@@ -1,0 +1,738 @@
+@import './highlight.scss';
+
+// ── Design tokens (SOS-inspired, saumon accent) ──────────────────────────────
+// Theme-agnostic tokens live in :root; surfaces / text / lines are themed below
+// (dark is the default, also used as fallback before the Dark plugin sets the
+// body class). Light overrides go in body.body--light.
+:root {
+  --brand: #e07a5f;
+  --brand-hover: #e68872;
+  --brand-soft: rgba(224, 122, 95, 0.14);
+  --brand-line: rgba(224, 122, 95, 0.3);
+  --brand-muted: rgba(224, 122, 95, 0.7);
+  --on-brand: #1b1419; // legible foreground on a brand-colored surface
+
+  --pulse: #6ee7a8; // running / success
+  --warn: #e0a33e;
+  --danger: #e5484d;
+
+  // ── Categorical data-viz series (dark steps — the default surface) ───────────
+  // Six hues for charts only; never for UI chrome, and never mixed with the
+  // status colors above (a red series would read as an error). The *order* is
+  // the colorblind-safety mechanism, not decoration: it was validated as a set
+  // against --surface (worst adjacent CVD ΔE 41.3 dark / 47.2 light, target ≥12).
+  // Assign slot 1, 2, 3… in a fixed order; never cycle or reorder by rank.
+  --series-1: #3987e5; // blue
+  --series-2: #199e70; // aqua
+  --series-3: #c98500; // yellow
+  --series-4: #9085e9; // violet
+  --series-5: #d55181; // magenta
+  --series-6: #d95926; // orange
+
+  // ── Agent identity hues ──────────────────────────────────────────────────────
+  // The eight names Claude Code's agent frontmatter allows in `color:`. Unlike
+  // --series-*, the slot is not ours to assign: an agent named "Explore" must
+  // land on the same hue in every session, so the mapping is a hash of the name
+  // (see src/utils/agentColors.ts) and the *names* are the contract.
+  //
+  // These are strokes and dots only — never a text color. The badge beside a
+  // dot stays --text on --surface-2, which sidesteps the contrast trap: `pink`
+  // and `yellow` cannot hold 4.5:1 against a white surface at these steps.
+  //
+  // `red` and `yellow` are pulled off --danger (#e5484d) and --warn (#e0a33e)
+  // on purpose. An agent is not an error, and a dot three pixels from a status
+  // color would read as one — the same reasoning that keeps --series-* away
+  // from the status hues.
+  --agent-blue: #3987e5;
+  --agent-green: #199e70;
+  --agent-yellow: #b8923a;
+  --agent-purple: #9085e9;
+  --agent-pink: #d55181;
+  --agent-orange: #d95926;
+  --agent-cyan: #4aa8c0;
+  --agent-red: #c0554a;
+
+  // ── Diff (added / removed lines) ─────────────────────────────────────────────
+  // A diff is a status, not a chart category: it never draws from --series-*.
+  // The hues track --pulse and --danger, but the text steps are re-picked per
+  // theme — the dark mints and reds fall under 4.5:1 on the light --surface.
+  --diff-add-bg: rgba(110, 231, 168, 0.13);
+  --diff-add-text: #6ee7a8;
+  --diff-add-line: #6ee7a8;
+  --diff-del-bg: rgba(229, 72, 77, 0.13);
+  --diff-del-text: #e5484d;
+  --diff-del-line: #e5484d;
+
+  // Header strip of a code block / diff, one step above its body.
+  //
+  // Re-declared in `body.body--light` on purpose. A `var()` inside a custom
+  // property resolves against the element carrying the declaration — here
+  // `:root` — and the themed surfaces are overridden one level down, on `body`.
+  // Declared only here, this would stay dark on the light theme.
+  --code-header-bg: var(--surface-3);
+
+  // ── Scale tokens (theme-agnostic — a size doesn't change between themes) ──────
+  // Type scale: a closed set. Pick the nearest step, never a free px value.
+  --fs-2xs: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 13px;
+  --fs-md: 14px;
+  --fs-lg: 15px;
+
+  // Radius scale.
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+
+  // Spacing scale (4 / 8 / 12 / 16 / 24).
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+
+  // Largeur utile d'un écran borné. Une seule valeur pour toutes les pages
+  // centrées : elles se répartissaient entre 1000, 1180 et 1280 px, ce qui
+  // faisait sauter le contenu d'un écran à l'autre alors que rien ne le
+  // justifiait. 1280 plutôt que moins, parce que le tableau liste/aperçu des
+  // plans de Maintenance est à l'étroit en dessous.
+  --page-max: 1280px;
+
+  // Motion.
+  --motion-fast: 0.12s;
+  --motion-base: 0.2s;
+  --motion-slow: 0.3s;
+
+  // Dark surfaces (default).
+  // Échelle élargie : chaque cran tient ~1,32:1 contre le précédent, contre
+  // ~1,07:1 auparavant — un écart sous lequel aucune frontière ne se voit sans
+  // filet pour la souligner. C'est ce qui permet enfin d'exprimer l'élévation
+  // par la surface elle-même. La très légère dérive froide (+1 vert, +4 bleu)
+  // évite le gris pur, qui lit terne à ces valeurs.
+  --bg: #101014;
+  --surface: #292a2d;
+  --surface-2: #3c3d40;
+  --surface-3: #4e4f52;
+  // Fourth step, added for floating surfaces (drawers, dialogs, menus). Note the
+  // scale does not mean the same thing in both themes: on dark it keeps climbing
+  // away from --bg, so a higher step reads as *raised*; on light it descends from
+  // white, so a higher step reads as *recessed*. Glass therefore uses this step
+  // on dark only — see --glass-bg. On light the raise already exists, since
+  // --surface (#fff) sits above --bg.
+  --surface-4: #606164;
+
+  // ── Rampe de texte ──────────────────────────────────────────────────────────
+  // Quatre crans, tous porteurs de CONTENU : les filets ont leurs propres tokens
+  // (--line*), rien ici n'est décoratif. Chacun doit donc rester lisible.
+  //
+  // Les trois crans du bas ont été relevés ensemble (0.55/0.32/0.18 auparavant),
+  // pas un par un : --faint plafonnait à 1,6:1 alors qu'il porte les marques de
+  // tour, horodatages, compteurs de jetons et numéros de ligne du rejeu — plus
+  // de 1 500 textes. Le remonter seul l'aurait collé à --dim ; il fallait
+  // rouvrir l'espace au-dessus pour garder quatre niveaux distincts.
+  //
+  // Mesuré sur les quatre surfaces, dans les deux thèmes : tout tient 3:1, seule
+  // exception --faint sur --surface-3 en sombre (2,84), combinaison qui
+  // n'apparaît nulle part. Le pire cas dicte la valeur, y compris sur des
+  // surfaces où le token n'est pas encore employé — sinon la prochaine
+  // utilisation réintroduit le défaut sans que personne ne le voie.
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.62);
+  --dim: rgba(255, 255, 255, 0.51);
+  --faint: rgba(255, 255, 255, 0.42);
+
+  --line: rgba(255, 255, 255, 0.06);
+  --line-2: rgba(255, 255, 255, 0.1);
+  --line-3: rgba(255, 255, 255, 0.16);
+
+  // Suit --bg : la barre est translucide, un fond figé sur l'ancien #0a0a0a
+  // aurait tiré au noir sur la nouvelle page.
+  --topbar-bg: rgba(16, 16, 20, 0.88);
+  --hover-overlay: rgba(255, 255, 255, 0.04);
+
+  // Right-drawer cast shadow — stronger on the near-black dark surface.
+  --drawer-shadow: -4px 0 16px rgba(0, 0, 0, 0.45);
+
+  // ── Glow (surface edge light) ────────────────────────────────────────────────
+  // The light does NOT bloom outward — that reads as neon. It comes off a crisp
+  // edge and travels *inward*, which is what gives a surface the sense of being
+  // a thick pane rather than a flat rectangle. Hence two of the three layers are
+  // `inset`, and the outward layer is deliberately the weakest.
+  //
+  // Cyan, declared here with its own value rather than aliased to --agent-cyan.
+  // The agent hues are an identity mapping keyed by agent *name*; borrowing one
+  // for app chrome would couple the two, and a re-hash there would silently
+  // restyle every card. Same value today, independent contracts.
+  // Two hue tokens, not one. `--glow-hue` is the pure accent and never changes;
+  // `--glow-color` is the contrast-safe step drawn on edges, trims and text, and
+  // it *is* re-stepped for the light theme (see `body.body--light`). Tinted fills
+  // keep using --glow-hue there, which is why they stay separate.
+  // Deliberately desaturated (192° hue kept, saturation 0.48 → 0.25). This glow
+  // is STRUCTURE, not a second accent: it sits on every card, so it signals
+  // nothing, and a colour that signals nothing must not outweigh --brand, which
+  // signals "you can act here" (including destructive actions). The two hues are
+  // near-exact complements — 12.6° vs 192° — so at comparable saturation neither
+  // recedes and they compete. Dropping saturation is what lets --brand win.
+  //
+  // The futuristic reading survives because it comes from the *structure* of the
+  // glow — crisp edge, light travelling inward — not from saturation. So the
+  // edge layer is kept crisp (72%) while the fills are cut hard.
+  --glow-hue: #6697a3;
+  --glow-color: var(--glow-hue);
+  --glow-edge: 1.5px;
+  --glow-depth: 32px;
+
+  // Note the `--glow-shadow-hover` twin: a `var()` inside a custom property is
+  // substituted against the element that *declares* it — here `:root` — so a
+  // `:hover` rule bumping `--glow-edge` would never re-resolve this value. The
+  // hover state has to be its own composed token (same trap as
+  // `--code-header-bg` above).
+  --glow-shadow:
+    inset 0 0 0 var(--glow-edge) color-mix(in srgb, var(--glow-color) 72%, transparent),
+    inset 0 0 var(--glow-depth) color-mix(in srgb, var(--glow-hue) 18%, transparent),
+    0 0 18px color-mix(in srgb, var(--glow-hue) 12%, transparent);
+
+  --glow-shadow-hover:
+    inset 0 0 0 var(--glow-edge) color-mix(in srgb, var(--glow-color) 88%, transparent),
+    inset 0 0 calc(var(--glow-depth) * 1.2) color-mix(in srgb, var(--glow-hue) 24%, transparent),
+    0 0 22px color-mix(in srgb, var(--glow-hue) 16%, transparent);
+
+  // Accent-derived trims that must track the glow hue (chips, tags, hairlines).
+  --glow-line: color-mix(in srgb, var(--glow-color) 30%, transparent);
+  --glow-soft: color-mix(in srgb, var(--glow-hue) 10%, transparent);
+  --glow-text: var(--glow-color);
+
+  // ── Glass (floating surfaces) ────────────────────────────────────────────────
+  // Drawers, dialogs and menus sit temporarily *above* the page. Painting them
+  // opaque flattens that relationship — they read as pasted rectangles. A
+  // translucent fill plus a backdrop blur restores it: the page stays visible
+  // underneath as an out-of-focus field, which is what makes the panel read as
+  // hovering rather than replacing.
+  //
+  // Only ever applied to temporary surfaces. A page-level surface has nothing
+  // meaningful behind it, so blurring there costs GPU work for no signal.
+  // Bâti sur --surface-4, PAS sur --surface. C'est le point qui décide de tout :
+  // un panneau flottant peint dans le ton de ce qu'il recouvre reste invisible,
+  // quelle que soit son opacité. Sur la palette sombre, --surface (#131313) et
+  // le fond de page (#0a0a0a) sont à 9 niveaux l'un de l'autre — même à 45 % la
+  // vitre ne révélait rien, mesuré. C'est l'écart de luminance qui dit
+  // « au-dessus », pas la transparence ; le flou n'est plus qu'un appoint sur le
+  // peu de contenu lumineux qui passe derrière.
+  --glass-bg: color-mix(in srgb, var(--surface-4) 86%, transparent);
+  --glass-blur: 40px;
+}
+
+// Light theme overrides.
+body.body--light {
+  // Le clair ne peut pas rejouer la même rampe : le blanc est un plafond, et
+  // descendre de 1,32 quatre fois mènerait à un gris moyen qui salit les creux
+  // au lieu de créer de la profondeur. Deux axes distincts, donc :
+  //  · ÉLEVER  — la page descend de 1,28:1 sous le blanc, même écart carte/page
+  //              qu'en sombre : c'est là que « franc » se joue ;
+  //  · CREUSER — les surfaces internes ne descendent que de ~1,12:1, car elles
+  //              vivent à l'intérieur des cartes blanches, jamais sur la page.
+  // Conséquence assumée : la suite n'est plus monotone ici, --surface-2 est plus
+  // clair que --bg. C'est correct — un bloc de code dans une carte n'a aucune
+  // raison d'être plus sombre que le fond derrière cette carte.
+  --bg: #e2e3e6;
+  --surface: #ffffff;
+  --surface-2: #f1f2f5;
+  --surface-3: #e5e6e9;
+  // Continues the light scale's own direction (downward from white), keeping the
+  // ~11-level cadence of the steps above. Defined so the token is never unset,
+  // but unused by --glass-bg here: on light a floating panel raises by staying
+  // white, not by darkening.
+  --surface-4: #d9dadd;
+
+  --brand-soft: rgba(224, 122, 95, 0.12);
+  --brand-line: rgba(224, 122, 95, 0.35);
+  // Réétagé pour le clair, comme --brand-soft et --brand-line juste au-dessus.
+  // La version sombre est un saumon à 70 % d'opacité : posée sur du blanc elle
+  // tombe à 1,79:1, et c'est elle qui porte le nom du modèle et le compteur de
+  // contexte dans le rejeu. Assombrie, elle mesure 4,9:1.
+  --brand-muted: color-mix(in srgb, var(--brand) 72%, #101010);
+
+  // Same six hues, re-stepped for the white surface — not an automatic flip.
+  // Aqua, yellow and magenta fall below 3:1 here, so every chart using them
+  // ships direct labels and a table view (the relief rule).
+  --series-1: #2a78d6;
+  --series-2: #1baf7a;
+  --series-3: #eda100;
+  --series-4: #4a3aa7;
+  --series-5: #e87ba4;
+  --series-6: #eb6834;
+
+  // Same eight agent hues, darkened until a 3:1 stroke reads on the white
+  // --surface. They stay strokes here too, so the 4.5:1 text bar never applies.
+  --agent-blue: #2a78d6;
+  --agent-green: #16855f;
+  --agent-yellow: #8a6d22;
+  --agent-purple: #6355c9;
+  --agent-pink: #c23d6d;
+  --agent-orange: #c04a1c;
+  --agent-cyan: #2b7f94;
+  --agent-red: #a8433a;
+
+  // Re-resolve against this element's surfaces — see the note in `:root`.
+  --code-header-bg: var(--surface-3);
+
+  // Same diff hues, darkened until they read on white (4.5:1 on --surface).
+  --diff-add-bg: rgba(20, 128, 74, 0.1);
+  --diff-add-text: #14804a;
+  --diff-add-line: #14804a;
+  --diff-del-bg: rgba(180, 35, 24, 0.09);
+  --diff-del-text: #b42318;
+  --diff-del-line: #b42318;
+
+  // Rampe relevée comme en sombre, et pour la même raison — voir le bloc `:root`.
+  // Les quatre crans tiennent ici 3:1 sur les quatre surfaces, sans exception.
+  --text: rgba(0, 0, 0, 0.87);
+  --muted: rgba(0, 0, 0, 0.66);
+  --dim: rgba(0, 0, 0, 0.55);
+  --faint: rgba(0, 0, 0, 0.44);
+
+  --line: rgba(0, 0, 0, 0.09);
+  --line-2: rgba(0, 0, 0, 0.14);
+  --line-3: rgba(0, 0, 0, 0.22);
+
+  --topbar-bg: rgba(255, 255, 255, 0.85);
+  --hover-overlay: rgba(0, 0, 0, 0.05);
+
+  --drawer-shadow: -4px 0 12px rgba(0, 0, 0, 0.08);
+
+  // ── Glow, light theme ────────────────────────────────────────────────────────
+  // Same three-layer structure, inverted optics. A glow *adds* light; on a white
+  // surface there is no headroom to add any, so the same values that read as
+  // luminous glass on black read as a smudge here. The edge instead ABSORBS —
+  // darker and more saturated, the way the cut edge of real glass looks on a
+  // white table — and the outward layer becomes a neutral cast shadow. A tinted
+  // outer halo on white reads as a print artifact, never as depth.
+  //
+  // --glow-hue holds 3.2:1 on --surface: enough for a hairline, short of the
+  // 4.5:1 needed for text. Darkened it measures 5.3:1, so it clears both —
+  // required, since --glow-text is used as a text color.
+  --glow-color: color-mix(in srgb, var(--glow-hue) 72%, #101010);
+
+  --glow-shadow:
+    inset 0 0 0 var(--glow-edge) color-mix(in srgb, var(--glow-color) 57%, transparent),
+    inset 0 0 calc(var(--glow-depth) * 0.5) color-mix(in srgb, var(--glow-hue) 10%, transparent),
+    0 2px 11px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+
+  --glow-shadow-hover:
+    inset 0 0 0 var(--glow-edge) color-mix(in srgb, var(--glow-color) 75%, transparent),
+    inset 0 0 calc(var(--glow-depth) * 0.5) color-mix(in srgb, var(--glow-hue) 14%, transparent),
+    0 4px 14px rgba(0, 0, 0, 0.13), 0 1px 2px rgba(0, 0, 0, 0.07);
+
+  --glow-line: color-mix(in srgb, var(--glow-color) 45%, transparent);
+  --glow-soft: color-mix(in srgb, var(--glow-hue) 12%, transparent);
+  // Doit être redéclaré ici, même si la valeur est identique à celle de `:root`.
+  // `--glow-text: var(--glow-color)` déclaré sur `:root` y est substitué une fois
+  // pour toutes contre le `--glow-color` de `:root` ; la valeur *calculée* qui
+  // descend ensuite est la teinte sombre, insensible au réétagement ci-dessus.
+  // Sans cette ligne, le texte tombait à 3.2:1 sur blanc (mesuré) au lieu de 5.3.
+  --glow-text: var(--glow-color);
+
+  // Lighter surfaces need a higher fill to stay legible: at 72% the page showing
+  // through would drag the panel's contrast down below its own text.
+  --glass-bg: color-mix(in srgb, var(--surface) 82%, transparent);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--fs-base);
+  letter-spacing: 0.01em;
+}
+
+// Quasar dark surfaces remapped to the SOS palette.
+//
+// Pointe sur les tokens plutôt que sur des valeurs copiées : figées, elles se
+// désynchronisent au premier réétagement de la palette — ce qui est arrivé, et
+// laissait chaque q-table, q-menu et q-dialog peint à l'ancienne surface
+// (#131313) au milieu de cartes passées à #292a2d, soit un trou sombre au
+// centre du contenu.
+body.body--dark {
+  --q-dark: var(--surface);
+  --q-dark-page: var(--bg);
+}
+
+// ── Typographic utilities ────────────────────────────────────────────────────
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-feature-settings: 'tnum' 1; // tabular figures
+}
+
+// Small uppercase technical label (section headers, captions).
+.section-label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+// Calendar event tooltip container (teleported to <body>, so styled globally).
+// The rows themselves are the LabelValueRow primitive (components/ui).
+.ev-tt {
+  display: grid;
+  gap: var(--space-xs);
+  min-width: 210px;
+  max-width: 400px;
+  font-size: var(--fs-sm);
+}
+
+// Surface card with hairline border (matches SOS .card).
+//
+// The glow replaces what used to be a hairline `border`, rather than sitting on
+// top of one: its first layer is an inset ring drawn at the same place a border
+// would be, and keeping both would double the edge. Dropping the border also
+// keeps the box model unchanged (an inset shadow takes no layout space), so no
+// existing page shifts by 2px.
+.surface-card {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--glow-shadow);
+  transition: box-shadow var(--motion-base);
+}
+.surface-card:hover {
+  box-shadow: var(--glow-shadow-hover);
+}
+
+// Renforts d'angle — opt-in, jamais par défaut.
+//
+// Quatre équerres qui épousent l'arrondi, obtenues en dessinant une bordure
+// complète puis en masquant tout sauf les coins : un trait droit posé à
+// l'angle raterait l'arc de `--radius-md` et se verrait. Un pseudo-élément
+// suffit donc là où quatre `<span>` seraient nécessaires, et la carte n'a
+// rien à changer dans son markup.
+//
+// `::before` et non `::after` : le lavis au survol des cartes de l'accueil
+// occupe déjà `::after`, et deux règles sur le même pseudo-élément se
+// mélangent au lieu de se superposer — les renforts disparaissaient.
+//
+// Le modificateur existe parce que l'effet ne survit pas à la répétition : il
+// dit « c'est de ce bloc qu'il s'agit », et une page qui le pose sur ses dix
+// cartes ne dit plus rien. À réserver au bloc unique d'un écran, ou au moment
+// où AURA demande une confirmation.
+.surface-card--braced {
+  position: relative;
+  // `clip` plutôt que `hidden` : le pixel par lequel les renforts débordent
+  // (voir plus bas) compte comme du contenu, et `overflow-clip-margin` est la
+  // seule façon de l'autoriser sans qu'il crée du défilement.
+  //
+  // Une carte qui défile vraiment garde son `auto` — Quasar en impose un aux
+  // cartes de dialogue, plus spécifique que cette règle. Là, c'est le
+  // débordement qu'il faut annuler, avec `--brace-inset: 0`.
+  overflow: clip;
+  overflow-clip-margin: 2px;
+}
+.surface-card--braced::before {
+  content: '';
+  position: absolute;
+  // `-1px` et non `0` : l'arête de `--glow-shadow` est une ombre *interne*,
+  // dessinée là où serait une bordure. À `inset: 0` les renforts passent en
+  // dessous d'elle et se lisent comme un liseré ; débordants d'un pixel, ils
+  // coiffent l'arête — ce sont des renforts posés sur l'angle, pas dedans.
+  //
+  // Réglable, parce que ce pixel est du contenu qui déborde : dans un
+  // conteneur qui défile pour de bon, il suffit à faire apparaître une barre.
+  // `--brace-inset: 0` remet alors les renforts au ras de l'arête.
+  inset: var(--brace-inset, -1px);
+  pointer-events: none;
+  // Au-dessus du contenu : un en-tête à fond plein recouvrirait sinon les
+  // deux renforts du haut, le pseudo-élément étant peint avant les enfants.
+  z-index: 1;
+  border: 2px solid var(--glow-color);
+  border-radius: inherit;
+  // Le noir n'est pas une couleur du thème : c'est l'opacité pleine du masque.
+  mask-image:
+    linear-gradient(#000 0 0), linear-gradient(#000 0 0), linear-gradient(#000 0 0),
+    linear-gradient(#000 0 0);
+  mask-size: 20px 20px;
+  mask-position:
+    top left,
+    top right,
+    bottom left,
+    bottom right;
+  mask-repeat: no-repeat;
+}
+
+// Trame de fond — la texture des écrans vides.
+//
+// Se pose sur un enfant `aria-hidden` d'un conteneur `position: relative` et
+// sans fond opaque — elle court *sous* le contenu, un fond sur le conteneur la
+// masquerait — et couvre toute sa surface. Elle n'existe que dans l'anneau entre le contenu et
+// les bords : effacée au centre, là où on lit, et sur les bords, où elle
+// deviendrait un cadre. C'est pourquoi elle ne va qu'aux écrans qui ont du
+// vide à occuper — sur un écran de travail plein bord à bord, elle n'aurait
+// nulle part où apparaître, sinon dans les gouttières.
+//
+// Les rayons sont en pourcentage, pas en pixels : la même classe sert un
+// écran entier comme un panneau.
+.backdrop-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  // Un élément positionné est peint après les enfants qui ne le sont pas : sans
+  // ça, la trame passe *par-dessus* les cartes au lieu de courir derrière
+  // elles. `-1` la remet sous le contenu tout en la laissant devant le fond.
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 46% 66% at 50% 50%, var(--brand-soft), transparent 70%),
+    repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 64px),
+    repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 64px);
+  mask-image: radial-gradient(
+    ellipse 58% 85% at 50% 50%,
+    transparent 18%,
+    #000 46%,
+    transparent 88%
+  );
+}
+
+// Variante pour tout écran dont la racine est bornée par un `max-width`,
+// centré ou calé à gauche. Posée sur lui, la trame s'arrêterait au bord de la
+// colonne — c'est-à-dire partout sauf là où il y a du vide, et la coupure se
+// voit d'autant mieux qu'elle tombe au milieu de l'écran. Ancrée à la fenêtre,
+// elle couvre les marges, et le fond reste immobile quand la colonne défile.
+.backdrop-grid--fixed {
+  position: fixed;
+}
+
+// Status dot with luminescent glow.
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  display: inline-block;
+  background: var(--dim);
+}
+.status-dot--brand {
+  background: var(--brand);
+  box-shadow: 0 0 6px var(--brand);
+}
+.status-dot--pulse {
+  background: var(--pulse);
+  box-shadow: 0 0 6px var(--pulse);
+}
+
+// ── Pastille vivante ─────────────────────────────────────────────────────────
+// Modificateur SÉPARÉ de la couleur, et c'est délibéré : `--pulse` nomme la
+// teinte verte (comme le token du même nom), pas un comportement. Beaucoup de
+// pastilles vertes de l'app disent seulement « ce fichier existe » ou « ce
+// serveur est configuré » — rien n'y bouge. Les faire respirer les banaliserait
+// et détruirait le signal là où il compte.
+//
+// `--live` ne se pose donc que sur ce qui change EN CE MOMENT : une session qui
+// travaille, un lien qui répond. Il s'ajoute à la classe de couleur plutôt que
+// de la remplacer, pour que la teinte reste choisie au point d'appel — d'où
+// `--dot-glow`, que les autres états (attente en ambre) pourront redéfinir.
+// Un halo qui naît de rien, s'épanouit et s'efface — puis un temps mort avant
+// le suivant.
+//
+// Le point qui décide de tout : il part de l'INVISIBLE. Faire osciller un halo
+// déjà présent entre deux intensités ne se remarque pas — il n'y a ni apparition
+// ni disparition, seulement une variation, et l'œil périphérique ne détecte que
+// les premières. C'est aussi ce qui autorise à rester doux : une émission qui
+// part de zéro se voit sans avoir besoin d'être forte.
+//
+// Le halo est un pseudo-élément en position absolue et centré : il ne prend
+// aucune place et déborde librement du disque de 7px sans rien décaler autour.
+.status-dot--live {
+  --dot-glow: var(--pulse);
+  position: relative;
+}
+.status-dot--live::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 999px;
+  // Un dégradé radial, pas un contour : on veut un halo diffus, pas un anneau.
+  background: radial-gradient(circle, var(--dot-glow) 0%, transparent 66%);
+  pointer-events: none;
+  // `transform` et `opacity` seulement : ces deux propriétés s'animent sur le
+  // compositeur, sans recalcul de mise en page à chaque image.
+  animation: status-halo 3s ease-in-out infinite;
+}
+// Montée douce jusqu'à 40 %, effacement plus long, puis un quart de cycle à
+// zéro. Cette pause est ce qui fait respirer l'ensemble : sans elle le halo
+// repart avant d'avoir disparu et tout se lit comme un grésillement.
+// Réglages : la durée (3s), le sommet d'opacité (0.55) et l'échelle finale.
+@keyframes status-halo {
+  0% {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  75%,
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-dot--live::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+// ── Accessibility helpers ─────────────────────────────────────────────────────
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 9999;
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--brand);
+  color: var(--on-brand);
+  border-radius: 0 0 var(--radius-sm) 0;
+}
+.skip-link:focus {
+  left: 0;
+  top: 0;
+}
+
+// ── Surfaces flottantes (verre) ───────────────────────────────────────────────
+// Drawers, dialogues et menus : translucides et floutés, pour qu'ils lisent
+// comme posés AU-DESSUS de la page plutôt que collés dedans.
+//
+// `.q-dialog__inner > .q-card` cible la carte du dialogue avec une spécificité
+// (0,2,0) supérieure à celle de `.surface-card` (0,1,0), donc le fond de verre
+// l'emporte sur le fond opaque de la primitive sans `!important` — et la carte
+// conserve l'arête lumineuse que `.surface-card` lui donne déjà.
+.q-drawer,
+.q-menu,
+.q-dialog__inner > .q-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+// Repli : sans `backdrop-filter`, un fond translucide laisserait lire le contenu
+// de la page à travers le panneau. On repasse alors à une surface opaque.
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .q-drawer,
+  .q-menu,
+  .q-dialog__inner > .q-card {
+    background: var(--surface);
+  }
+}
+
+// ── Drawers ───────────────────────────────────────────────────────────────────
+.q-drawer {
+  // Légère ombre portée à gauche pour les drawers de droite — sensation de
+  // "document temporairement par-dessus".
+  &.q-drawer--right {
+    box-shadow: var(--drawer-shadow);
+  }
+}
+
+// La tranche du drawer rejoint le système de lueur : même vocabulaire que
+// l'arête des panneaux, sans en poser l'anneau complet (trop lourd sur une
+// surface pleine hauteur).
+//
+// Quasar déclare `.q-drawer--right.q-drawer--bordered` (0,2,0) et son CSS est
+// chargé après celui-ci : à spécificité égale, il gagnerait. Le `.q-layout`
+// initial monte à (0,3,0) et trancherait sans recourir à `!important`.
+.q-layout .q-drawer--right.q-drawer--bordered {
+  border-left: 1px solid var(--glow-line);
+}
+
+// Replay KPI tooltips (q-tooltip teleports to <body>, so styled globally).
+.rp-tt {
+  font-size: var(--fs-xs);
+  line-height: 1.55;
+}
+.rp-tt strong {
+  color: var(--brand);
+  font-weight: 600;
+}
+
+// ── Sortie de terminal (ANSI) ─────────────────────────────────────────────────
+// Classes émises par `utils/ansi.ts` dans du HTML injecté : elles doivent être
+// globales, un style scoped ne les atteindrait pas. Les couleurs réutilisent la
+// palette d'agents, qui a déjà ses valeurs pour les deux thèmes.
+.ansi-bold {
+  font-weight: 600;
+  color: var(--text);
+}
+// En opacité plutôt qu'en couleur : `dim` se combine souvent avec une couleur,
+// et un `color` ici entrerait en concurrence avec elle.
+.ansi-dim {
+  opacity: 0.62;
+}
+.ansi-italic {
+  font-style: italic;
+}
+.ansi-underline {
+  text-decoration: underline;
+}
+.ansi-strike {
+  text-decoration: line-through;
+}
+.ansi-fg-black {
+  color: var(--dim);
+}
+.ansi-fg-white {
+  color: var(--text);
+}
+.ansi-fg-red {
+  color: var(--agent-red);
+}
+.ansi-fg-green {
+  color: var(--agent-green);
+}
+.ansi-fg-yellow {
+  color: var(--agent-yellow);
+}
+.ansi-fg-blue {
+  color: var(--agent-blue);
+}
+.ansi-fg-magenta {
+  color: var(--agent-pink);
+}
+.ansi-fg-cyan {
+  color: var(--agent-cyan);
+}
+.ansi-bg-black {
+  background: var(--surface-3);
+}
+.ansi-bg-white {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.ansi-bg-red {
+  background: color-mix(in srgb, var(--agent-red) 25%, transparent);
+}
+.ansi-bg-green {
+  background: color-mix(in srgb, var(--agent-green) 25%, transparent);
+}
+.ansi-bg-yellow {
+  background: color-mix(in srgb, var(--agent-yellow) 25%, transparent);
+}
+.ansi-bg-blue {
+  background: color-mix(in srgb, var(--agent-blue) 25%, transparent);
+}
+.ansi-bg-magenta {
+  background: color-mix(in srgb, var(--agent-pink) 25%, transparent);
+}
+.ansi-bg-cyan {
+  background: color-mix(in srgb, var(--agent-cyan) 25%, transparent);
+}

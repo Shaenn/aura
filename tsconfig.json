@@ -1,0 +1,6 @@
+{
+  "extends": "./.quasar/tsconfig.json",
+  // `test/` runs on Node and imports the BFF with explicit `.ts` extensions, which
+  // the Quasar config forbids. It has its own tsconfig, checked by `pnpm typecheck`.
+  "exclude": ["./dist", "./idea", "./node_modules", "./.quasar", "./server", "./test"]
+}

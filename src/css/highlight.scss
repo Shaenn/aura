@@ -1,0 +1,87 @@
+// highlight.js token theme, driven by CSS variables so it flips with the app
+// theme. Default (dark) values live in :root; body.body--light overrides them.
+// Only `.hljs-*` class names are emitted by utils/markdown.ts.
+:root {
+  --hl-comment: #6b7280;
+  --hl-keyword: #e07a5f; // brand saumon for keywords
+  --hl-string: #6ee7a8;
+  --hl-number: #e0a33e;
+  --hl-title: #4aa8c0;
+  --hl-attr: #e9a08b;
+  --hl-literal: #e0a33e;
+  --hl-meta: #8a93a6;
+  --hl-tag: #8a93a6;
+}
+body.body--light {
+  --hl-comment: #8a919a;
+  --hl-keyword: #c05a3e;
+  --hl-string: #1f8a54;
+  --hl-number: #b07316;
+  --hl-title: #2f7f96;
+  --hl-attr: #b56a52;
+  --hl-literal: #b07316;
+  --hl-meta: #6b7280;
+  --hl-tag: #6b7280;
+}
+
+.hljs {
+  color: var(--text);
+  background: transparent;
+}
+.hljs-comment,
+.hljs-quote {
+  color: var(--hl-comment);
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-name,
+.hljs-doctag {
+  color: var(--hl-keyword);
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-addition {
+  color: var(--hl-string);
+}
+.hljs-number,
+.hljs-literal {
+  color: var(--hl-number);
+}
+.hljs-title,
+.hljs-title.function_,
+.hljs-title.class_,
+.hljs-section {
+  color: var(--hl-title);
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-property {
+  color: var(--hl-attr);
+}
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link {
+  color: var(--hl-literal);
+}
+.hljs-meta,
+.hljs-meta .hljs-keyword {
+  color: var(--hl-meta);
+}
+.hljs-tag,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: var(--hl-tag);
+}
+.hljs-deletion {
+  color: var(--danger);
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 600;
+}

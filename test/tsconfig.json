@@ -1,0 +1,22 @@
+{
+  // The tests exercise the BFF, so they compile under the BFF's rules — Node libs,
+  // no DOM, `.ts` import extensions. `include` is not inherited through `extends`,
+  // hence the repetition; the imported `server/` and `shared/` files are pulled in
+  // by the import graph.
+  //
+  // `paths` mirror Quasar's (see `.quasar/tsconfig.json`) so a DOM-free client
+  // helper — `contextRows`, `contextTree` — type-checks when a test imports it.
+  "extends": "../server/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "..",
+    "paths": {
+      "app": ["."],
+      "app/*": ["./*"],
+      "src": ["./src"],
+      "src/*": ["./src/*"],
+      "components": ["./src/components"],
+      "components/*": ["./src/components/*"]
+    }
+  },
+  "include": ["./**/*.ts"]
+}

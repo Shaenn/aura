@@ -1,0 +1,7 @@
+{
+  "agentId": "failed1",
+  "agentType": "Explore",
+  "toolUseId": "toolu_a5",
+  "description": "Explorer les tests",
+  "spawnDepth": 1
+}

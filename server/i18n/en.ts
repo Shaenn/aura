@@ -1,0 +1,105 @@
+import type { Catalog } from './index.ts';
+import diagnostics from './en-diagnostics.ts';
+
+// Anglais du BFF. La charte `docs/voice.md` s'applique : sobre et direct, jamais
+// de `please`, jamais de `sorry`, et une erreur qui dit ce qui reste possible.
+
+const en: Catalog = {
+  diagnostics,
+  errors: {
+    notFound: 'Not found.',
+    fileNotFound: 'File not found.',
+    entryNotFound: 'Entry not found.',
+    backupNotFound: 'Backup not found.',
+    planNotFound: 'Plan not found.',
+    unknownSession: 'Unknown session.',
+    processNotFound:
+      'I cannot find that process among Claude’s. It may have just exited — reload the list.',
+    cannotKillSelf:
+      'I do not terminate myself. Use the shutdown: it stops the Workshop sessions first.',
+    paramRequired: 'The "{name}" parameter is required.',
+    paramsRequired: 'The "{first}" and "{second}" parameters are required.',
+    bodyExpected: 'Expected body: {shape}.',
+    dateFormat: 'Dates are expected in YYYY-MM-DD format.',
+    dateOrder: '"from" must come before "to".',
+    projectAndIdRequired: '`project` and `id` are both required.',
+    unknownRules: 'Unknown rule: {names}.',
+    invalidPreferences: 'Invalid preferences.',
+    serverNameRequired: 'A server name is required.',
+    workdirRequired: 'A working folder is required.',
+    tooManySessions:
+      'I am not opening another session: {max} are already running, and each holds a process. Close one and I will open this one.',
+    emptyMessage: 'Empty message.',
+    attachmentsShape: 'I could not read the attached images. The turn was not sent.',
+    attachmentType:
+      'I cannot attach an image of type {type}. The turn was not sent — PNG, JPEG, GIF and WebP work.',
+    attachmentTooBig:
+      'This image is over 5 MB, which the API refuses. The turn was not sent; a smaller capture will go through.',
+    unknownAttachment: 'This image is no longer in memory. It remains in the transcript.',
+    /** La sortie d'un shell de fond : le fichier est temporaire, il s'efface. */
+    unknownShell: "I can't find this shell's output. The temporary file is gone.",
+    permissionModeRequired: 'A permission mode is required.',
+    purgeTargetRequired: 'I do not delete a backup without knowing which one.',
+    unexpected: 'I could not see this operation through. The details are in my log.',
+    permissionModeUnknown: 'I do not open a session in {mode} mode.',
+    decisionExpected: 'Expected answer: allow, allow-always or deny.',
+    answersExpected: 'One answer per question is expected.',
+    alreadyDecided: 'This request has already been decided.',
+    questionAlreadyDecided: 'This question has already been answered.',
+    accessDenied: 'Access denied.',
+  },
+
+  guard: {
+    outsideRoot: 'Path outside the managed folder: {path}',
+    notWritable: "I don't write outside the editable resources: {path}",
+    fileChanged: 'The file changed on disk since the preview.',
+    claudeJsonChanged: '~/.claude.json changed on disk since the preview.',
+    badHost: 'I only answer a request addressed to this machine.',
+    crossSite: 'I do not answer a request coming from another site.',
+  },
+
+  mcp: {
+    argsMustBeStrings: 'args must be a list of strings.',
+    unknownTransport: 'Unknown transport: give either a command (stdio) or a URL (http).',
+  },
+
+  agent: {
+    permissionTimeout:
+      'Nobody answered this permission request within fifteen minutes; I am denying it by default.',
+    sessionStopped: 'Session stopped.',
+    deniedFromAtelier: 'Denied from the Workshop.',
+    sessionEnded: 'The session stopped: {message}',
+    cleared:
+      'I am opening a new session. The context is empty; the previous exchange stays on disk.',
+    clearedByCommand:
+      'I am opening a new session: /clear emptied the context. The previous exchange stays on disk.',
+    pickerUnavailable: 'No folder picker available on {platform}.',
+    noPowerShell: 'No PowerShell host found.',
+  },
+
+  hooks: {
+    failed: 'The hook failed (code {code}).',
+    blocked: 'The hook stopped the turn from continuing.',
+  },
+
+  context: {
+    preamble: '(preamble)',
+    skillNamed: 'Skill {names}',
+    skillInvoked: 'Skill invoked',
+    deferredTools: 'Deferred tools ({count})',
+    hookBlocked: 'Hook {name} — blocked',
+    todoReminder: 'Task reminder ({count})',
+    turnReasoning: 'Turn {turn} — reasoning and answer',
+  },
+
+  storage: {
+    projects: 'Conversation transcripts',
+    'file-history': 'History of edited files',
+    telemetry: 'Pending telemetry',
+    'paste-cache': 'Paste cache',
+    'shell-snapshots': 'Shell snapshots',
+    plans: 'Generated plans',
+  },
+};
+
+export default en;

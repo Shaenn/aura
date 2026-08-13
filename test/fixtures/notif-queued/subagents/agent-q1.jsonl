@@ -1,0 +1,2 @@
+{"type":"user","uuid":"qa1","parentUuid":null,"timestamp":"2026-01-01T10:00:20.000Z","isSidechain":true,"message":{"role":"user","content":[{"type":"text","text":"Cartographie les textes du front."}]}}
+{"type":"assistant","uuid":"qa2","parentUuid":"qa1","timestamp":"2026-01-01T10:00:40.000Z","isSidechain":true,"message":{"id":"msg_q1","role":"assistant","model":"claude-opus-4-8","content":[{"type":"text","text":"Voici la cartographie."}],"usage":{"input_tokens":50,"output_tokens":5,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}

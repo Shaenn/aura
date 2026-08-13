@@ -1,0 +1,45 @@
+# Ce que la revue humaine ne doit pas avoir à vérifier.
+#
+# Sur `windows-latest` : c'est la seule plateforme sur laquelle AURA est testée, et
+# plusieurs gardes du serveur tiennent à des particularités de Windows — la casse du
+# système de fichiers, les noms courts 8.3, l'énumération des processus. Les faire tourner
+# ailleurs vérifierait autre chose que ce qui est livré.
+#
+# `build` en plus de `typecheck` : `pnpm typecheck` ne couvre que `server/` et `test/`. Le
+# front n'est typé que par `vue-tsc`, que seul le build déclenche. Sans cette étape, une
+# rupture de types dans `src/` passerait la CI.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+
+      - run: pnpm typecheck
+
+      # Les tests lisent le `~/.claude` de la machine s'il existe, et se sautent sinon.
+      # Sur un exécuteur neuf il n'y en a pas : ils tournent alors sur leurs fixtures.
+      - run: pnpm test
+
+      - run: pnpm build

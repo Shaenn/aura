@@ -1,0 +1,2 @@
+{"type":"user","uuid":"ou1","parentUuid":null,"timestamp":"2026-01-01T10:06:00.000Z","isSidechain":true,"message":{"role":"user","content":[{"type":"text","text":"Une question posée de côté."}]}}
+{"type":"assistant","uuid":"ou2","parentUuid":"ou1","timestamp":"2026-01-01T10:06:10.000Z","isSidechain":true,"message":{"id":"msg_o1","role":"assistant","model":"claude-opus-4-8","content":[{"type":"text","text":"Voici la réponse de côté."}],"usage":{"input_tokens":40,"output_tokens":4,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}

@@ -1,0 +1,7 @@
+{
+  "agentId": "sync1",
+  "agentType": "Explore",
+  "toolUseId": "toolu_a1",
+  "description": "Explorer le code",
+  "spawnDepth": 1
+}

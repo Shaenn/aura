@@ -1,0 +1,2 @@
+{"type":"user","uuid":"fu1","parentUuid":null,"timestamp":"2026-01-01T10:04:05.000Z","isSidechain":true,"message":{"role":"user","content":[{"type":"text","text":"Propose un plan."}]}}
+{"type":"assistant","uuid":"fu2","parentUuid":"fu1","timestamp":"2026-01-01T10:04:20.000Z","isSidechain":true,"message":{"id":"msg_p1","role":"assistant","model":"claude-opus-4-8","content":[{"type":"text","text":"Je rassemble les contraintes."}],"usage":{"input_tokens":80,"output_tokens":8,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}

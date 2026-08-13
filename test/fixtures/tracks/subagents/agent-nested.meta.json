@@ -1,0 +1,7 @@
+{
+  "agentId": "nested",
+  "agentType": "general-purpose",
+  "toolUseId": "toolu_nested",
+  "description": "Compter les tests",
+  "spawnDepth": 2
+}

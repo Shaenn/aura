@@ -1,0 +1,51 @@
+import type { MessageSchema } from '../../fr';
+
+const memory: MessageSchema['pages']['memory'] = {
+  sub: 'Global memory (CLAUDE.md), index and structured per-project memories.',
+  global: 'Global',
+  globalHint: 'standing instructions',
+  indexHint: 'index',
+  projectScope: 'Project',
+  newIn: 'New memory in {project}',
+  newBadge: 'new',
+  pick: 'Pick a memory to read it.',
+  fields: {
+    name: 'Name',
+    description: 'Description',
+    type: 'Type',
+    content: 'Content',
+    file: 'File',
+  },
+  viewAria: 'Content view',
+  viewEdit: 'Edit',
+  viewPreview: 'Preview',
+  emptyBody: 'Empty content.',
+  deleteTitle: 'Delete this memory?',
+  deleteNote: 'A timestamped backup is taken before deleting.',
+  types: {
+    user: 'Who the user is: role, expertise, lasting preferences.',
+    feedback:
+      'Guidance on how to work — corrections as well as confirmed approaches. States the why.',
+    project:
+      'Ongoing work, goals or constraints not derivable from the code or the git history. Absolute dates.',
+    reference: 'Pointers to external resources: URLs, dashboards, tickets.',
+  },
+  discard: 'Discard the changes you have not applied?',
+  discardNote: "I haven't written them to disk: leaving this screen loses them.",
+  discardConfirm: 'Discard',
+  namePlaceholder: 'calibrated-thresholds',
+  nameRequired: 'Name the memory: its name becomes the file name.',
+  nameTaken: 'A memory already goes by that name.',
+  unnamed: 'unnamed',
+  targetNotFound: "I can't find the target {target}.",
+  indexUpdated: 'MEMORY.md index updated.',
+  deleted: 'Memory deleted.',
+  deletedNote: 'I kept a backup of it.',
+  readError: "I couldn't read your memories",
+  openError: "I couldn't open this file",
+  deleteError: "I couldn't delete this memory",
+  bodyPlaceholder:
+    'The fact, plainly. Link neighbouring memories with [[their-name]]. Dates in absolute form.',
+};
+
+export default memory;

@@ -1,0 +1,7 @@
+{
+  "agentId": "async2",
+  "agentType": "code-reviewer",
+  "toolUseId": "toolu_a3",
+  "description": "Revue B",
+  "spawnDepth": 1
+}

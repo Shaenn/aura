@@ -1,0 +1,7 @@
+{
+  "agentId": "q1",
+  "agentType": "Explore",
+  "toolUseId": "toolu_q1",
+  "description": "Cartographier les textes",
+  "spawnDepth": 1
+}

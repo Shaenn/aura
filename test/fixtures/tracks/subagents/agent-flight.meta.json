@@ -1,0 +1,7 @@
+{
+  "agentId": "flight",
+  "agentType": "Plan",
+  "toolUseId": "toolu_a4",
+  "description": "Concevoir la suite",
+  "spawnDepth": 1
+}

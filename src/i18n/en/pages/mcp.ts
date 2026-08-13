@@ -1,0 +1,41 @@
+import type { MessageSchema } from '../../fr';
+
+const mcp: MessageSchema['pages']['mcp'] = {
+  connected: 'Connected · claude.ai',
+  connectedNote: 'Managed in your claude.ai account — not editable here.',
+  noConnected: "I don't see any connected server.",
+  fileTitle: 'Configured · file',
+  fileNote:
+    'Servers declared in {path}. {global} servers are editable here; those tied to a project stay read-only.',
+  fileNoteGlobal: 'Global',
+  noFileServer: "I don't see any server declared in the file.",
+  editAria: 'Edit {name}',
+  deleteAria: 'Delete {name}',
+  settingsTitle: 'MCP settings',
+  settingsNote: 'Edits {path} — applied through preview and confirmation.',
+  projectServers: 'Project MCP servers',
+  autoApprove: 'Auto-approved',
+  toConfirm: 'To confirm',
+  approvedList: 'Approved .mcp.json servers',
+  disabledList: 'Disabled .mcp.json servers',
+  serverNamePlaceholder: 'server name',
+  addServer: 'Add a server',
+  editServer: 'Edit a server',
+  name: 'Name',
+  namePlaceholder: 'e.g. my-server',
+  nameRequired: 'Name required',
+  transport: 'Transport',
+  command: 'Command',
+  commandPlaceholder: 'e.g. npx',
+  commandRequired: 'Command required',
+  args: 'Arguments (one per line)',
+  urlPlaceholder: 'https://example.com/mcp',
+  urlRequired: 'URL required',
+  preview: 'Preview…',
+  prepareError: "I couldn't prepare this server change",
+  noPending: 'I have no pending change.',
+  readError: "I couldn't read your MCP settings",
+  reloadError: "I couldn't reload the MCP servers",
+};
+
+export default mcp;

@@ -1,0 +1,25 @@
+export default {
+  title: 'Plugins & Marketplaces',
+  marketplaces: 'Marketplaces',
+  badges: { pending: 'en attente', added: 'ajoutée', builtin: 'système' },
+  removeMarketplaceAria: 'Supprimer la marketplace {name}',
+  sourcePlaceholder: 'owner/repo · https://…/repo.git · ./chemin-local',
+  sourceAria: 'Source de la marketplace',
+  sourceRequired: 'Source requise',
+  getCommand: 'Obtenir la commande',
+  marketplaceHint:
+    "L'ajout et la suppression de marketplaces se font via Claude Code (fichiers gérés par la CLI). Je vous donne la commande exacte à exécuter.",
+  installed: 'Plugins installés',
+  empty: 'Je ne vois aucun plugin installé.',
+  stateAria: 'État de {id}',
+  uninstallAria: 'Désinstaller {id}',
+  removeFromConfig: 'Retirer aussi de la config',
+  uninstallTitle: 'Désinstaller le plugin',
+  uninstallNote: 'La désinstallation retire le plugin et nettoie son cache — géré par Claude Code.',
+  addTitle: 'Ajouter une marketplace',
+  addNote: 'Claude Code clonera/copiera la marketplace puis la rendra disponible.',
+  removeTitle: 'Supprimer la marketplace',
+  removeNote:
+    'Cette commande désinstalle aussi les plugins de la marketplace et supprime son clone local.',
+  readError: "Je n'ai pas pu lire vos réglages de plugins",
+};

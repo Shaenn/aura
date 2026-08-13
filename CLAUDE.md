@@ -1,0 +1,59 @@
+# CLAUDE.md
+
+## Identité
+
+L'application s'appelle **AURA** — _Assistant Unifié des Ressources Agentiques_. Une seule
+forme écrite, en capitales, partout : jamais « Aura », jamais « aura ».
+
+Tout texte visible par l'utilisateur suit la charte de voix : @docs/voix.md
+
+## Architecture
+
+```
+Navigateur (SPA Quasar)  ──/api/*──►  BFF Fastify (server/)  ──►  ~/.claude
+        :9100 (dev)                        :8800                  (lecture / écriture gardée)
+```
+
+AURA est un outil **local, mono-utilisateur** : aucun service externe, aucun secret, aucune
+authentification. Le front n'appelle que `/api/*` en même origine — pas de CORS.
+
+- `src/` — SPA Vue 3 / Quasar. Voir `src/CLAUDE.md`.
+- `server/` — BFF Fastify. Voir `server/CLAUDE.md`.
+- `shared/` — types de _wire_ (`transcript.ts`, `context.ts`, `agent.ts`, `projects.ts`,
+  `processes.ts`)
+  importés tels quels des deux côtés. Renommer un champ ici casse les deux typechecks
+  d'un coup : c'est voulu, c'est ce qui empêche la dérive. Toute forme échangée entre le
+  BFF et la SPA vit ici, jamais dupliquée.
+
+## Commandes
+
+```bash
+pnpm dev:all     # front :9100 + BFF :8800 (proxy /api → :8800)
+pnpm test        # vitest, environnement node, test/**/*.test.ts
+pnpm typecheck   # tsc sur server/ et test/ — ne couvre PAS src/
+pnpm lint
+pnpm format
+```
+
+`src/` est typé par `vue-tsc` via `vite-plugin-checker`, donc uniquement pendant
+`pnpm dev` ou `pnpm build`. Une modification du front qui casse les types ne sera **pas**
+vue par `pnpm typecheck`.
+
+`server/` et `test/` ont leur propre `tsconfig.json` (Node, pas de `lib: dom`) ; la racine
+les exclut. `exactOptionalPropertyTypes` est actif côté `src/`, inactif côté `server/`.
+
+## Conventions transverses
+
+- **Toute écriture dans `~/.claude` suit le contrat propose → apply**, jamais un write
+  direct : le BFF renvoie un diff, l'utilisateur confirme, l'écriture se fait avec backup
+  et vérification que le disque n'a pas bougé entre-temps. Détail dans `server/CLAUDE.md`.
+- Les fichiers de `frontend-rules/` décrivent ce que le code du projet fait déjà : ce sont des
+  règles, pas du code applicatif. Ne pas les modifier pour faire passer du code — si une règle
+  et le code divergent, aller voir lequel des deux est en tort.
+- Le code existant non conforme aux règles ne se refactore pas sans demander : le signaler
+  et laisser décider.
+- Les commentaires expliquent _pourquoi_, pas _quoi_. Le code du dépôt suit cette forme —
+  s'y conformer plutôt que d'annoter chaque ligne.
+
+`CONTRIBUTING.md` détaille la structure fichier par fichier ; `README.md` couvre
+l'installation et l'usage.

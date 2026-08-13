@@ -1,0 +1,45 @@
+import type { MessageSchema } from '../../fr';
+
+const project: MessageSchema['pages']['project'] = {
+  title: 'Project {name}',
+  readOnlyBanner: '{dir} is read-only',
+  statsAria: 'Project indicators',
+  stats: {
+    resources: '.claude resources',
+    sessions: 'Sessions',
+    hooks: 'Hooks',
+    claudeSize: '.claude size',
+  },
+  splitAria: 'Project resources and plans',
+  navAria: 'List of resources and plans',
+  navTitle: 'Project resources',
+  viewerAria: 'Resource preview',
+  noDescription: 'No description in the frontmatter.',
+  placeholder: 'Pick a resource or a plan to show it here.',
+  deletePlanTitle: 'Delete this plan?',
+  sessions: 'Sessions',
+  noSession: "I haven't recorded any session for this project.",
+  filterPlaceholder: 'Filter the sessions…',
+  filterAria: 'Filter the sessions',
+  costTooltip: 'API list price, not what the subscription billed',
+  customTitle: 'Title set by hand',
+  hasSidechain: 'Contains sub-agents',
+  untitled: 'Untitled session — opening message shown',
+  columns: {
+    session: 'Session',
+    userTurns: 'Turns',
+    tokens: 'Tokens',
+    cost: 'Cost',
+    duration: 'Duration',
+    gitBranch: 'Branch',
+    size: 'Size',
+    mtime: 'Modified',
+  },
+  year: 'the year {year}',
+  readError: "I couldn't read this file.",
+  planDeleted: 'Plan deleted.',
+  planDeleteError: "I couldn't delete this plan",
+  loadError: "I couldn't load this project.",
+};
+
+export default project;
