@@ -1,0 +1,42 @@
+# Ce que Dependabot surveille, et à quel rythme.
+#
+# Un projet tenu par une personne se noie vite sous les demandes de mise à jour :
+# une par dépendance et par semaine, et plus personne ne les lit. Le groupement
+# ci-dessous vise l'inverse — peu de demandes, chacune relisible.
+#
+# La règle est celle du risque, pas celle du calendrier. Les versions mineures et
+# correctives arrivent groupées, parce qu'elles se relisent ensemble et que la CI
+# suffit à les juger. Les versions majeures arrivent seules, parce qu'elles
+# cassent, et qu'on veut savoir laquelle.
+
+version: 2
+
+updates:
+  # Les dépendances du projet. `npm` couvre aussi pnpm : c'est le fichier de
+  # verrou qui décide, pas le nom de l'écosystème.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # Un lot par semaine pour tout ce qui ne change pas d'interface.
+      mineures:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      # Le SDK d'agent bouge vite et sa surface est celle sur laquelle l'Atelier
+      # est écrit. Ses majeures se prennent à la main, en lisant ce qui change.
+      - dependency-name: '@anthropic-ai/claude-agent-sdk'
+        update-types: [version-update:semver-major]
+
+  # Les actions de la CI. Elles se sont fait oublier une fois — trois versions
+  # majeures de retard, et un runtime que GitHub avait annoncé mort.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']
