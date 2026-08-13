@@ -10,7 +10,7 @@ system.
 
 ## Requirements
 
-- **Node.js** ≥ 22.12 installed on the machine.
+- **Node.js** ≥ 22.22 installed on the machine.
 - **pnpm** ≥ 10 (`npm i -g pnpm`).
 - **Claude Code** installed and run at least once, with an existing **`~/.claude`** folder
   (on Windows: `C:\Users\<you>\.claude`). That folder is what AURA reads and changes.

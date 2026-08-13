@@ -10,7 +10,7 @@ supposent ce système.
 
 ## Pré-requis
 
-- **Node.js** ≥ 22.12 installé sur le poste.
+- **Node.js** ≥ 22.22 installé sur le poste.
 - **pnpm** ≥ 10 (`npm i -g pnpm`).
 - **Claude Code** installé et lancé au moins une fois, avec un dossier **`~/.claude`** existant
   (sous Windows : `C:\Users\<vous>\.claude`). C'est ce dossier qu'AURA lit et modifie.
