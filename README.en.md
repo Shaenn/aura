@@ -15,6 +15,8 @@ _The control desk for your Claude Code environment._
 [![Platforms](https://img.shields.io/badge/Windows-5a5a5a)](#requirements)
 [![Stack](https://img.shields.io/badge/Vue%203%20%C2%B7%20Quasar%20%C2%B7%20Fastify-5a5a5a)](#architecture)
 
+**[The site and the manual online](https://shaenn.github.io/aura/en/)**
+
 **English** · [Français](README.md)
 
 </div>
@@ -219,7 +221,7 @@ thread. → [watch the video](docs/videos/2-agent-explore.webm)
 → [watch the video](docs/videos/3-question.webm)
 
 The detail — bounds, background work, resuming a session — is in
-[the manual page](src/help/sections/en/atelier.md).
+[the manual page](https://shaenn.github.io/aura/en/guide/atelier).
 
 ---
 
@@ -230,15 +232,15 @@ each screen is built the way it is** — why a permission that expires is denied
 why the diagnostic thresholds are percentiles, why sub-agents get their own track. The `?` key
 opens the page matching the current screen.
 
-The sources are readable here, without installing anything:
+It reads online, without installing anything:
 
-[Concepts](src/help/sections/en/concepts.md) · [Session replay](src/help/sections/en/replay.md) ·
-[Workshop](src/help/sections/en/atelier.md) · [Active sessions](src/help/sections/en/sessions.md) ·
-[Diagnostic](src/help/sections/en/diagnostic.md) · [Usage & costs](src/help/sections/en/usage.md) ·
-[all the pages](src/help/sections/en/)
+[Concepts](https://shaenn.github.io/aura/en/guide/concepts) · [Session replay](https://shaenn.github.io/aura/en/guide/replay) ·
+[Workshop](https://shaenn.github.io/aura/en/guide/atelier) · [Active sessions](https://shaenn.github.io/aura/en/guide/sessions) ·
+[Diagnostic](https://shaenn.github.io/aura/en/guide/diagnostic) · [Usage & costs](https://shaenn.github.io/aura/en/guide/usage) ·
+[all the pages](https://shaenn.github.io/aura/en/guide/concepts)
 
 If you are wondering whether the project is serious,
-[Concepts](src/help/sections/en/concepts.md) is the page to read: it takes five minutes and says
+[Concepts](https://shaenn.github.io/aura/en/guide/concepts) is the page to read: it takes five minutes and says
 exactly what AURA allows itself to write, to read, and to refuse.
 
 ---
