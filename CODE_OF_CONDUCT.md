@@ -1,5 +1,7 @@
 # Code de conduite
 
+**Français** · [English](CODE_OF_CONDUCT.en.md)
+
 ## L'engagement
 
 Ce projet est ouvert à toute personne qui veut l'utiliser, le signaler ou l'améliorer, sans

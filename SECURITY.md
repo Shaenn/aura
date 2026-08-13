@@ -1,5 +1,7 @@
 # Sécurité
 
+**Français** · [English](SECURITY.en.md)
+
 AURA lit et écrit dans `~/.claude`, le dossier où Claude Code range vos transcripts, vos
 réglages et vos identifiants. C'est un périmètre sensible, et ce document dit ce que
 l'application garantit, ce qu'elle ne garantit pas, et comment signaler un défaut.

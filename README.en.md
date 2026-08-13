@@ -283,6 +283,9 @@ leave the managed folder, whatever the number of `..`.
 The only process that talks to the outside is the Workshop agent, when you tell it to — and it
 uses the authentication of your Claude Code installation, not ours.
 
+[SECURITY.en.md](SECURITY.en.md) details the server's guards, what they do not cover, and how to
+report a flaw.
+
 ---
 
 ## Requirements

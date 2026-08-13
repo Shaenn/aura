@@ -6,8 +6,9 @@ Technical guide for working on the application. For installing and using it, see
 [README](README.en.md).
 
 By proposing a contribution, you agree to it being published under the project's
-[MIT licence](LICENSE). The [code of conduct](CODE_OF_CONDUCT.md) applies to issues as much as
-to reviews, and [SECURITY.md](SECURITY.md) says how to report a flaw without exposing it.
+[MIT licence](LICENSE). The [code of conduct](CODE_OF_CONDUCT.en.md) applies to issues as much
+as to reviews, and [SECURITY.en.md](SECURITY.en.md) says how to report a flaw without exposing
+it.
 
 ## Stack
 
@@ -41,7 +42,7 @@ So the front only ever calls `/api/...` — same origin, no CORS, no secret on t
 AURA is a **local, single-user** tool: no authentication, no external service. The BFF listens on
 `127.0.0.1` only, with no variable to open it up. What that does not close — the browser, after
 all, is on the machine — is handled by `server/guard.ts`: `Host` checked against DNS rebinding,
-`Sec-Fetch-Site` required on every write. See [SECURITY.md](SECURITY.md).
+`Sec-Fetch-Site` required on every write. See [SECURITY.en.md](SECURITY.en.md).
 
 ## Layout
 

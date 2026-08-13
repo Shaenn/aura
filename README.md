@@ -310,6 +310,9 @@ vérifié : il ne peut pas sortir du dossier géré, quel que soit le nombre de 
 Le seul processus qui parle à l'extérieur est l'agent de l'Atelier, quand vous lui en donnez
 l'ordre — et il utilise l'authentification de votre installation Claude Code, pas la nôtre.
 
+[SECURITY.md](SECURITY.md) détaille les gardes du serveur, ce qu'elles ne couvrent pas, et
+comment signaler une faille.
+
 ---
 
 ## Prérequis
