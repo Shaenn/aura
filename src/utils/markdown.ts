@@ -19,7 +19,10 @@
 // navigateur. DOMPurify retire scripts, gestionnaires d'événements et sources
 // exotiques ; ce qui reste ne peut que s'afficher.
 
-import MarkdownIt from 'markdown-it';
+// markdown-it 15 embarque ses déclarations et n'exporte plus la classe par
+// défaut : le défaut est une valeur appelable, et le type de l'instance est un
+// export nommé. D'où l'alias — sans lui, `MarkdownIt` ne désigne qu'une valeur.
+import MarkdownIt, { type MarkdownIt as MarkdownItInstance } from 'markdown-it';
 import DOMPurify, { type Config } from 'dompurify';
 import hljs from 'highlight.js/lib/common';
 import powershell from 'highlight.js/lib/languages/powershell';
@@ -33,8 +36,8 @@ hljs.registerLanguage('powershell', powershell);
 const isExternalHref = (href: string): boolean =>
   href.startsWith('//') || /^[a-z][a-z0-9+.-]*:/i.test(href);
 
-function createRenderer(allowHtml: boolean): MarkdownIt {
-  const m: MarkdownIt = new MarkdownIt({
+function createRenderer(allowHtml: boolean): MarkdownItInstance {
+  const m: MarkdownItInstance = new MarkdownIt({
     html: allowHtml,
     linkify: true,
     breaks: false,
@@ -78,7 +81,10 @@ function createRenderer(allowHtml: boolean): MarkdownIt {
     m.renderer.rules.link_open ??
     ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
   m.renderer.rules.link_open = (tokens, idx, options, env, self) => {
-    if (isExternalHref(tokens[idx]?.attrGet('href') ?? '')) {
+    // `attrGet` rend `string | number | null` depuis la 15 : un attribut peut
+    // porter un nombre (`width`, `colspan`). Un href n'en est jamais un, mais
+    // le type l'admet — on ramène au texte plutôt que d'affirmer le contraire.
+    if (isExternalHref(String(tokens[idx]?.attrGet('href') ?? ''))) {
       tokens[idx]?.attrSet('target', '_blank');
       tokens[idx]?.attrSet('rel', 'noopener noreferrer');
     }
