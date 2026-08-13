@@ -8,6 +8,10 @@
 # correctives arrivent groupées, parce qu'elles se relisent ensemble et que la CI
 # suffit à les juger. Les versions majeures arrivent seules, parce qu'elles
 # cassent, et qu'on veut savoir laquelle.
+#
+# Le numéro dit le risque tant que la dépendance a dépassé son premier zéro. En
+# dessous, il ne dit plus rien, et c'est le cas de celle dont ce projet dépend le
+# plus — voir la note du groupe.
 
 version: 2
 
@@ -24,11 +28,16 @@ updates:
       # Un lot par semaine pour tout ce qui ne change pas d'interface.
       #
       # Le SDK d'agent en est tenu à l'écart, et la raison tient à son numéro de
-      # version. Il vit en `0.3.x` : sous le premier zéro, semver ne promet rien,
-      # et c'est le **mineur** qui porte les ruptures — `0.3.229` → `0.4.0`.
-      # Ignorer ses majeures n'aurait donc protégé de rien, puisqu'il n'en publie
-      # pas ; le risque serait arrivé noyé dans le lot, là où on ne le lit pas.
-      # Hors du groupe, il arrive seul, et sa demande se voit.
+      # version. Il vit en `0.3.x` : sous le premier zéro, semver ne promet
+      # **rien**. Le mineur y porte les ruptures franches — `0.3.229` → `0.4.0` —
+      # mais le correctif n'est pas un refuge pour autant : entre deux `0.3.x`,
+      # une forme de message peut se déplacer sans que le numéro le dise.
+      #
+      # Ignorer ses majeures n'aurait donc rien protégé, puisqu'il n'en publie
+      # pas. Hors du groupe, il arrive seul à chaque version — correctifs
+      # compris. C'est plus de demandes que pour les autres, et c'est voulu :
+      # c'est la seule dépendance dont la surface est celle sur laquelle
+      # l'Atelier est écrit, et la seule qu'on relit avant de prendre.
       mineures:
         patterns: ['*']
         exclude-patterns: ['@anthropic-ai/claude-agent-sdk']
