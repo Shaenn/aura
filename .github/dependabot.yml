@@ -32,6 +32,20 @@ updates:
     # quatre majeures d'un coup — typescript, app-vite, pinia, @types/node. Ce
     # rattrapage ne se reproduira pas ; ce chiffre est fait pour redescendre.
     open-pull-requests-limit: 6
+
+    # `@types/node` ne décrit pas une bibliothèque : il décrit la surface d'API
+    # d'une version majeure de Node. Sa majeure doit donc suivre le runtime, et
+    # rien d'autre — le projet tourne en 24, ses types restent en 24.
+    #
+    # Prendre plus haut ne casse rien à l'installation, ce qui est justement le
+    # piège : TypeScript accepterait des API absentes de Node 24, le typecheck
+    # passerait, et l'échec n'arriverait qu'à l'exécution. Cette montée-là se
+    # décide en changeant `engines`, la CI et la documentation d'un même geste,
+    # pas en fusionnant une demande.
+    ignore:
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+
     groups:
       # Un lot par semaine pour tout ce qui ne change pas d'interface.
       #
