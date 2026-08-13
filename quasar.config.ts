@@ -34,7 +34,7 @@ export default defineConfig((/* ctx */) => {
     build: {
       target: {
         browser: 'baseline-widely-available',
-        node: 'node22',
+        node: 'node24',
       },
 
       typescript: {
