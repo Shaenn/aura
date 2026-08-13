@@ -48,8 +48,8 @@ importers:
         specifier: ^3.0.1
         version: 3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3))
       quasar:
-        specifier: ^2.16.0
-        version: 2.21.1
+        specifier: ^2.22.0
+        version: 2.22.0
       vue:
         specifier: ^3.5.22
         version: 3.5.39(typescript@5.9.3)
@@ -68,7 +68,7 @@ importers:
         version: 9.39.4
       '@quasar/app-vite':
         specifier: ^2.5.1
-        version: 2.6.2(@quasar/extras@1.18.0)(@types/node@22.20.0)(eslint@9.39.4(supports-color@10.2.2))(pinia@3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(quasar@2.21.1)(rolldown@1.1.4)(sass@1.100.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.23.0)(typescript@5.9.3)(vue-router@5.1.0(@vue/compiler-sfc@3.5.39)(esbuild@0.27.7)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(rolldown@1.1.4)(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))(yaml@2.9.0)
+        version: 2.6.2(@quasar/extras@1.18.0)(@types/node@22.20.0)(eslint@9.39.4(supports-color@10.2.2))(pinia@3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(quasar@2.22.0)(rolldown@1.1.4)(sass@1.100.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.23.0)(typescript@5.9.3)(vue-router@5.1.0(@vue/compiler-sfc@3.5.39)(esbuild@0.27.7)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(rolldown@1.1.4)(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))(yaml@2.9.0)
       '@types/markdown-it':
         specifier: ^14.1.2
         version: 14.1.2
@@ -3325,8 +3325,8 @@ packages:
   quansync@0.2.11:
     resolution: {integrity: sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA==}
 
-  quasar@2.21.1:
-    resolution: {integrity: sha512-fB+i8BzKjfU5dbQK8lv+bGthZ4SAYQiRWi0HDrFQSYvQoV5437o45dnCQpQBcwO/tnaKAFzglsahbXxOc43mww==}
+  quasar@2.22.0:
+    resolution: {integrity: sha512-0WAJ0ZnNMWK7QNFnpOVLyUDeEZ6cexkO+f7GjOEEIITIynH2xkfuryWO97Pa/G/+eQJc0ZwX9GohEXXwYTIBew==}
     engines: {node: '>= 10.18.1', npm: '>= 6.13.4', yarn: '>= 1.21.1'}
 
   queue-microtask@1.2.3:
@@ -5004,11 +5004,11 @@ snapshots:
 
   '@pkgr/core@0.3.6': {}
 
-  '@quasar/app-vite@2.6.2(@quasar/extras@1.18.0)(@types/node@22.20.0)(eslint@9.39.4(supports-color@10.2.2))(pinia@3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(quasar@2.21.1)(rolldown@1.1.4)(sass@1.100.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.23.0)(typescript@5.9.3)(vue-router@5.1.0(@vue/compiler-sfc@3.5.39)(esbuild@0.27.7)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(rolldown@1.1.4)(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))(yaml@2.9.0)':
+  '@quasar/app-vite@2.6.2(@quasar/extras@1.18.0)(@types/node@22.20.0)(eslint@9.39.4(supports-color@10.2.2))(pinia@3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(quasar@2.22.0)(rolldown@1.1.4)(sass@1.100.0)(supports-color@10.2.2)(terser@5.48.0)(tsx@4.23.0)(typescript@5.9.3)(vue-router@5.1.0(@vue/compiler-sfc@3.5.39)(esbuild@0.27.7)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(rolldown@1.1.4)(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))(yaml@2.9.0)':
     dependencies:
       '@quasar/render-ssr-error': 1.0.4
       '@quasar/ssl-certificate': 2.0.0
-      '@quasar/vite-plugin': 1.12.0(@vitejs/plugin-vue@6.0.7(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3)))(quasar@2.21.1)(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3))
+      '@quasar/vite-plugin': 1.12.0(@vitejs/plugin-vue@6.0.7(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3)))(quasar@2.22.0)(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3))
       '@types/chrome': 0.1.43
       '@types/compression': 1.8.1
       '@types/cordova': 11.0.3
@@ -5035,7 +5035,7 @@ snapshots:
       minimist: 1.2.8
       mlly: 1.8.2
       open: 11.0.0
-      quasar: 2.21.1
+      quasar: 2.22.0
       rollup-plugin-visualizer: 7.0.1(rolldown@1.1.4)
       sass-embedded: 1.100.0
       semver: 7.8.5
@@ -5080,10 +5080,10 @@ snapshots:
       fs-extra: 11.3.6
       selfsigned: 5.5.0
 
-  '@quasar/vite-plugin@1.12.0(@vitejs/plugin-vue@6.0.7(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3)))(quasar@2.21.1)(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3))':
+  '@quasar/vite-plugin@1.12.0(@vitejs/plugin-vue@6.0.7(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3)))(quasar@2.22.0)(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3))':
     dependencies:
       '@vitejs/plugin-vue': 6.0.7(vite@8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3))
-      quasar: 2.21.1
+      quasar: 2.22.0
       vite: 8.1.3(@types/node@22.20.0)(esbuild@0.27.7)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(tsx@4.23.0)(yaml@2.9.0)
       vue: 3.5.39(typescript@5.9.3)
 
@@ -7460,7 +7460,7 @@ snapshots:
 
   quansync@0.2.11: {}
 
-  quasar@2.21.1: {}
+  quasar@2.22.0: {}
 
   queue-microtask@1.2.3: {}
 
