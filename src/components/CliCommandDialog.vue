@@ -39,7 +39,7 @@
 // install/uninstall, marketplace add/remove) — Claude Code manages ~/.claude/plugins.
 import { copyToClipboard } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { useNotify } from 'src/composables/useNotify';
+import { useNotify } from '@/composables/useNotify';
 
 const props = defineProps<{ command: string | null; title?: string; note?: string }>();
 const emit = defineEmits<{ close: [] }>();

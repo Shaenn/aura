@@ -66,13 +66,13 @@
 <script setup lang="ts">
 import { computed, ref, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { readMemory, readResource, type ResourceNode } from 'src/services/projects';
-import { readPlan } from 'src/services/system';
-import { parseDoc, type KeySpec } from 'src/utils/resourceFrontmatter';
+import { readMemory, readResource, type ResourceNode } from '@/services/projects';
+import { readPlan } from '@/services/system';
+import { parseDoc, type KeySpec } from '@/utils/resourceFrontmatter';
 import { CATEGORY_META, FM_KEYS, renderBody, type ResourceSource } from './projectResources';
 import FrontmatterCard from './FrontmatterCard.vue';
-import MarkdownView from 'components/replay/MarkdownView.vue';
-import CopyButton from 'components/ui/CopyButton.vue';
+import MarkdownView from '@/components/replay/MarkdownView.vue';
+import CopyButton from '@/components/ui/CopyButton.vue';
 
 const props = withDefaults(
   defineProps<{

@@ -22,8 +22,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { Block } from 'src/services/projects';
-import { agentColor } from 'src/utils/agentColors';
+import type { Block } from '@/services/projects';
+import { agentColor } from '@/utils/agentColors';
 import MarkdownView from './MarkdownView.vue';
 
 const { t } = useI18n();

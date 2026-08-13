@@ -138,7 +138,7 @@
 import { onMounted, ref, computed, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { useNotify } from 'src/composables/useNotify';
+import { useNotify } from '@/composables/useNotify';
 import {
   getProcesses,
   getStorage,
@@ -146,9 +146,9 @@ import {
   purgeArea,
   type ClaudeProcess,
   type Storage,
-} from 'src/services/system';
-import OrphanPlans from 'components/OrphanPlans.vue';
-import { fmtBytes, relTime } from 'src/utils/format';
+} from '@/services/system';
+import OrphanPlans from '@/components/OrphanPlans.vue';
+import { fmtBytes, relTime } from '@/utils/format';
 
 const { t } = useI18n();
 const $q = useQuasar();

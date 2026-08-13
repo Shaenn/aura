@@ -30,9 +30,9 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { AgentActivity, AgentPhase } from 'src/services/agent';
-import { fmtNum } from 'src/utils/format';
-import PulseDots from 'src/components/ui/PulseDots.vue';
+import type { AgentActivity, AgentPhase } from '@/services/agent';
+import { fmtNum } from '@/utils/format';
+import PulseDots from '@/components/ui/PulseDots.vue';
 
 const props = defineProps<{ activity: AgentActivity }>();
 

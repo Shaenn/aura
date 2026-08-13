@@ -33,11 +33,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { TranscriptEvent } from 'src/services/projects';
-import { fmtTime } from 'src/utils/format';
+import type { TranscriptEvent } from '@/services/projects';
+import { fmtTime } from '@/utils/format';
 import ImageStrip from './ImageStrip.vue';
 import MarkdownView from './MarkdownView.vue';
-import CopyButton from 'components/ui/CopyButton.vue';
+import CopyButton from '@/components/ui/CopyButton.vue';
 
 const { t } = useI18n();
 

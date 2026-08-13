@@ -23,8 +23,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { TranscriptEvent } from 'src/services/projects';
-import { fmtTime } from 'src/utils/format';
+import type { TranscriptEvent } from '@/services/projects';
+import { fmtTime } from '@/utils/format';
 
 const { t } = useI18n();
 

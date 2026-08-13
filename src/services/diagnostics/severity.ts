@@ -1,5 +1,5 @@
 import type { Severity } from './index';
-import { t } from 'src/i18n';
+import { t } from '@/i18n';
 
 // ── Gravité ──────────────────────────────────────────────────────────────────
 //

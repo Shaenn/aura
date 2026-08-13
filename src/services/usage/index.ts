@@ -1,4 +1,4 @@
-import { apiHeaders } from 'src/services/http';
+import { apiHeaders } from '@/services/http';
 
 // Client for the token-usage API (`/api/usage`).
 

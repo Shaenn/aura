@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Block } from 'src/services/projects';
+import type { Block } from '@/services/projects';
 import OutputPane from '../OutputPane.vue';
 
 import { useI18n } from 'vue-i18n';

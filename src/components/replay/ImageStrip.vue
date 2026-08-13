@@ -53,9 +53,9 @@
 // sans en alourdir le chargement de 2,6 Mo.
 import { computed, inject, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { TranscriptImage } from 'src/services/projects';
-import { transcriptImageUrl } from 'src/services/projects';
-import { fmtBytes, fmtNum } from 'src/utils/format';
+import type { TranscriptImage } from '@/services/projects';
+import { transcriptImageUrl } from '@/services/projects';
+import { fmtBytes, fmtNum } from '@/utils/format';
 import { TRANSCRIPT_SOURCE } from './transcriptSource';
 
 const { t } = useI18n();

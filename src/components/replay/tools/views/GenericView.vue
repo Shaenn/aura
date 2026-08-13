@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Block } from 'src/services/projects';
+import type { Block } from '@/services/projects';
 import KeyValueList from '../KeyValueList.vue';
 import OutputPane from '../OutputPane.vue';
 

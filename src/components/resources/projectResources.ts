@@ -7,8 +7,8 @@
 // hors de tout composant : c'est ce qui doit rester identique entre les deux, et
 // c'est aussi la seule partie qu'on peut éprouver sans monter de Vue.
 
-import type { FolderCandidate, ResourceCategory, ResourceNode } from 'src/services/projects';
-import { AGENT_KEYS, RULE_KEYS, SKILL_KEYS, type KeySpec } from 'src/utils/resourceFrontmatter';
+import type { FolderCandidate, ResourceCategory, ResourceNode } from '@/services/projects';
+import { AGENT_KEYS, RULE_KEYS, SKILL_KEYS, type KeySpec } from '@/utils/resourceFrontmatter';
 
 /**
  * D'où vient le fichier qu'on lit, et donc par quelle route il se lit.

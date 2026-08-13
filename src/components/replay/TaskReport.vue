@@ -35,9 +35,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { Block } from 'src/services/projects';
-import { useExpandable, syncDetails } from 'src/composables/useExpandAll';
-import { agentColor } from 'src/utils/agentColors';
+import type { Block } from '@/services/projects';
+import { useExpandable, syncDetails } from '@/composables/useExpandAll';
+import { agentColor } from '@/utils/agentColors';
 import MarkdownView from './MarkdownView.vue';
 
 const { t } = useI18n();

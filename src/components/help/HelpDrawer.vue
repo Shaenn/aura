@@ -59,9 +59,9 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, type RouteLocationRaw } from 'vue-router';
-import MarkdownView from 'src/components/replay/MarkdownView.vue';
-import { findSection, sectionForRoute } from 'src/help';
-import { useHelp, closeHelp, unpinHelp } from 'src/composables/useHelp';
+import MarkdownView from '@/components/replay/MarkdownView.vue';
+import { findSection, sectionForRoute } from '@/help';
+import { useHelp, closeHelp, unpinHelp } from '@/composables/useHelp';
 
 const { t } = useI18n();
 const route = useRoute();

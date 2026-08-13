@@ -31,14 +31,14 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { Block } from 'src/services/projects';
+import type { Block } from '@/services/projects';
 import { asRecord, str } from '../values';
 import { langOf, langLabel, isMarkdown } from '../language';
 import CodeBlock from '../CodeBlock.vue';
 import KeyValueList from '../KeyValueList.vue';
 import OutputPane from '../OutputPane.vue';
-import MarkdownView from 'components/replay/MarkdownView.vue';
-import SegmentedControl from 'components/ui/SegmentedControl.vue';
+import MarkdownView from '@/components/replay/MarkdownView.vue';
+import SegmentedControl from '@/components/ui/SegmentedControl.vue';
 
 import { useI18n } from 'vue-i18n';
 

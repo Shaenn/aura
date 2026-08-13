@@ -13,7 +13,7 @@
 // Nothing here calls the BFF. It is a pure view over `ParsedTranscript.events`.
 
 import { computed, type ComputedRef, type MaybeRefOrGetter, toValue } from 'vue';
-import type { TranscriptEvent } from 'src/services/projects';
+import type { TranscriptEvent } from '@/services/projects';
 
 /**
  * Which sub-agent run a node belongs to. Both are absent on the main thread.

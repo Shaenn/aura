@@ -79,9 +79,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { SubagentRunSummary } from 'src/services/projects';
-import { agentColorOf } from 'src/utils/agentColors';
-import { MAIN_TRACK, trackTabId, type TrackId } from 'src/composables/useAgentTracks';
+import type { SubagentRunSummary } from '@/services/projects';
+import { agentColorOf } from '@/utils/agentColors';
+import { MAIN_TRACK, trackTabId, type TrackId } from '@/composables/useAgentTracks';
 
 const props = withDefaults(
   defineProps<{

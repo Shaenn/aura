@@ -175,12 +175,12 @@
 <script setup lang="ts">
 import { computed, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { Block, ContextCategory, TranscriptEvent } from 'src/services/projects';
-import type { AssistantTurn } from 'src/composables/useTranscriptTurns';
+import type { Block, ContextCategory, TranscriptEvent } from '@/services/projects';
+import type { AssistantTurn } from '@/composables/useTranscriptTurns';
 import type { CardContext, CardTurn, ContextRowModel } from './contextRows';
-import { useExpandable, provideScopedExpandAll } from 'src/composables/useExpandAll';
-import { useChartTokens, seriesColor } from 'src/composables/useChartTokens';
-import { fmtDuration, fmtInt, fmtNum, fmtTime } from 'src/utils/format';
+import { useExpandable, provideScopedExpandAll } from '@/composables/useExpandAll';
+import { useChartTokens, seriesColor } from '@/composables/useChartTokens';
+import { fmtDuration, fmtInt, fmtNum, fmtTime } from '@/utils/format';
 import MarkdownView from './MarkdownView.vue';
 import ImageStrip from './ImageStrip.vue';
 import ThinkingBlock from './ThinkingBlock.vue';

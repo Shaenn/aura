@@ -1,4 +1,4 @@
-import { defineBoot } from '#q-app/wrappers';
+import { defineBoot } from '#q-app';
 
 // UI font: Inter (weights used across the app).
 import '@fontsource/inter/400.css';

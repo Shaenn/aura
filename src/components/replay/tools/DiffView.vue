@@ -54,10 +54,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { diffLines, diffStat, type DiffOp } from 'src/utils/diff';
-import { highlightCode } from 'src/utils/markdown';
+import { diffLines, diffStat, type DiffOp } from '@/utils/diff';
+import { highlightCode } from '@/utils/markdown';
 import { basename, langOf, langLabel } from './language';
-import CopyButton from 'components/ui/CopyButton.vue';
+import CopyButton from '@/components/ui/CopyButton.vue';
 
 import { useI18n } from 'vue-i18n';
 

@@ -1,4 +1,4 @@
-import { apiHeaders } from 'src/services/http';
+import { apiHeaders } from '@/services/http';
 
 // Client for the server-side UI preferences (`/api/preferences`).
 //

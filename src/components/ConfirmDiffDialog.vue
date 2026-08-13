@@ -53,9 +53,9 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { useNotify } from 'src/composables/useNotify';
-import { apply, ClaudeApiError, type Proposal } from 'src/services/claude';
-import { diffLines, diffStat } from 'src/utils/diff';
+import { useNotify } from '@/composables/useNotify';
+import { apply, ClaudeApiError, type Proposal } from '@/services/claude';
+import { diffLines, diffStat } from '@/utils/diff';
 
 const props = defineProps<{
   proposal: Proposal | null;

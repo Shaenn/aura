@@ -1,4 +1,4 @@
-import { t, te } from 'src/i18n';
+import { t, te } from '@/i18n';
 
 // Read the tools fields of skills (`allowed-tools`) and agents (`tools`), and
 // explain each token. The value is a comma-separated list, but a token can carry

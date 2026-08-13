@@ -45,9 +45,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { HookRun } from 'src/services/projects';
-import { useExpandable, syncDetails } from 'src/composables/useExpandAll';
-import { fmtDuration } from 'src/utils/format';
+import type { HookRun } from '@/services/projects';
+import { useExpandable, syncDetails } from '@/composables/useExpandAll';
+import { fmtDuration } from '@/utils/format';
 
 const props = defineProps<{ run: HookRun }>();
 

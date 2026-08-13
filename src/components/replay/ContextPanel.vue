@@ -266,15 +266,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { onExpandAll } from 'src/composables/useExpandAll';
-import { useChartTokens, seriesColor } from 'src/composables/useChartTokens';
-import { fmtCost, fmtNum, fmtPercent } from 'src/utils/format';
+import { onExpandAll } from '@/composables/useExpandAll';
+import { useChartTokens, seriesColor } from '@/composables/useChartTokens';
+import { fmtCost, fmtNum, fmtPercent } from '@/utils/format';
 import ContextRow from './ContextRow.vue';
 import ContextTree from './ContextTree.vue';
 import ContextFillCurve from './ContextFillCurve.vue';
 import { toFlatRows, toRow, toTurnGroups, type ContextRowModel } from './contextRows';
 import { buildTree, hasFolders } from './contextTree';
-import type { ContextCategory, ContextInjection, SessionContext } from 'src/services/projects';
+import type { ContextCategory, ContextInjection, SessionContext } from '@/services/projects';
 
 const { t } = useI18n();
 

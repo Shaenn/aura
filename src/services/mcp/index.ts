@@ -7,8 +7,8 @@
 // claude.ai-connected servers stay read-only. Errors reuse ClaudeApiError so a
 // 409 conflict renders the same message as the standard claude flow.
 
-import { ClaudeApiError } from 'src/services/claude';
-import { apiHeaders, type HeaderMap } from 'src/services/http';
+import { ClaudeApiError } from '@/services/claude';
+import { apiHeaders, type HeaderMap } from '@/services/http';
 
 /** A single MCP server entry as stored in ~/.claude.json. */
 export interface McpServerConfig {

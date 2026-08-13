@@ -331,7 +331,7 @@ import { onMounted, ref, computed, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { useNotify } from 'src/composables/useNotify';
+import { useNotify } from '@/composables/useNotify';
 import {
   getProjectDetail,
   getProjectPlans,
@@ -342,22 +342,22 @@ import {
   type ResourceNode,
   type ResourceCategory,
   type TranscriptSummary,
-} from 'src/services/projects';
-import { readPlan, deletePlan, type PlanInfo } from 'src/services/system';
-import { fmtBytes, fmtCost, fmtDate, fmtDuration, fmtNum } from 'src/utils/format';
-import { setBreadcrumbs } from 'src/composables/useBreadcrumbs';
-import MarkdownView from 'components/replay/MarkdownView.vue';
-import FrontmatterCard from 'components/resources/FrontmatterCard.vue';
-import ProjectResourcesNav from 'components/resources/ProjectResourcesNav.vue';
-import IncludeFolderDialog from 'components/resources/IncludeFolderDialog.vue';
+} from '@/services/projects';
+import { readPlan, deletePlan, type PlanInfo } from '@/services/system';
+import { fmtBytes, fmtCost, fmtDate, fmtDuration, fmtNum } from '@/utils/format';
+import { setBreadcrumbs } from '@/composables/useBreadcrumbs';
+import MarkdownView from '@/components/replay/MarkdownView.vue';
+import FrontmatterCard from '@/components/resources/FrontmatterCard.vue';
+import ProjectResourcesNav from '@/components/resources/ProjectResourcesNav.vue';
+import IncludeFolderDialog from '@/components/resources/IncludeFolderDialog.vue';
 import {
   CATEGORY_META,
   FM_KEYS,
   renderBody,
   treeCount,
-} from 'components/resources/projectResources';
-import { parseDoc, type KeySpec } from 'src/utils/resourceFrontmatter';
-import { useSettingsStore } from 'stores/settings';
+} from '@/components/resources/projectResources';
+import { parseDoc, type KeySpec } from '@/utils/resourceFrontmatter';
+import { useSettingsStore } from '@/stores/settings';
 
 const props = defineProps<{ slug: string }>();
 const { t } = useI18n();

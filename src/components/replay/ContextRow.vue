@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { fmtNum } from 'src/utils/format';
+import { fmtNum } from '@/utils/format';
 import ContextRowBody from './ContextRowBody.vue';
 import type { ContextRowModel } from './contextRows';
 

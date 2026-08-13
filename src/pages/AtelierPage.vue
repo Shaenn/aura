@@ -638,34 +638,34 @@ import {
   watch,
 } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useNotify } from 'src/composables/useNotify';
+import { useNotify } from '@/composables/useNotify';
 import { useI18n } from 'vue-i18n';
-import TranscriptTimeline from 'components/replay/TranscriptTimeline.vue';
-import AgentTrackBar from 'components/replay/AgentTrackBar.vue';
-import ContextDrawer from 'components/replay/ContextDrawer.vue';
-import ContextPanel from 'components/replay/ContextPanel.vue';
-import TaskPanel from 'components/replay/TaskPanel.vue';
-import ShellPanel from 'components/replay/ShellPanel.vue';
-import { trackTasks, taskIndex, TASK_INDEX } from 'components/replay/taskList';
-import { diskCaughtUp, humanTurns, stitch } from 'components/replay/seam';
-import { indexRuns, AGENT_RUNS, OPEN_TRACK } from 'components/replay/agentRuns';
-import { TRANSCRIPT_SOURCE } from 'components/replay/transcriptSource';
-import { RUNNING_TOOLS } from 'components/replay/runningTools';
-import SegmentedControl from 'components/ui/SegmentedControl.vue';
-import ProjectResourcesPanel from 'components/resources/ProjectResourcesPanel.vue';
-import ResourceDialog from 'components/resources/ResourceDialog.vue';
-import type { ResourceSource } from 'components/resources/projectResources';
+import TranscriptTimeline from '@/components/replay/TranscriptTimeline.vue';
+import AgentTrackBar from '@/components/replay/AgentTrackBar.vue';
+import ContextDrawer from '@/components/replay/ContextDrawer.vue';
+import ContextPanel from '@/components/replay/ContextPanel.vue';
+import TaskPanel from '@/components/replay/TaskPanel.vue';
+import ShellPanel from '@/components/replay/ShellPanel.vue';
+import { trackTasks, taskIndex, TASK_INDEX } from '@/components/replay/taskList';
+import { diskCaughtUp, humanTurns, stitch } from '@/components/replay/seam';
+import { indexRuns, AGENT_RUNS, OPEN_TRACK } from '@/components/replay/agentRuns';
+import { TRANSCRIPT_SOURCE } from '@/components/replay/transcriptSource';
+import { RUNNING_TOOLS } from '@/components/replay/runningTools';
+import SegmentedControl from '@/components/ui/SegmentedControl.vue';
+import ProjectResourcesPanel from '@/components/resources/ProjectResourcesPanel.vue';
+import ResourceDialog from '@/components/resources/ResourceDialog.vue';
+import type { ResourceSource } from '@/components/resources/projectResources';
 import {
   eventsOfTrack,
   trackOfEvent,
   MAIN_TRACK,
   type TrackId,
-} from 'src/composables/useAgentTracks';
-import PermissionPrompt from 'components/agent/PermissionPrompt.vue';
-import AskPrompt, { type AskDraft } from 'components/agent/AskPrompt.vue';
-import SessionComposer from 'components/agent/SessionComposer.vue';
-import ActivityLine from 'components/agent/ActivityLine.vue';
-import { useLiveSession } from 'src/composables/useLiveSession';
+} from '@/composables/useAgentTracks';
+import PermissionPrompt from '@/components/agent/PermissionPrompt.vue';
+import AskPrompt, { type AskDraft } from '@/components/agent/AskPrompt.vue';
+import SessionComposer from '@/components/agent/SessionComposer.vue';
+import ActivityLine from '@/components/agent/ActivityLine.vue';
+import { useLiveSession } from '@/composables/useLiveSession';
 import {
   getProjects,
   getProjectSessions,
@@ -674,15 +674,15 @@ import {
   type ProjectSummary,
   type ResourceNode,
   type TranscriptSummary,
-} from 'src/services/projects';
-import { readFile as readClaudeFile } from 'src/services/claude';
-import { relTime } from 'src/utils/format';
+} from '@/services/projects';
+import { readFile as readClaudeFile } from '@/services/claude';
+import { relTime } from '@/utils/format';
 import type {
   AgentSession,
   AskRequest,
   PermissionAnswer,
   PromptAttachment,
-} from 'src/services/agent';
+} from '@/services/agent';
 import {
   answerAsk,
   answerPermission,
@@ -694,7 +694,7 @@ import {
   sendPrompt,
   setSessionPermissionMode,
   stopSession,
-} from 'src/services/agent';
+} from '@/services/agent';
 
 const { t } = useI18n();
 const { notifyError } = useNotify();

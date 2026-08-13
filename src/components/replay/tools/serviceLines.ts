@@ -17,7 +17,7 @@
 // ici : ce module sert les vues qui n'avaient rien.
 
 /** La poignée qu'un résultat porte pour qu'un autre puisse y renvoyer. */
-import { t } from 'src/i18n';
+import { t } from '@/i18n';
 
 export const RESULT_ID = /^\[result-id: [^\]]+\]$/;
 

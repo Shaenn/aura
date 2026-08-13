@@ -9,7 +9,7 @@
 // The views and their frequency, measured over 44 585 real tool calls:
 // Read 31.1% · Edit 23.3% · Bash 19.5% · Grep 8.6% · Glob 4.8% · Write 4.5%.
 
-import { t } from 'src/i18n';
+import { t } from '@/i18n';
 
 export type ToolView =
   | 'read'

@@ -81,9 +81,9 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import MarkdownView from 'src/components/replay/MarkdownView.vue';
-import { helpSections, searchSections } from 'src/help';
-import { closeHelp } from 'src/composables/useHelp';
+import MarkdownView from '@/components/replay/MarkdownView.vue';
+import { helpSections, searchSections } from '@/help';
+import { closeHelp } from '@/composables/useHelp';
 
 const { t } = useI18n();
 const route = useRoute();

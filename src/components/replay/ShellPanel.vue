@@ -58,7 +58,7 @@ import { computed, onUnmounted, ref, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ShellLine from './ShellLine.vue';
 import ShellOutputView, { type OutputState } from './ShellOutputView.vue';
-import { getShellOutput, type BackgroundShell } from 'src/services/agent';
+import { getShellOutput, type BackgroundShell } from '@/services/agent';
 
 const { t } = useI18n();
 

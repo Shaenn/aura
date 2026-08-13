@@ -142,14 +142,14 @@ import {
   type SessionDiagnostic,
   type SessionRank,
   type Severity,
-} from 'src/services/diagnostics';
+} from '@/services/diagnostics';
 import {
   severityIcon,
   severityColor,
   severityLabel,
   worstSeverity,
-} from 'src/services/diagnostics/severity';
-import { fmtMoney, fmtPercent } from 'src/utils/format';
+} from '@/services/diagnostics/severity';
+import { fmtMoney, fmtPercent } from '@/utils/format';
 
 const { t } = useI18n();
 

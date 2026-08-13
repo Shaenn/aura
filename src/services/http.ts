@@ -6,7 +6,7 @@
 // Oublier l'en-tête sur un service, c'est le voir répondre en français au milieu
 // d'une interface anglaise.
 
-import { currentLocale } from 'src/i18n';
+import { currentLocale } from '@/i18n';
 
 /**
  * Une table d'en-têtes, sans passer par `HeadersInit`.

@@ -18,7 +18,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { PlanModeMark } from 'src/services/projects';
+import type { PlanModeMark } from '@/services/projects';
 
 const props = defineProps<{ mark: PlanModeMark }>();
 

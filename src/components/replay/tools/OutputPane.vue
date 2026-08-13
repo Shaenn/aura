@@ -71,11 +71,11 @@
 
 <script setup lang="ts">
 import { ref, computed, inject, useId } from 'vue';
-import { useExpandable } from 'src/composables/useExpandAll';
-import { readToolResult } from 'src/services/projects';
-import { ansiToHtml, stripAnsi } from 'src/utils/ansi';
+import { useExpandable } from '@/composables/useExpandAll';
+import { readToolResult } from '@/services/projects';
+import { ansiToHtml, stripAnsi } from '@/utils/ansi';
 import { TRANSCRIPT_SOURCE } from '../transcriptSource';
-import CopyButton from 'components/ui/CopyButton.vue';
+import CopyButton from '@/components/ui/CopyButton.vue';
 
 import { useI18n } from 'vue-i18n';
 

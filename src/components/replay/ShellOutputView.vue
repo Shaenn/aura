@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { computed, nextTick, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { ansiToHtml } from 'src/utils/ansi';
+import { ansiToHtml } from '@/utils/ansi';
 
 /** Ce que le panneau a réussi à charger, et où il en est. */
 export interface OutputState {

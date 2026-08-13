@@ -65,13 +65,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Block } from 'src/services/projects';
+import type { Block } from '@/services/projects';
 import { arr, asRecord, str } from '../values';
 import { stripResultIds, userRefusal } from '../serviceLines';
 import KeyValueList from '../KeyValueList.vue';
 import OutputPane from '../OutputPane.vue';
 import DiffView from '../DiffView.vue';
-import MarkdownView from 'components/replay/MarkdownView.vue';
+import MarkdownView from '@/components/replay/MarkdownView.vue';
 
 import { useI18n } from 'vue-i18n';
 

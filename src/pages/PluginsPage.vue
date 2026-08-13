@@ -153,13 +153,13 @@
 import { onMounted, ref, computed } from 'vue';
 import { type QForm } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import SettingField from 'components/settings/SettingField.vue';
-import SegmentedControl from 'components/ui/SegmentedControl.vue';
-import ConfirmDiffDialog from 'components/ConfirmDiffDialog.vue';
-import CliCommandDialog from 'components/CliCommandDialog.vue';
-import { useJsonForm } from 'src/composables/useJsonForm';
-import { useNotify } from 'src/composables/useNotify';
-import { getAt, setAt, deleteAt } from 'src/utils/json-edit';
+import SettingField from '@/components/settings/SettingField.vue';
+import SegmentedControl from '@/components/ui/SegmentedControl.vue';
+import ConfirmDiffDialog from '@/components/ConfirmDiffDialog.vue';
+import CliCommandDialog from '@/components/CliCommandDialog.vue';
+import { useJsonForm } from '@/composables/useJsonForm';
+import { useNotify } from '@/composables/useNotify';
+import { getAt, setAt, deleteAt } from '@/utils/json-edit';
 import {
   readFile,
   getPlugins,
@@ -167,7 +167,7 @@ import {
   ClaudeApiError,
   type Proposal,
   type PluginsIndex,
-} from 'src/services/claude';
+} from '@/services/claude';
 
 const { t } = useI18n();
 const { notifyError } = useNotify();

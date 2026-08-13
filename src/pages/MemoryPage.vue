@@ -317,12 +317,12 @@
 <script setup lang="ts">
 import { onMounted, ref, reactive, computed, watch, useId } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useNotify } from 'src/composables/useNotify';
-import ConfirmDiffDialog from 'components/ConfirmDiffDialog.vue';
-import MarkdownView from 'components/replay/MarkdownView.vue';
-import SegmentedControl from 'components/ui/SegmentedControl.vue';
-import { useFrontmatterForm } from 'src/composables/useFrontmatterForm';
-import { slug, prettyProjectSlug } from 'src/utils/slug';
+import { useNotify } from '@/composables/useNotify';
+import ConfirmDiffDialog from '@/components/ConfirmDiffDialog.vue';
+import MarkdownView from '@/components/replay/MarkdownView.vue';
+import SegmentedControl from '@/components/ui/SegmentedControl.vue';
+import { useFrontmatterForm } from '@/composables/useFrontmatterForm';
+import { slug, prettyProjectSlug } from '@/utils/slug';
 import {
   getMemories,
   readFile,
@@ -332,7 +332,7 @@ import {
   ClaudeApiError,
   type MemoryProject,
   type Proposal,
-} from 'src/services/claude';
+} from '@/services/claude';
 
 const { t } = useI18n();
 

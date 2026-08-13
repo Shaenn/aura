@@ -74,8 +74,8 @@ import {
   getProjectResources,
   type ProjectResources,
   type ResourceNode,
-} from 'src/services/projects';
-import type { PlanInfo } from 'src/services/system';
+} from '@/services/projects';
+import type { PlanInfo } from '@/services/system';
 import { treeCount, type ResourceSource } from './projectResources';
 import ProjectResourcesNav from './ProjectResourcesNav.vue';
 

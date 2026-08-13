@@ -49,7 +49,7 @@
 // `aria-checked`, `tabindex`), et c'est elle que l'on habille.
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { AskQuestion } from 'src/services/agent';
+import type { AskQuestion } from '@/services/agent';
 
 const props = defineProps<{ question: AskQuestion; modelValue: string | string[] | undefined }>();
 const emit = defineEmits<{ 'update:modelValue': [string | string[]] }>();
