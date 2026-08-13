@@ -54,14 +54,14 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { ResourceNode } from 'src/services/projects';
-import { fmtBytes } from 'src/utils/format';
+import type { ResourceNode } from '@/services/projects';
+import { fmtBytes } from '@/utils/format';
 
 // Les nœuds sont déclarés avec `buildTree`, qui les produit : un module de
 // logique n'a pas à importer un composant pour nommer son résultat. On les
 // ré-exporte ici pour que les appelants historiques ne changent pas d'import.
-export type { RuleFileNode, RuleDirNode, RuleNode } from 'components/resources/projectResources';
-import type { RuleNode } from 'components/resources/projectResources';
+export type { RuleFileNode, RuleDirNode, RuleNode } from '@/components/resources/projectResources';
+import type { RuleNode } from '@/components/resources/projectResources';
 
 // `fileMeta` : le chiffre en bout de ligne. C'est une taille partout, sauf sur
 // les Sauvegardes où un fichier vaut par son nombre de versions.

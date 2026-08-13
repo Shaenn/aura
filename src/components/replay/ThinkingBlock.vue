@@ -14,7 +14,7 @@
 // hence a component rather than a `<details>` inside the turn's v-for, which
 // would have no per-block state to bind to.
 import { computed } from 'vue';
-import { useExpandable, syncDetails } from 'src/composables/useExpandAll';
+import { useExpandable, syncDetails } from '@/composables/useExpandAll';
 import MarkdownView from './MarkdownView.vue';
 
 import { useI18n } from 'vue-i18n';

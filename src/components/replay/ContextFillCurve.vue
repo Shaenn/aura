@@ -33,8 +33,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { fmtNum } from 'src/utils/format';
-import type { SessionContext } from 'src/services/projects';
+import { fmtNum } from '@/utils/format';
+import type { SessionContext } from '@/services/projects';
 
 import { useI18n } from 'vue-i18n';
 

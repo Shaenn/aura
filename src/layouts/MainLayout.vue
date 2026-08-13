@@ -132,13 +132,13 @@
 import { computed, onMounted, onUnmounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
-import { useSettingsStore } from 'src/stores/settings';
-import { useSystemStore } from 'src/stores/system';
-import { useBreadcrumbs, type Crumb } from 'src/composables/useBreadcrumbs';
-import { useHelp, toggleHelp, unpinHelp } from 'src/composables/useHelp';
-import { sectionForRoute } from 'src/help';
-import { routeTitle, documentTitle } from 'src/router/titles';
-import HelpDrawer from 'src/components/help/HelpDrawer.vue';
+import { useSettingsStore } from '@/stores/settings';
+import { useSystemStore } from '@/stores/system';
+import { useBreadcrumbs, type Crumb } from '@/composables/useBreadcrumbs';
+import { useHelp, toggleHelp, unpinHelp } from '@/composables/useHelp';
+import { sectionForRoute } from '@/help';
+import { routeTitle, documentTitle } from '@/router/titles';
+import HelpDrawer from '@/components/help/HelpDrawer.vue';
 
 const { t } = useI18n();
 const settings = useSettingsStore();

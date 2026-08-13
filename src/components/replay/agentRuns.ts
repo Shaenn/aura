@@ -11,7 +11,7 @@
 // de lui-même, ce qu'elle a toujours fait.
 
 import type { InjectionKey, Ref } from 'vue';
-import type { SubagentRunSummary, TranscriptEvent } from 'src/services/projects';
+import type { SubagentRunSummary, TranscriptEvent } from '@/services/projects';
 import { summarise } from './tools/registry';
 
 /** Un run, augmenté de ce que la carte montre en direct. */

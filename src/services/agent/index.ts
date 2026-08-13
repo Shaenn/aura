@@ -19,8 +19,8 @@ export type {
   PromptAttachment,
   ShellOutput,
   SlashCommandInfo,
-} from 'app/shared/agent';
-export { IDLE_ACTIVITY, PERMISSION_MODES } from 'app/shared/agent';
+} from 'shared/agent';
+export { IDLE_ACTIVITY, PERMISSION_MODES } from 'shared/agent';
 
 import type {
   AgentSession,
@@ -28,8 +28,8 @@ import type {
   PromptAttachment,
   ShellOutput,
   SlashCommandInfo,
-} from 'app/shared/agent';
-import { apiHeaders } from 'src/services/http';
+} from 'shared/agent';
+import { apiHeaders } from '@/services/http';
 
 async function send<T>(url: string, method: string, body?: unknown): Promise<T> {
   // `Content-Type` seulement quand il y a un corps : annoncer du JSON sans en

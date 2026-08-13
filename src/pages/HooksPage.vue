@@ -236,11 +236,11 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useNotify } from 'src/composables/useNotify';
-import ConfirmDiffDialog from 'components/ConfirmDiffDialog.vue';
-import SegmentedControl from 'components/ui/SegmentedControl.vue';
-import { useJsonForm } from 'src/composables/useJsonForm';
-import { getAt, setAt, deleteAt } from 'src/utils/json-edit';
+import { useNotify } from '@/composables/useNotify';
+import ConfirmDiffDialog from '@/components/ConfirmDiffDialog.vue';
+import SegmentedControl from '@/components/ui/SegmentedControl.vue';
+import { useJsonForm } from '@/composables/useJsonForm';
+import { getAt, setAt, deleteAt } from '@/utils/json-edit';
 import {
   readFile,
   propose as proposeWrite,
@@ -248,7 +248,7 @@ import {
   ClaudeApiError,
   type Proposal,
   type PluginHooks,
-} from 'src/services/claude';
+} from '@/services/claude';
 
 const { t } = useI18n();
 const { notifyError } = useNotify();

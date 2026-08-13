@@ -6,7 +6,7 @@
 // When the text isn't valid JSON, `valid` is false and controls should disable.
 
 import { computed, type Ref, type WritableComputedRef } from 'vue';
-import { getAt, setAt, deleteAt, type Path } from 'src/utils/json-edit';
+import { getAt, setAt, deleteAt, type Path } from '@/utils/json-edit';
 
 export function useJsonForm(content: Ref<string>) {
   const parsed = computed<Record<string, unknown> | null>(() => {

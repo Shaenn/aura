@@ -67,9 +67,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { TimelineNode } from 'src/composables/useTranscriptTurns';
+import type { TimelineNode } from '@/composables/useTranscriptTurns';
 import type { CardContext } from './contextRows';
-import { fmtTime } from 'src/utils/format';
+import { fmtTime } from '@/utils/format';
 import MarkdownView from './MarkdownView.vue';
 import UserBubble from './UserBubble.vue';
 import AssistantTurn from './AssistantTurn.vue';

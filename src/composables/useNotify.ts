@@ -10,7 +10,7 @@
 // l'appelant fournit la tentative, le détail vient de l'exception.
 
 import { useQuasar } from 'quasar';
-import { t } from 'src/i18n';
+import { t } from '@/i18n';
 
 function detail(e: unknown): string {
   if (e instanceof Error && e.message.trim()) return e.message;

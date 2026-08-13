@@ -108,8 +108,8 @@ import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import type { QTableColumn } from 'quasar';
-import { getProjects, type ProjectSummary } from 'src/services/projects';
-import { fmtBytes, relTime } from 'src/utils/format';
+import { getProjects, type ProjectSummary } from '@/services/projects';
+import { fmtBytes, relTime } from '@/utils/format';
 
 const { t } = useI18n();
 const router = useRouter();

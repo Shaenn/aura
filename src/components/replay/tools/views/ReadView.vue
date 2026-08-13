@@ -56,15 +56,15 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { Block } from 'src/services/projects';
-import { useExpandable, syncDetails } from 'src/composables/useExpandAll';
+import type { Block } from '@/services/projects';
+import { useExpandable, syncDetails } from '@/composables/useExpandAll';
 import { asRecord, num, str } from '../values';
 import { identicalTo, stripResultIds } from '../serviceLines';
 import { langOf, langLabel, isMarkdown } from '../language';
 import CodeBlock from '../CodeBlock.vue';
 import OutputPane from '../OutputPane.vue';
-import MarkdownView from 'components/replay/MarkdownView.vue';
-import SegmentedControl from 'components/ui/SegmentedControl.vue';
+import MarkdownView from '@/components/replay/MarkdownView.vue';
+import SegmentedControl from '@/components/ui/SegmentedControl.vue';
 
 import { useI18n } from 'vue-i18n';
 

@@ -158,9 +158,9 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { PromptAttachment, SlashCommandInfo } from 'src/services/agent';
-import { fmtBytes } from 'src/utils/format';
-import { treeRows } from 'src/utils/pathMatch';
+import type { PromptAttachment, SlashCommandInfo } from '@/services/agent';
+import { fmtBytes } from '@/utils/format';
+import { treeRows } from '@/utils/pathMatch';
 
 const props = defineProps<{
   working?: boolean;

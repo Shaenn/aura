@@ -8,7 +8,7 @@
 // agent ? » — sans rien déplacer dans le modèle : on ne fait que choisir, à
 // l'affichage, quelle part du flux on regarde.
 
-import type { TranscriptEvent } from 'app/shared/transcript';
+import type { TranscriptEvent } from 'shared/transcript';
 
 /** La piste affichée : `''` pour le fil principal, sinon l'`agentId` d'un run. */
 export type TrackId = string;

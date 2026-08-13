@@ -1,4 +1,4 @@
-import { apiHeaders, type HeaderMap } from 'src/services/http';
+import { apiHeaders, type HeaderMap } from '@/services/http';
 
 // Client for the safety-backups API (`/api/backups/*`). Restore itself reuses
 // the claude propose/apply flow (see BackupsPage), so it's not here.

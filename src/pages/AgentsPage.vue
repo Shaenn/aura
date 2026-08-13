@@ -22,10 +22,10 @@
 // The dot is keyed on the agent's name, which is what a transcript records as
 // `subagent_type` — so an agent wears the same colour here and in a replay.
 import { useI18n } from 'vue-i18n';
-import ResourceViewer from 'components/resources/ResourceViewer.vue';
-import { listAgents } from 'src/services/claude';
-import { agentColor } from 'src/utils/agentColors';
-import { AGENT_KEYS } from 'src/utils/resourceFrontmatter';
+import ResourceViewer from '@/components/resources/ResourceViewer.vue';
+import { listAgents } from '@/services/claude';
+import { agentColor } from '@/utils/agentColors';
+import { AGENT_KEYS } from '@/utils/resourceFrontmatter';
 
 const { t } = useI18n();
 </script>

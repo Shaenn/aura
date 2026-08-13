@@ -23,8 +23,8 @@
 // manuel reste complet pendant qu'on le traduit, et un trou se voit à la langue
 // de la page, pas à son absence.
 
-import { parseDoc, entryTokens, type FmEntry } from 'src/utils/resourceFrontmatter';
-import { currentLocale, DEFAULT_LOCALE, isLocale, type AppLocale } from 'src/i18n';
+import { parseDoc, entryTokens, type FmEntry } from '@/utils/resourceFrontmatter';
+import { currentLocale, DEFAULT_LOCALE, isLocale, type AppLocale } from '@/i18n';
 import type { HelpSection } from './types';
 
 const files = import.meta.glob<string>('./sections/*/*.md', {

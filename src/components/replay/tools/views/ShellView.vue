@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Block } from 'src/services/projects';
+import type { Block } from '@/services/projects';
 import { asRecord, bool, str } from '../values';
 import { basename } from '../language';
 import CodeBlock from '../CodeBlock.vue';

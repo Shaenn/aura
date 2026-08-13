@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { computed, inject } from 'vue';
-import type { Block } from 'src/services/projects';
+import type { Block } from '@/services/projects';
 import { readTaskCall, TASK_INDEX } from './taskList';
 
 const props = defineProps<{

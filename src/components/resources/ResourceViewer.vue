@@ -143,17 +143,17 @@
 // with this UI — which is why there is no form here.
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useNotify } from 'src/composables/useNotify';
-import MarkdownView from 'components/replay/MarkdownView.vue';
-import FrontmatterCard from 'components/resources/FrontmatterCard.vue';
-import { parseDoc, type KeySpec } from 'src/utils/resourceFrontmatter';
+import { useNotify } from '@/composables/useNotify';
+import MarkdownView from '@/components/replay/MarkdownView.vue';
+import FrontmatterCard from '@/components/resources/FrontmatterCard.vue';
+import { parseDoc, type KeySpec } from '@/utils/resourceFrontmatter';
 import {
   listDir,
   readFile,
   deleteResource,
   ClaudeApiError,
   type ResourceItem,
-} from 'src/services/claude';
+} from '@/services/claude';
 
 const props = defineProps<{
   title: string;

@@ -17,9 +17,9 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import ResourceViewer from 'components/resources/ResourceViewer.vue';
-import { listSkills } from 'src/services/claude';
-import { SKILL_KEYS } from 'src/utils/resourceFrontmatter';
+import ResourceViewer from '@/components/resources/ResourceViewer.vue';
+import { listSkills } from '@/services/claude';
+import { SKILL_KEYS } from '@/utils/resourceFrontmatter';
 
 const { t } = useI18n();
 

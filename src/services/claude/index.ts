@@ -1,4 +1,4 @@
-import { apiHeaders, type HeaderMap } from 'src/services/http';
+import { apiHeaders, type HeaderMap } from '@/services/http';
 
 // Client for the guarded .claude filesystem API (`/api/claude/*`).
 //

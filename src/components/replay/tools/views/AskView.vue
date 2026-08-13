@@ -13,8 +13,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Block } from 'src/services/projects';
-import AskUserQuestionView from 'components/replay/AskUserQuestionView.vue';
+import type { Block } from '@/services/projects';
+import AskUserQuestionView from '@/components/replay/AskUserQuestionView.vue';
 
 const props = defineProps<{ block: Block }>();
 

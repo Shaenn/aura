@@ -208,11 +208,11 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { ChartConfiguration } from 'chart.js/auto';
-import { getUsage, resolveRange, type RangeKey, type UsageReport } from 'src/services/usage';
-import { useChartTokens, seriesColor } from 'src/composables/useChartTokens';
-import SegmentedControl from 'components/ui/SegmentedControl.vue';
-import BaseChart from 'components/usage/BaseChart.vue';
-import { fmtMoney, fmtNum } from 'src/utils/format';
+import { getUsage, resolveRange, type RangeKey, type UsageReport } from '@/services/usage';
+import { useChartTokens, seriesColor } from '@/composables/useChartTokens';
+import SegmentedControl from '@/components/ui/SegmentedControl.vue';
+import BaseChart from '@/components/usage/BaseChart.vue';
+import { fmtMoney, fmtNum } from '@/utils/format';
 
 const { t } = useI18n();
 const tokens = useChartTokens();

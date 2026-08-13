@@ -103,16 +103,16 @@
 
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue';
-import type { Block } from 'src/services/projects';
-import { syncDetails } from 'src/composables/useExpandAll';
+import type { Block } from '@/services/projects';
+import { syncDetails } from '@/composables/useExpandAll';
 import { asRecord, chips, str } from '../values';
 import ToolChips from '../ToolChips.vue';
 import OutputPane from '../OutputPane.vue';
-import MarkdownView from 'components/replay/MarkdownView.vue';
-import LottieView from 'components/ui/LottieView.vue';
-import { AGENT_RUNS, OPEN_TRACK } from 'components/replay/agentRuns';
-import { agentColorOf } from 'src/utils/agentColors';
-import robot from 'src/assets/lottie/robot.json';
+import MarkdownView from '@/components/replay/MarkdownView.vue';
+import LottieView from '@/components/ui/LottieView.vue';
+import { AGENT_RUNS, OPEN_TRACK } from '@/components/replay/agentRuns';
+import { agentColorOf } from '@/utils/agentColors';
+import robot from '@/assets/lottie/robot.json';
 
 import { useI18n } from 'vue-i18n';
 

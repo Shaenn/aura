@@ -34,9 +34,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { highlightLines } from 'src/utils/markdown';
+import { highlightLines } from '@/utils/markdown';
 import { basename } from './language';
-import CopyButton from 'components/ui/CopyButton.vue';
+import CopyButton from '@/components/ui/CopyButton.vue';
 
 import { useI18n } from 'vue-i18n';
 

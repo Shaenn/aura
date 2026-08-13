@@ -4,8 +4,8 @@
 // keep importing them from `src/services/projects` while the BFF and the SPA
 // typecheck against the same declarations.
 
-import type { PlanInfo } from 'src/services/system';
-import { apiHeaders } from 'src/services/http';
+import type { PlanInfo } from '@/services/system';
+import { apiHeaders } from '@/services/http';
 
 export type {
   FolderCandidate,
@@ -16,7 +16,7 @@ export type {
   ProjectSummary,
   ResourceCategory,
   ResourceNode,
-} from 'app/shared/projects';
+} from 'shared/projects';
 
 export type {
   Block,
@@ -34,7 +34,7 @@ export type {
   TranscriptStats,
   TranscriptSummary,
   Usage,
-} from 'app/shared/transcript';
+} from 'shared/transcript';
 
 export type {
   Compaction,
@@ -42,15 +42,15 @@ export type {
   ContextInjection,
   SessionContext,
   TurnContext,
-} from 'app/shared/context';
+} from 'shared/context';
 
 import type {
   FolderCandidate,
   ProjectDetail,
   ProjectResources,
   ProjectSummary,
-} from 'app/shared/projects';
-import type { ParsedTranscript, TranscriptImage, TranscriptSummary } from 'app/shared/transcript';
+} from 'shared/projects';
+import type { ParsedTranscript, TranscriptImage, TranscriptSummary } from 'shared/transcript';
 
 async function request(url: string): Promise<Response> {
   const res = await fetch(url, { headers: apiHeaders() });

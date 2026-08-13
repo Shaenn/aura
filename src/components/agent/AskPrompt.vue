@@ -130,7 +130,7 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { AskRequest } from 'src/services/agent';
+import type { AskRequest } from '@/services/agent';
 import QuestionFields from './QuestionFields.vue';
 
 /**

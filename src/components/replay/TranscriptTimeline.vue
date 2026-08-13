@@ -78,12 +78,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { SessionContext, SilentHooks, TranscriptEvent } from 'src/services/projects';
-import { useTranscriptTurns, type TimelineNode } from 'src/composables/useTranscriptTurns';
+import type { SessionContext, SilentHooks, TranscriptEvent } from '@/services/projects';
+import { useTranscriptTurns, type TimelineNode } from '@/composables/useTranscriptTurns';
 import { cardContext, type CardContext } from './contextRows';
-import { useExpandable, syncDetails, onExpandAll } from 'src/composables/useExpandAll';
-import { agentColorOf } from 'src/utils/agentColors';
-import { fmtDuration, fmtNum } from 'src/utils/format';
+import { useExpandable, syncDetails, onExpandAll } from '@/composables/useExpandAll';
+import { agentColorOf } from '@/utils/agentColors';
+import { fmtDuration, fmtNum } from '@/utils/format';
 import TimelineNodeView from './TimelineNodeView.vue';
 
 const { t } = useI18n();

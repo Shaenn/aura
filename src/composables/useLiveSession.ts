@@ -17,9 +17,9 @@ import type {
   BackgroundShell,
   PermissionRequest,
   SlashCommandInfo,
-} from 'src/services/agent';
-import { getSessionCommands, getSessionFiles, IDLE_ACTIVITY, streamUrl } from 'src/services/agent';
-import type { TranscriptEvent } from 'src/services/projects';
+} from '@/services/agent';
+import { getSessionCommands, getSessionFiles, IDLE_ACTIVITY, streamUrl } from '@/services/agent';
+import type { TranscriptEvent } from '@/services/projects';
 
 export function useLiveSession() {
   /**

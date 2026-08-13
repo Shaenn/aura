@@ -373,11 +373,11 @@
  */
 import { computed, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
-import RuleTree from 'components/RuleTree.vue';
-import PlanTree from 'components/PlanTree.vue';
-import type { IncludedFolder, ResourceCategory, ResourceNode } from 'src/services/projects';
-import type { PlanInfo } from 'src/services/system';
-import { fmtBytes } from 'src/utils/format';
+import RuleTree from '@/components/RuleTree.vue';
+import PlanTree from '@/components/PlanTree.vue';
+import type { IncludedFolder, ResourceCategory, ResourceNode } from '@/services/projects';
+import type { PlanInfo } from '@/services/system';
+import { fmtBytes } from '@/utils/format';
 import { buildTree, CATEGORY_META, groupSkills, refLeaf, type RuleNode } from './projectResources';
 
 const props = withDefaults(

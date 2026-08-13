@@ -1,5 +1,5 @@
-import { defineBoot } from '#q-app/wrappers';
-import { useSettingsStore } from 'src/stores/settings';
+import { defineBoot } from '#q-app';
+import { useSettingsStore } from '@/stores/settings';
 
 // Load UI preferences from the BFF before the first paint: nothing is kept in the
 // browser, dark mode is applied with no flash, and any legacy localStorage is

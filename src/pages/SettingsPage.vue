@@ -301,19 +301,19 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useNotify } from 'src/composables/useNotify';
-import SegmentedControl from 'components/ui/SegmentedControl.vue';
-import SettingField from 'components/settings/SettingField.vue';
-import RuleList from 'components/settings/RuleList.vue';
-import ConfirmDiffDialog from 'components/ConfirmDiffDialog.vue';
-import CodeBlock from 'components/replay/tools/CodeBlock.vue';
-import { useJsonForm } from 'src/composables/useJsonForm';
+import { useNotify } from '@/composables/useNotify';
+import SegmentedControl from '@/components/ui/SegmentedControl.vue';
+import SettingField from '@/components/settings/SettingField.vue';
+import RuleList from '@/components/settings/RuleList.vue';
+import ConfirmDiffDialog from '@/components/ConfirmDiffDialog.vue';
+import CodeBlock from '@/components/replay/tools/CodeBlock.vue';
+import { useJsonForm } from '@/composables/useJsonForm';
 import {
   readFile,
   propose as proposeWrite,
   ClaudeApiError,
   type Proposal,
-} from 'src/services/claude';
+} from '@/services/claude';
 
 const { t } = useI18n();
 const { notifyError } = useNotify();

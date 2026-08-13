@@ -103,18 +103,18 @@
 import { onMounted, ref, computed, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import ConfirmDiffDialog from 'components/ConfirmDiffDialog.vue';
+import ConfirmDiffDialog from '@/components/ConfirmDiffDialog.vue';
 import RuleTree, {
   type RuleNode,
   type RuleDirNode,
   type RuleFileNode,
-} from 'components/RuleTree.vue';
-import EmptyState from 'components/ui/EmptyState.vue';
-import { useNotify } from 'src/composables/useNotify';
-import { listBackups, readBackup, purgeBackups, type BackupEntry } from 'src/services/backups';
-import { propose as proposeWrite, type Proposal } from 'src/services/claude';
-import { fmtBytes, fmtDate } from 'src/utils/format';
-import { prettyProjectSlug } from 'src/utils/slug';
+} from '@/components/RuleTree.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
+import { useNotify } from '@/composables/useNotify';
+import { listBackups, readBackup, purgeBackups, type BackupEntry } from '@/services/backups';
+import { propose as proposeWrite, type Proposal } from '@/services/claude';
+import { fmtBytes, fmtDate } from '@/utils/format';
+import { prettyProjectSlug } from '@/utils/slug';
 
 const { t } = useI18n();
 const $q = useQuasar();

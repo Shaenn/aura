@@ -35,8 +35,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { Compaction } from 'src/services/projects';
-import { fmtNum, fmtDuration, fmtPercent } from 'src/utils/format';
+import type { Compaction } from '@/services/projects';
+import { fmtNum, fmtDuration, fmtPercent } from '@/utils/format';
 
 const props = defineProps<{ compaction: Compaction }>();
 

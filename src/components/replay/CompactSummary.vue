@@ -14,10 +14,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useExpandable, syncDetails } from 'src/composables/useExpandAll';
-import type { TranscriptEvent } from 'src/services/projects';
-import { estimateTokens } from 'app/shared/context';
-import { fmtNum } from 'src/utils/format';
+import { useExpandable, syncDetails } from '@/composables/useExpandAll';
+import type { TranscriptEvent } from '@/services/projects';
+import { estimateTokens } from 'shared/context';
+import { fmtNum } from '@/utils/format';
 import MarkdownView from './MarkdownView.vue';
 
 const { t } = useI18n();

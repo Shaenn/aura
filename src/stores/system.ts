@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { getSystem, getOverview, type Overview } from 'src/services/claude';
-import { getSessions, type SessionInfo } from 'src/services/system';
+import { getSystem, getOverview, type Overview } from '@/services/claude';
+import { getSessions, type SessionInfo } from '@/services/system';
 
 /**
  * Live "system" state for the OS-like status bar and the launchpad: whether the

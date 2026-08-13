@@ -56,7 +56,7 @@
 import { ref, watch, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ContextPanel from './ContextPanel.vue';
-import type { SessionContext } from 'src/services/projects';
+import type { SessionContext } from '@/services/projects';
 
 withDefaults(
   defineProps<{

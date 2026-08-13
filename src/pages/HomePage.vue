@@ -127,10 +127,10 @@
 import { computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useI18n } from 'vue-i18n';
-import EmptyState from 'components/ui/EmptyState.vue';
-import { useSystemStore } from 'src/stores/system';
-import type { SessionInfo } from 'src/services/system';
-import { helpSections } from 'src/help';
+import EmptyState from '@/components/ui/EmptyState.vue';
+import { useSystemStore } from '@/stores/system';
+import type { SessionInfo } from '@/services/system';
+import { helpSections } from '@/help';
 
 const { t } = useI18n();
 const sys = useSystemStore();

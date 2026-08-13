@@ -9,8 +9,8 @@
 // Ce module est du calcul pur sur deux listes d'événements. Il vit hors du SFC
 // pour être exerçable par vitest, qui ne monte pas de composant.
 
-import { isHumanMessage } from 'src/composables/useTranscriptTurns';
-import type { TranscriptEvent } from 'src/services/projects';
+import { isHumanMessage } from '@/composables/useTranscriptTurns';
+import type { TranscriptEvent } from '@/services/projects';
 
 /**
  * Le geste humain, des deux côtés de la couture.

@@ -23,9 +23,9 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MarkdownView from './MarkdownView.vue';
-import { useExpandable, syncDetails } from 'src/composables/useExpandAll';
+import { useExpandable, syncDetails } from '@/composables/useExpandAll';
 import type { SkillDoc } from './skillDocument';
-import { fmtInt } from 'src/utils/format';
+import { fmtInt } from '@/utils/format';
 
 const { t } = useI18n();
 

@@ -68,8 +68,8 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { PlanInfo } from 'src/services/system';
-import { fmtMonth } from 'src/utils/format';
+import type { PlanInfo } from '@/services/system';
+import { fmtMonth } from '@/utils/format';
 
 const { t } = useI18n();
 

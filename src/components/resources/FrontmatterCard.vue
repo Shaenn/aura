@@ -127,7 +127,7 @@
 // "ignorée" flag, no defaults disclosure. Silence beats inventing a reference.
 import { computed, ref, useId } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { describeToolToken } from 'src/utils/tools';
+import { describeToolToken } from '@/utils/tools';
 import {
   entryTokens,
   isKnownKey,
@@ -136,7 +136,7 @@ import {
   keySpec,
   type FmEntry,
   type KeySpec,
-} from 'src/utils/resourceFrontmatter';
+} from '@/utils/resourceFrontmatter';
 
 const { t } = useI18n();
 

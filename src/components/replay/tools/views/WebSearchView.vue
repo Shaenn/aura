@@ -57,12 +57,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Block } from 'src/services/projects';
+import type { Block } from '@/services/projects';
 import { arr, asRecord, chips, str } from '../values';
 import { permissionDenied } from '../serviceLines';
 import ToolChips from '../ToolChips.vue';
 import OutputPane from '../OutputPane.vue';
-import MarkdownView from 'components/replay/MarkdownView.vue';
+import MarkdownView from '@/components/replay/MarkdownView.vue';
 
 import { useI18n } from 'vue-i18n';
 

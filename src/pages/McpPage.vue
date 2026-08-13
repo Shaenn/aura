@@ -270,24 +270,24 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useNotify } from 'src/composables/useNotify';
-import RuleList from 'components/settings/RuleList.vue';
-import SegmentedControl from 'components/ui/SegmentedControl.vue';
-import ConfirmDiffDialog from 'components/ConfirmDiffDialog.vue';
-import { useJsonForm } from 'src/composables/useJsonForm';
+import { useNotify } from '@/composables/useNotify';
+import RuleList from '@/components/settings/RuleList.vue';
+import SegmentedControl from '@/components/ui/SegmentedControl.vue';
+import ConfirmDiffDialog from '@/components/ConfirmDiffDialog.vue';
+import { useJsonForm } from '@/composables/useJsonForm';
 import {
   getMcp,
   proposeMcp,
   applyMcp,
   type McpInventory,
   type McpServerConfig,
-} from 'src/services/mcp';
+} from '@/services/mcp';
 import {
   readFile,
   propose as proposeWrite,
   ClaudeApiError,
   type Proposal,
-} from 'src/services/claude';
+} from '@/services/claude';
 
 const { t } = useI18n();
 const { notifyError } = useNotify();

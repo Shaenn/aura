@@ -283,31 +283,31 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, provide, ref, computed, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { readTranscript, type ParsedTranscript } from 'src/services/projects';
-import { onClaudeChange } from 'src/services/events';
-import type { Severity } from 'src/services/diagnostics';
-import { severityIcon, severityColor, severityLabel } from 'src/services/diagnostics/severity';
-import { prettyProjectSlug } from 'src/utils/slug';
+import { readTranscript, type ParsedTranscript } from '@/services/projects';
+import { onClaudeChange } from '@/services/events';
+import type { Severity } from '@/services/diagnostics';
+import { severityIcon, severityColor, severityLabel } from '@/services/diagnostics/severity';
+import { prettyProjectSlug } from '@/utils/slug';
 import { useI18n } from 'vue-i18n';
-import { fmtDate, fmtNum, fmtDuration, fmtCost, fmtPercent } from 'src/utils/format';
-import { setBreadcrumbs } from 'src/composables/useBreadcrumbs';
-import { provideExpandAll } from 'src/composables/useExpandAll';
+import { fmtDate, fmtNum, fmtDuration, fmtCost, fmtPercent } from '@/utils/format';
+import { setBreadcrumbs } from '@/composables/useBreadcrumbs';
+import { provideExpandAll } from '@/composables/useExpandAll';
 import {
   eventsOfTrack,
   trackOfEvent,
   trackTabId,
   MAIN_TRACK,
   type TrackId,
-} from 'src/composables/useAgentTracks';
-import TranscriptTimeline from 'components/replay/TranscriptTimeline.vue';
-import AgentTrackBar from 'components/replay/AgentTrackBar.vue';
-import AsideSection from 'components/replay/AsideSection.vue';
-import ContextPanel from 'components/replay/ContextPanel.vue';
-import SessionCostPanel from 'components/replay/SessionCostPanel.vue';
-import TaskPanel from 'components/replay/TaskPanel.vue';
-import { TRANSCRIPT_SOURCE } from 'components/replay/transcriptSource';
-import { trackTasks, taskIndex, TASK_INDEX } from 'components/replay/taskList';
-import { indexRuns, AGENT_RUNS, OPEN_TRACK } from 'components/replay/agentRuns';
+} from '@/composables/useAgentTracks';
+import TranscriptTimeline from '@/components/replay/TranscriptTimeline.vue';
+import AgentTrackBar from '@/components/replay/AgentTrackBar.vue';
+import AsideSection from '@/components/replay/AsideSection.vue';
+import ContextPanel from '@/components/replay/ContextPanel.vue';
+import SessionCostPanel from '@/components/replay/SessionCostPanel.vue';
+import TaskPanel from '@/components/replay/TaskPanel.vue';
+import { TRANSCRIPT_SOURCE } from '@/components/replay/transcriptSource';
+import { trackTasks, taskIndex, TASK_INDEX } from '@/components/replay/taskList';
+import { indexRuns, AGENT_RUNS, OPEN_TRACK } from '@/components/replay/agentRuns';
 
 const { t } = useI18n();
 

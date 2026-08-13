@@ -101,10 +101,10 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useNotify } from 'src/composables/useNotify';
-import { getPlans, readPlan, deletePlan, type PlanInfo } from 'src/services/system';
-import { fmtBytes, fmtDate } from 'src/utils/format';
-import MarkdownView from 'components/replay/MarkdownView.vue';
+import { useNotify } from '@/composables/useNotify';
+import { getPlans, readPlan, deletePlan, type PlanInfo } from '@/services/system';
+import { fmtBytes, fmtDate } from '@/utils/format';
+import MarkdownView from '@/components/replay/MarkdownView.vue';
 
 const { t } = useI18n();
 const { notifyError, notifyDone } = useNotify();

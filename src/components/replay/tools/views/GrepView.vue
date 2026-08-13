@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Block } from 'src/services/projects';
+import type { Block } from '@/services/projects';
 import { asRecord, bool, chips, num, str } from '../values';
 import { basename, dirname } from '../language';
 import { RESULT_ID } from '../serviceLines';

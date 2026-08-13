@@ -13,7 +13,7 @@
 // one is not valid in the other, and the cards flag it as ignored.
 
 import { parseTools } from './tools';
-import { t } from 'src/i18n';
+import { t } from '@/i18n';
 
 const FENCE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 

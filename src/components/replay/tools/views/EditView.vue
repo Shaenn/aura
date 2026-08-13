@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Block } from 'src/services/projects';
+import type { Block } from '@/services/projects';
 import { asRecord, bool, str } from '../values';
 import DiffView from '../DiffView.vue';
 import KeyValueList from '../KeyValueList.vue';

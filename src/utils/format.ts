@@ -10,7 +10,7 @@
 // `currentLocale()` y crée la dépendance réactive qui rafraîchit l'affichage
 // quand la langue change.
 
-import { currentLocale, t, type AppLocale } from 'src/i18n';
+import { currentLocale, t, type AppLocale } from '@/i18n';
 
 /** Rien à afficher — un tiret cadratin, pas un vide qui ferait douter. */
 const EMPTY = '—';

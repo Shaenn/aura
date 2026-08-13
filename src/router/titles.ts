@@ -6,7 +6,7 @@
 // Les libellés vivent dans `src/i18n/<langue>/nav.ts`, indexés par nom de route. Le nom de
 // route est l'identifiant stable ; ce qui s'affiche dépend de la langue.
 
-import { t, te } from 'src/i18n';
+import { t, te } from '@/i18n';
 
 const APP_NAME = 'AURA';
 

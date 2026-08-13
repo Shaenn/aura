@@ -58,11 +58,11 @@
 <script setup lang="ts">
 import { computed, inject, ref, useId } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useExpandable } from 'src/composables/useExpandAll';
+import { useExpandable } from '@/composables/useExpandAll';
 import { RUNNING_TOOLS } from './runningTools';
-import type { Block } from 'src/services/projects';
-import { estimateTokens } from 'app/shared/context';
-import { fmtInt, fmtNum } from 'src/utils/format';
+import type { Block } from '@/services/projects';
+import { estimateTokens } from 'shared/context';
+import { fmtInt, fmtNum } from '@/utils/format';
 import { descriptorFor, summarise, type ToolView } from './tools/registry';
 import HookRunView from './HookRunView.vue';
 import ImageStrip from './ImageStrip.vue';

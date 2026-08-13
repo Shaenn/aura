@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { fmtNum } from 'src/utils/format';
+import { fmtNum } from '@/utils/format';
 import ContextRowBody from './ContextRowBody.vue';
 import type { TreeNode } from './contextTree';
 import type { ContextRowModel } from './contextRows';

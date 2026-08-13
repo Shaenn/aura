@@ -19,8 +19,8 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import PulseDots from 'src/components/ui/PulseDots.vue';
-import { fmtDuration } from 'src/utils/format';
+import PulseDots from '@/components/ui/PulseDots.vue';
+import { fmtDuration } from '@/utils/format';
 
 const { t } = useI18n();
 

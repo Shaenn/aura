@@ -48,8 +48,8 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { fmtBytes, fmtDuration, fmtTime } from 'src/utils/format';
-import type { BackgroundShell } from 'src/services/agent';
+import { fmtBytes, fmtDuration, fmtTime } from '@/utils/format';
+import type { BackgroundShell } from '@/services/agent';
 
 const { t } = useI18n();
 

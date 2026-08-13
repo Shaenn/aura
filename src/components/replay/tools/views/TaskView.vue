@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Block } from 'src/services/projects';
+import type { Block } from '@/services/projects';
 import { asRecord, chips, num, str } from '../values';
 import ToolChips from '../ToolChips.vue';
 import CodeBlock from '../CodeBlock.vue';

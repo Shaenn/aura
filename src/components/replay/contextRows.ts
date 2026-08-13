@@ -4,9 +4,9 @@
 // catégorie, classées par taille, ou mises à plat. Les trois partagent une ligne,
 // donc une seule forme, construite ici. Rien de ce fichier ne touche au DOM.
 
-import { t } from 'src/i18n';
-import { turnDeltas } from 'app/shared/context';
-import type { ContextCategory, ContextInjection, SessionContext } from 'src/services/projects';
+import { t } from '@/i18n';
+import { turnDeltas } from 'shared/context';
+import type { ContextCategory, ContextInjection, SessionContext } from '@/services/projects';
 
 /** Une sous-ligne révélée par le pli : un outil, ou une moitié d'une réponse. */
 export interface ContextDetailLine {

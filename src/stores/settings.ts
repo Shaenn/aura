@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
 import { Dark } from 'quasar';
-import { getPreferences, savePreferences, type Preferences } from 'src/services/preferences';
-import { isLocale, DEFAULT_LOCALE, type AppLocale } from 'src/i18n';
-import { applyLocale } from 'src/i18n/apply';
+import { getPreferences, savePreferences, type Preferences } from '@/services/preferences';
+import { isLocale, DEFAULT_LOCALE, type AppLocale } from '@/i18n';
+import { applyLocale } from '@/i18n/apply';
 
 /**
  * UI preferences for AURA. Persisted **server-side** in the BFF

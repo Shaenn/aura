@@ -6,7 +6,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
-import { renderMarkdown } from 'src/utils/markdown';
+import { renderMarkdown } from '@/utils/markdown';
 
 const props = withDefaults(
   defineProps<{

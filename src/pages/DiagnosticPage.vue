@@ -433,11 +433,11 @@ import {
   type Impact,
   type Recommendation,
   type Target,
-} from 'src/services/diagnostics';
-import { severityIcon, severityColor, severityLabel } from 'src/services/diagnostics/severity';
-import { resolveRange, type RangeKey } from 'src/services/usage';
-import SegmentedControl from 'components/ui/SegmentedControl.vue';
-import HelpTip from 'components/ui/HelpTip.vue';
+} from '@/services/diagnostics';
+import { severityIcon, severityColor, severityLabel } from '@/services/diagnostics/severity';
+import { resolveRange, type RangeKey } from '@/services/usage';
+import SegmentedControl from '@/components/ui/SegmentedControl.vue';
+import HelpTip from '@/components/ui/HelpTip.vue';
 import {
   fmtDateLong,
   fmtDateShort,
@@ -445,7 +445,7 @@ import {
   fmtMoney,
   fmtNum,
   fmtPercent,
-} from 'src/utils/format';
+} from '@/utils/format';
 
 const { t } = useI18n();
 

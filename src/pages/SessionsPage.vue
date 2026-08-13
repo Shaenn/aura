@@ -474,41 +474,41 @@
 import { ref, computed, onMounted, onUnmounted, provide, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { copyToClipboard } from 'quasar';
-import { getSessions, type SessionInfo } from 'src/services/system';
+import { getSessions, type SessionInfo } from '@/services/system';
 import {
   readTranscript,
   type ParsedTranscript,
   type Block,
   type ResourceNode,
-} from 'src/services/projects';
+} from '@/services/projects';
 import {
   readFile as readClaudeFile,
   propose as proposeWrite,
   type Proposal,
-} from 'src/services/claude';
-import { onClaudeChange } from 'src/services/events';
+} from '@/services/claude';
+import { onClaudeChange } from '@/services/events';
 import {
   eventsOfTrack,
   trackOfEvent,
   trackTabId,
   MAIN_TRACK,
   type TrackId,
-} from 'src/composables/useAgentTracks';
-import TranscriptTimeline from 'components/replay/TranscriptTimeline.vue';
-import LiveTurnLine from 'components/replay/LiveTurnLine.vue';
-import AgentTrackBar from 'components/replay/AgentTrackBar.vue';
-import ContextDrawer from 'components/replay/ContextDrawer.vue';
-import ContextPanel from 'components/replay/ContextPanel.vue';
-import TaskPanel from 'components/replay/TaskPanel.vue';
-import { trackTasks, taskIndex, TASK_INDEX } from 'components/replay/taskList';
-import { indexRuns, AGENT_RUNS, OPEN_TRACK } from 'components/replay/agentRuns';
-import { TRANSCRIPT_SOURCE } from 'components/replay/transcriptSource';
-import ProjectResourcesPanel from 'components/resources/ProjectResourcesPanel.vue';
-import ResourceDialog from 'components/resources/ResourceDialog.vue';
-import type { ResourceSource } from 'components/resources/projectResources';
-import ConfirmDiffDialog from 'components/ConfirmDiffDialog.vue';
-import EmptyState from 'components/ui/EmptyState.vue';
-import { useNotify } from 'src/composables/useNotify';
+} from '@/composables/useAgentTracks';
+import TranscriptTimeline from '@/components/replay/TranscriptTimeline.vue';
+import LiveTurnLine from '@/components/replay/LiveTurnLine.vue';
+import AgentTrackBar from '@/components/replay/AgentTrackBar.vue';
+import ContextDrawer from '@/components/replay/ContextDrawer.vue';
+import ContextPanel from '@/components/replay/ContextPanel.vue';
+import TaskPanel from '@/components/replay/TaskPanel.vue';
+import { trackTasks, taskIndex, TASK_INDEX } from '@/components/replay/taskList';
+import { indexRuns, AGENT_RUNS, OPEN_TRACK } from '@/components/replay/agentRuns';
+import { TRANSCRIPT_SOURCE } from '@/components/replay/transcriptSource';
+import ProjectResourcesPanel from '@/components/resources/ProjectResourcesPanel.vue';
+import ResourceDialog from '@/components/resources/ResourceDialog.vue';
+import type { ResourceSource } from '@/components/resources/projectResources';
+import ConfirmDiffDialog from '@/components/ConfirmDiffDialog.vue';
+import EmptyState from '@/components/ui/EmptyState.vue';
+import { useNotify } from '@/composables/useNotify';
 import { useI18n } from 'vue-i18n';
 
 const { notifyDone, notifyWarn } = useNotify();

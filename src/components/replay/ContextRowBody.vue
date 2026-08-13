@@ -52,8 +52,8 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { fmtNum } from 'src/utils/format';
-import CopyButton from 'components/ui/CopyButton.vue';
+import { fmtNum } from '@/utils/format';
+import CopyButton from '@/components/ui/CopyButton.vue';
 import type { ContextRowModel } from './contextRows';
 
 const { t } = useI18n();
