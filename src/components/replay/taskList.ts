@@ -7,7 +7,7 @@
 // fois, pour en tirer la liste telle qu'elle est maintenant.
 
 import type { InjectionKey, Ref } from 'vue';
-import type { Block, TranscriptEvent } from '@/../shared/transcript';
+import type { Block, TranscriptEvent } from 'shared/transcript';
 
 /**
  * Le sujet de chaque tâche, par identifiant.

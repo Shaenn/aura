@@ -5,7 +5,7 @@
 // donc une seule forme, construite ici. Rien de ce fichier ne touche au DOM.
 
 import { t } from '@/i18n';
-import { turnDeltas } from '@/../shared/context';
+import { turnDeltas } from 'shared/context';
 import type { ContextCategory, ContextInjection, SessionContext } from '@/services/projects';
 
 /** Une sous-ligne révélée par le pli : un outil, ou une moitié d'une réponse. */

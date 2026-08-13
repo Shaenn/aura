@@ -16,7 +16,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useExpandable, syncDetails } from '@/composables/useExpandAll';
 import type { TranscriptEvent } from '@/services/projects';
-import { estimateTokens } from '@/../shared/context';
+import { estimateTokens } from 'shared/context';
 import { fmtNum } from '@/utils/format';
 import MarkdownView from './MarkdownView.vue';
 

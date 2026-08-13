@@ -11,11 +11,13 @@ const root = fileURLToPath(new URL('.', import.meta.url));
 // helper client testable — sans dépendance au DOM — s'importe tel quel. Seuls les
 // imports de *valeur* se résolvent au runtime ; les `import type` sont effacés.
 //
-// Un seul depuis Quasar 3, qui a retiré `src`, `components`, `app` et les autres.
+// Quasar 3 a retiré `src`, `components`, `app` et les autres : il ne reste que
+// `@/`, plus `shared` que `quasar.config.ts` déclare lui-même.
 export default defineConfig({
   resolve: {
     alias: {
       '@': `${root}src`,
+      shared: `${root}shared`,
     },
   },
   test: {

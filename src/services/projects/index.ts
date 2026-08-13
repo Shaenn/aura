@@ -16,7 +16,7 @@ export type {
   ProjectSummary,
   ResourceCategory,
   ResourceNode,
-} from '@/../shared/projects';
+} from 'shared/projects';
 
 export type {
   Block,
@@ -34,7 +34,7 @@ export type {
   TranscriptStats,
   TranscriptSummary,
   Usage,
-} from '@/../shared/transcript';
+} from 'shared/transcript';
 
 export type {
   Compaction,
@@ -42,15 +42,15 @@ export type {
   ContextInjection,
   SessionContext,
   TurnContext,
-} from '@/../shared/context';
+} from 'shared/context';
 
 import type {
   FolderCandidate,
   ProjectDetail,
   ProjectResources,
   ProjectSummary,
-} from '@/../shared/projects';
-import type { ParsedTranscript, TranscriptImage, TranscriptSummary } from '@/../shared/transcript';
+} from 'shared/projects';
+import type { ParsedTranscript, TranscriptImage, TranscriptSummary } from 'shared/transcript';
 
 async function request(url: string): Promise<Response> {
   const res = await fetch(url, { headers: apiHeaders() });

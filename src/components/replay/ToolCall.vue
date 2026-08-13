@@ -61,7 +61,7 @@ import { useI18n } from 'vue-i18n';
 import { useExpandable } from '@/composables/useExpandAll';
 import { RUNNING_TOOLS } from './runningTools';
 import type { Block } from '@/services/projects';
-import { estimateTokens } from '@/../shared/context';
+import { estimateTokens } from 'shared/context';
 import { fmtInt, fmtNum } from '@/utils/format';
 import { descriptorFor, summarise, type ToolView } from './tools/registry';
 import HookRunView from './HookRunView.vue';

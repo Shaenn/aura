@@ -1,7 +1,7 @@
 import { apiHeaders, type HeaderMap } from '@/services/http';
-import type { KillProcessResult, ProcessList } from '@/../shared/processes';
+import type { KillProcessResult, ProcessList } from 'shared/processes';
 
-export type { ClaudeProcess, ClaudeProcessKind } from '@/../shared/processes';
+export type { ClaudeProcess, ClaudeProcessKind } from 'shared/processes';
 
 // Client for the observability & maintenance API (`/api/system/*`).
 

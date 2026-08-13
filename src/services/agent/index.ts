@@ -19,8 +19,8 @@ export type {
   PromptAttachment,
   ShellOutput,
   SlashCommandInfo,
-} from '@/../shared/agent';
-export { IDLE_ACTIVITY, PERMISSION_MODES } from '@/../shared/agent';
+} from 'shared/agent';
+export { IDLE_ACTIVITY, PERMISSION_MODES } from 'shared/agent';
 
 import type {
   AgentSession,
@@ -28,7 +28,7 @@ import type {
   PromptAttachment,
   ShellOutput,
   SlashCommandInfo,
-} from '@/../shared/agent';
+} from 'shared/agent';
 import { apiHeaders } from '@/services/http';
 
 async function send<T>(url: string, method: string, body?: unknown): Promise<T> {

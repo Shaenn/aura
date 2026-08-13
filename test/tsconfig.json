@@ -6,7 +6,8 @@
   //
   // `paths` mirror Quasar's (see `.quasar/tsconfig.json`) so a DOM-free client
   // helper — `contextRows`, `contextTree` — type-checks when a test imports it.
-  // Un seul alias depuis Quasar 3, qui a retiré `src`, `components` et `app`.
+  // Quasar 3 a retiré `src`, `components` et `app` ; restent `@/` et `shared`,
+  // ce dernier déclaré par `quasar.config.ts > build > alias`.
   //
   // Sans `baseUrl` : TypeScript 6 le déprécie comme racine de résolution et 7 le
   // retirera. Depuis la 4.4, `paths` se résout relativement à ce fichier — d'où
@@ -15,7 +16,9 @@
   "compilerOptions": {
     "paths": {
       "@": ["../src"],
-      "@/*": ["../src/*"]
+      "@/*": ["../src/*"],
+      "shared": ["../shared"],
+      "shared/*": ["../shared/*"]
     }
   },
   "include": ["./**/*.ts"]
