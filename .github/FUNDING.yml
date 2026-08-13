@@ -1,0 +1,6 @@
+# Fait apparaître le bouton « Sponsor » en tête du dépôt.
+#
+# GitHub Sponsors seulement : c'est la seule voie où la page de paiement ne
+# porte pas de nom de bénéficiaire. Un lien direct vers un service de paiement
+# en afficherait un, et ce dépôt tient à n'en publier aucun.
+github: [Shaenn]

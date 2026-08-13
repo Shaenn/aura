@@ -455,6 +455,12 @@ pnpm typecheck      # server/ and test/
 pnpm test           # vitest
 ```
 
+## Sponsoring
+
+AURA is a personal project, given as-is, and it will stay that way. If the tool serves you, the
+**Sponsor** button at the top of this page is the way to say so — no rewards promised, and no
+change whatsoever to the licence.
+
 ## Licence
 
 [MIT](LICENSE). Use it, fork it, change it, embed it wherever you like — just keep the copyright

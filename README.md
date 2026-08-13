@@ -501,6 +501,12 @@ pnpm typecheck      # server/ et test/
 pnpm test           # vitest
 ```
 
+## Soutenir
+
+AURA est un projet personnel, offert tel quel, et le restera. Si l'outil vous sert, le bouton
+**Sponsor** en haut de cette page est la façon de le dire — sans contrepartie promise, et sans
+que cela change quoi que ce soit à la licence.
+
 ## Licence
 
 [MIT](LICENSE). Utilisez-la, forkez-la, modifiez-la, intégrez-la où vous voulez — gardez
