@@ -19,6 +19,9 @@
     "stop": "node scripts/free-ports.mjs 8800 9100",
     "start": "tsx server/index.ts",
     "build": "quasar build",
+    "site:dev": "node scripts/sync-site.mjs && vitepress dev site",
+    "site:build": "node scripts/sync-site.mjs && vitepress build site",
+    "site:preview": "vitepress preview site",
     "postinstall": "quasar prepare"
   },
   "dependencies": {
@@ -57,6 +60,7 @@
     "tsx": "^4.23.12",
     "typescript": "^6.0.3",
     "vite-plugin-checker": "^0.14.5",
+    "vitepress": "^1.6.4",
     "vitest": "^4.1.10",
     "vue-eslint-parser": "^10.4.0",
     "vue-tsc": "^3.3.9"

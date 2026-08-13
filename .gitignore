@@ -49,3 +49,12 @@ llm règles/
 
 # Playwright visual harness (local debugging tool, not committed)
 harness/
+
+# Site vitrine : ce que `scripts/sync-site.mjs` recopie depuis le manuel et les médias du
+# dépôt. La source reste `src/help/sections/` et `docs/` — versionner la copie créerait un
+# second manuel, qui dériverait.
+/site/guide/
+/site/en/guide/
+/site/public/media/
+/site/.vitepress/cache/
+/site/.vitepress/dist/
