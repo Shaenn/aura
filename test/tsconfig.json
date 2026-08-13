@@ -6,16 +6,19 @@
   //
   // `paths` mirror Quasar's (see `.quasar/tsconfig.json`) so a DOM-free client
   // helper — `contextRows`, `contextTree` — type-checks when a test imports it.
+  //
+  // Sans `baseUrl` : TypeScript 6 le déprécie comme racine de résolution et 7 le
+  // retirera. Depuis la 4.4, `paths` se résout relativement à ce fichier — d'où
+  // les `../`, qui disent la même chose que l'ancienne base `..`.
   "extends": "../server/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": "..",
     "paths": {
-      "app": ["."],
-      "app/*": ["./*"],
-      "src": ["./src"],
-      "src/*": ["./src/*"],
-      "components": ["./src/components"],
-      "components/*": ["./src/components/*"]
+      "app": [".."],
+      "app/*": ["../*"],
+      "src": ["../src"],
+      "src/*": ["../src/*"],
+      "components": ["../src/components"],
+      "components/*": ["../src/components/*"]
     }
   },
   "include": ["./**/*.ts"]
