@@ -115,10 +115,6 @@ scripts/                tooling outside the application
   free-ports.mjs        frees 8800/9100: orderly BFF shutdown first, force second
   i18n-scan.mjs         survey of the strings to translate
 
-spike/                  the Phase 0 probe: what was measured before the Workshop was written.
-                        Kept for what it documents — the questions settled before the code —
-                        not because the application uses it. Nothing imports it.
-
 dev.ps1 / dev.bat       launch + open the browser
 stop.ps1 / stop.bat     orderly stop (they delegate to scripts/free-ports.mjs)
 ```

@@ -114,10 +114,6 @@ scripts/                outillage hors application
   free-ports.mjs        libère 8800/9100 : extinction ordonnée du BFF d'abord, force ensuite
   i18n-scan.mjs         relevé des chaînes à traduire
 
-spike/                  la sonde de la Phase 0 : ce qui a été mesuré avant d'écrire l'Atelier.
-                        Gardée pour ce qu'elle documente — les questions tranchées avant le
-                        code — et non parce que l'application s'en sert. Rien ne l'importe.
-
 dev.ps1 / dev.bat       lancement + ouverture du navigateur
 stop.ps1 / stop.bat     arrêt ordonné (délèguent à scripts/free-ports.mjs)
 ```
