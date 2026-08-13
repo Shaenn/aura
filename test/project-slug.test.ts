@@ -35,7 +35,7 @@ describe('encodeProjectPath', () => {
   it('ne produit que des lettres, des chiffres et des tirets', () => {
     // Ce que le parc confirme : aucun dossier réel ne porte d'autre caractère.
     const dir = join(homedir(), '.claude', 'projects');
-    let names: string[] = [];
+    let names: string[];
     try {
       names = readdirSync(dir, { withFileTypes: true })
         .filter((d) => d.isDirectory())
