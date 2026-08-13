@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="">
+  <!-- Poster des démonstrations de l'Atelier. Aucune image n'est extraite des .webm :
+       sans poster, `preload="none"` laisse un cadre noir, et avec un poster tiré de la
+       vidéo il faudrait la décoder au build. Celui-ci reprend la marque, ne dit rien
+       qu'il faudrait traduire, et pèse un kilo-octet. -->
+  <defs>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="40%" stop-color="#e07a5f" stop-opacity="0.20" />
+      <stop offset="100%" stop-color="#e07a5f" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="1000" fill="#101014" />
+  <circle cx="800" cy="500" r="360" fill="url(#halo)" />
+
+  <g transform="rotate(45 800 500)">
+    <rect x="672" y="372" width="256" height="256" rx="40" fill="#e07a5f" />
+    <rect x="712" y="412" width="176" height="176" rx="22" fill="#101014" />
+  </g>
+
+  <!-- Triangle de lecture, centré dans le noyau du losange. -->
+  <path d="M772 456 L872 500 L772 544 Z" fill="#e9a08b" />
+</svg>
