@@ -23,7 +23,15 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 5
+    # Mesuré sur douze mois de publications des 36 dépendances directes : le lot
+    # mineur bouge 52 semaines sur 52, le SDK 45 sur 52 — 265 versions — et 28
+    # majeures sont franchies dans l'année, soit une tous les treize jours. Le
+    # régime établi tient donc en ~2,4 demandes par semaine, et 5 y suffisait.
+    #
+    # 6 parce que le projet a été bâti sur des versions anciennes et rattrape
+    # quatre majeures d'un coup — typescript, app-vite, pinia, @types/node. Ce
+    # rattrapage ne se reproduira pas ; ce chiffre est fait pour redescendre.
+    open-pull-requests-limit: 6
     groups:
       # Un lot par semaine pour tout ce qui ne change pas d'interface.
       #
