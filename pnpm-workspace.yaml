@@ -1,10 +1,29 @@
 # https://pnpm.io/settings
 shamefullyHoist: true
 
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - esbuild
-
+# Seuls ces deux paquets ont le droit d'exécuter un script au moment de
+# l'installation. Tout le reste est inerte sur le disque tant que rien ne
+# l'importe.
 allowBuilds:
   '@parcel/watcher': true
   esbuild: true
+
+# Fait échouer l'installation si un script de build apparaît dans l'arbre des
+# dépendances sans figurer ci-dessus. C'est déjà le défaut de pnpm 11 ; le
+# déclarer le met à l'abri d'un retour en arrière, et dit l'intention à qui lit.
+strictDepBuilds: true
+
+# Refuse les versions publiées il y a moins de 24 heures. Défense contre les
+# attaques où un jeton compromis publie une version malveillante : la fenêtre
+# pendant laquelle le mainteneur légitime peut détecter et dépublier reste,
+# elle, exploitable.
+#
+# 1440 est déjà le défaut de pnpm 11 — ce n'est donc pas la durée qu'on gagne
+# ici. C'est `minimumReleaseAgeStrict`, qui ne vaut `true` que si le seuil est
+# déclaré **explicitement**. Sans cette ligne, pnpm ne refuse pas une version
+# trop jeune : il retombe dessus et inscrit lui-même la dérogation dans ce
+# fichier. La quarantaine se désactive alors toute seule, en silence, et on ne
+# le voit qu'en relisant le diff. Mesuré : `@anthropic-ai/claude-agent-sdk`
+# 0.3.231, publié six heures plus tôt, s'est installé accompagné de neuf lignes
+# d'exclusion ajoutées sans un mot.
+minimumReleaseAge: 1440
