@@ -22,14 +22,17 @@ updates:
     open-pull-requests-limit: 5
     groups:
       # Un lot par semaine pour tout ce qui ne change pas d'interface.
+      #
+      # Le SDK d'agent en est tenu à l'écart, et la raison tient à son numéro de
+      # version. Il vit en `0.3.x` : sous le premier zéro, semver ne promet rien,
+      # et c'est le **mineur** qui porte les ruptures — `0.3.229` → `0.4.0`.
+      # Ignorer ses majeures n'aurait donc protégé de rien, puisqu'il n'en publie
+      # pas ; le risque serait arrivé noyé dans le lot, là où on ne le lit pas.
+      # Hors du groupe, il arrive seul, et sa demande se voit.
       mineures:
         patterns: ['*']
+        exclude-patterns: ['@anthropic-ai/claude-agent-sdk']
         update-types: [minor, patch]
-    ignore:
-      # Le SDK d'agent bouge vite et sa surface est celle sur laquelle l'Atelier
-      # est écrit. Ses majeures se prennent à la main, en lisant ce qui change.
-      - dependency-name: '@anthropic-ai/claude-agent-sdk'
-        update-types: [version-update:semver-major]
 
   # Les actions de la CI. Elles se sont fait oublier une fois — trois versions
   # majeures de retard, et un runtime que GitHub avait annoncé mort.
