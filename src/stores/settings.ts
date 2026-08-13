@@ -81,7 +81,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   /** Load preferences from the server; seed the file on first run. */
   async function load(): Promise<void> {
-    let server: Preferences | null = null;
+    let server: Preferences | null;
     try {
       server = await getPreferences();
     } catch {
