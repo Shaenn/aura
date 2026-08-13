@@ -11,7 +11,7 @@ _The control desk for your Claude Code environment._
 [![CI](https://github.com/Shaenn/aura/actions/workflows/ci.yml/badge.svg)](https://github.com/Shaenn/aura/actions/workflows/ci.yml)
 [![MIT licence](https://img.shields.io/badge/licence-MIT-2f6f4e)](LICENSE)
 [![Local](https://img.shields.io/badge/100%25-local-2f6f4e)](#security--privacy)
-[![Node](https://img.shields.io/badge/node-%E2%89%A5%2022.22-5a5a5a)](#requirements)
+[![Node](https://img.shields.io/badge/node-24-5a5a5a)](#requirements)
 [![Platforms](https://img.shields.io/badge/Windows-5a5a5a)](#requirements)
 [![Stack](https://img.shields.io/badge/Vue%203%20%C2%B7%20Quasar%20%C2%B7%20Fastify-5a5a5a)](#architecture)
 
@@ -290,8 +290,8 @@ report a flaw.
 
 ## Requirements
 
-- **Node.js** ≥ 22.22 (the bound comes from Quasar; the server itself wants the native
-  `--env-file`, added in 22.12). Versions 22 / 24 / 26 / 28.
+- **Node.js 24** — a single major version: the one the application is developed, tested and
+  shipped on, and the one CI runs. Node 24 is under long-term support.
 - **pnpm** ≥ 10 — `npm i -g pnpm`.
 - **Claude Code** installed and run at least once, so an existing `~/.claude` folder.
   On Windows: `C:\Users\<you>\.claude`.

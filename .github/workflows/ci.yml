@@ -33,9 +33,11 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          # La borne du projet, et non une version plus récente : la CI vérifie
-          # ce que le README promet, pas ce qui marche sur la machine de qui code.
-          node-version: 22.22.0
+          # La seule version que le projet supporte. Il n'y a plus de borne à
+          # distinguer d'une version courante : `engines` dit `^24`, la machine
+          # de développement tourne en 24, la CI aussi. Une CI qui vérifierait
+          # un autre Node ne vérifierait rien de ce qui est livré.
+          node-version: 24.19.0
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile

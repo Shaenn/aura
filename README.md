@@ -11,7 +11,7 @@ _Le poste de pilotage de votre environnement Claude Code._
 [![CI](https://github.com/Shaenn/aura/actions/workflows/ci.yml/badge.svg)](https://github.com/Shaenn/aura/actions/workflows/ci.yml)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-2f6f4e)](LICENSE)
 [![Local](https://img.shields.io/badge/100%25-local-2f6f4e)](#sécurité--confidentialité)
-[![Node](https://img.shields.io/badge/node-%E2%89%A5%2022.22-5a5a5a)](#prérequis)
+[![Node](https://img.shields.io/badge/node-24-5a5a5a)](#prérequis)
 [![Plateformes](https://img.shields.io/badge/Windows-5a5a5a)](#prérequis)
 [![Stack](https://img.shields.io/badge/Vue%203%20%C2%B7%20Quasar%20%C2%B7%20Fastify-5a5a5a)](#architecture)
 
@@ -317,8 +317,8 @@ comment signaler une faille.
 
 ## Prérequis
 
-- **Node.js** ≥ 22.22 (la borne vient de Quasar ; le serveur, lui, veut `--env-file` natif,
-  arrivé en 22.12). Versions 22 / 24 / 26 / 28.
+- **Node.js 24** — une seule version majeure, celle sur laquelle l'application est développée,
+  testée et livrée. C'est aussi celle que la CI fait tourner. Node 24 est en support long terme.
 - **pnpm** ≥ 10 — `npm i -g pnpm`.
 - **Claude Code** installé et lancé au moins une fois, donc un dossier `~/.claude` existant —
   `C:\Users\<vous>\.claude`.
