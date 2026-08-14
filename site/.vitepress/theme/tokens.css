@@ -1,0 +1,101 @@
+/* Les valeurs viennent de `src/css/app.scss` : `:root` pour le sombre, `body.body--light`
+   pour le clair. Elles ne sont pas re-choisies ici — le site et l'application doivent se
+   ressembler, et le vocabulaire visuel d'AURA est fermé. */
+
+:root {
+  --vp-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial,
+    sans-serif;
+  --vp-font-family-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas,
+    monospace;
+
+  --vp-c-brand-1: #e07a5f;
+  --vp-c-brand-2: #e68872;
+  --vp-c-brand-3: #e07a5f;
+  --vp-c-brand-soft: rgba(224, 122, 95, 0.14);
+
+  --vp-c-tip-1: var(--vp-c-brand-1);
+  --vp-c-tip-soft: var(--vp-c-brand-soft);
+
+  --vp-layout-max-width: 1440px;
+  --vp-nav-logo-height: 22px;
+}
+
+/* Thème clair — l'application le propose, le site doit tenir dans les deux. */
+:root {
+  --vp-c-bg: #e2e3e6;
+  --vp-c-bg-alt: #ffffff;
+  --vp-c-bg-soft: #f1f2f5;
+  --vp-c-bg-elv: #ffffff;
+
+  --vp-c-text-1: rgba(0, 0, 0, 0.87);
+  --vp-c-text-2: rgba(0, 0, 0, 0.66);
+  --vp-c-text-3: rgba(0, 0, 0, 0.55);
+
+  --vp-c-divider: rgba(0, 0, 0, 0.14);
+  --vp-c-border: rgba(0, 0, 0, 0.14);
+  --vp-c-gutter: rgba(0, 0, 0, 0.09);
+}
+
+.dark {
+  --vp-c-bg: #101014;
+  --vp-c-bg-alt: #292a2d;
+  --vp-c-bg-soft: #292a2d;
+  --vp-c-bg-elv: #3c3d40;
+
+  --vp-c-text-1: rgba(255, 255, 255, 0.92);
+  --vp-c-text-2: rgba(255, 255, 255, 0.62);
+  --vp-c-text-3: rgba(255, 255, 255, 0.51);
+
+  --vp-c-divider: rgba(255, 255, 255, 0.1);
+  --vp-c-border: rgba(255, 255, 255, 0.1);
+  --vp-c-gutter: rgba(255, 255, 255, 0.06);
+}
+
+/* La page de garde : le halo de la marque, en fond du bloc d'accroche. */
+:root {
+  --vp-home-hero-name-color: var(--vp-c-brand-1);
+  --vp-home-hero-image-background-image: radial-gradient(
+    circle at 50% 50%,
+    rgba(224, 122, 95, 0.28),
+    rgba(224, 122, 95, 0) 62%
+  );
+  --vp-home-hero-image-filter: blur(48px);
+}
+
+/* Les captures font 2880×1800 : elles se réduisent à la largeur disponible, et le cadre
+   les détache du fond dans les deux thèmes. */
+.vp-doc img.shot {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+}
+
+.vp-doc figure {
+  margin: 24px 0;
+}
+
+.vp-doc figcaption {
+  margin-top: 8px;
+  color: var(--vp-c-text-3);
+  font-size: 13px;
+  text-align: center;
+}
+
+.vp-doc video.demo-video {
+  width: 100%;
+  height: auto;
+  margin: 12px 0 24px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  background: #101014;
+}
+
+/* Le tableau comparatif est large : il défile dans son conteneur plutôt que de faire
+   défiler la page — la règle vaut pour tous les tableaux du manuel. */
+.vp-doc div[class*='table'],
+.vp-doc table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}

@@ -15,6 +15,8 @@ _Le poste de pilotage de votre environnement Claude Code._
 [![Plateformes](https://img.shields.io/badge/Windows-5a5a5a)](#prérequis)
 [![Stack](https://img.shields.io/badge/Vue%203%20%C2%B7%20Quasar%20%C2%B7%20Fastify-5a5a5a)](#architecture)
 
+**[Le site et le manuel en ligne](https://shaenn.github.io/aura)**
+
 **Français** · [English](README.en.md)
 
 </div>
@@ -245,7 +247,7 @@ principal. → [voir la vidéo](docs/videos/2-agent-explore.webm)
 → [voir la vidéo](docs/videos/3-question.webm)
 
 Le détail — bornes, arrière-plan, reprise d'une session — est dans
-[la page du manuel](src/help/sections/fr/atelier.md).
+[la page du manuel](https://shaenn.github.io/aura/guide/atelier).
 
 ---
 
@@ -256,14 +258,14 @@ AURA embarque son propre manuel : **18 pages** qui ne décrivent pas seulement o
 non accordée, pourquoi les seuils du diagnostic sont des percentiles, pourquoi les sous-agents
 ont leur propre piste. La touche `?` ouvre la page correspondant à l'écran courant.
 
-Les sources sont lisibles ici, sans installer quoi que ce soit :
+Il se lit en ligne, sans installer quoi que ce soit :
 
-[Concepts](src/help/sections/fr/concepts.md) · [Rejeu de session](src/help/sections/fr/replay.md) ·
-[Atelier](src/help/sections/fr/atelier.md) · [Sessions actives](src/help/sections/fr/sessions.md) ·
-[Diagnostic](src/help/sections/fr/diagnostic.md) · [Usage & coûts](src/help/sections/fr/usage.md) ·
-[toutes les pages](src/help/sections/fr/)
+[Concepts](https://shaenn.github.io/aura/guide/concepts) · [Rejeu de session](https://shaenn.github.io/aura/guide/replay) ·
+[Atelier](https://shaenn.github.io/aura/guide/atelier) · [Sessions actives](https://shaenn.github.io/aura/guide/sessions) ·
+[Diagnostic](https://shaenn.github.io/aura/guide/diagnostic) · [Usage & coûts](https://shaenn.github.io/aura/guide/usage) ·
+[toutes les pages](https://shaenn.github.io/aura/guide/concepts)
 
-Si vous vous demandez si le projet est sérieux, [Concepts](src/help/sections/fr/concepts.md) est la
+Si vous vous demandez si le projet est sérieux, [Concepts](https://shaenn.github.io/aura/guide/concepts) est la
 page à lire : elle tient en cinq minutes et dit exactement ce qu'AURA s'autorise à écrire, à
 lire, et à refuser.
 
