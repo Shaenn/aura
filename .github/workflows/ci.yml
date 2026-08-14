@@ -27,9 +27,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # 11 et non 10 : les gardes de `pnpm-workspace.yaml` sont des fonctions de
+      # pnpm 11. Sous la 10, `pnpm install` ne vérifie pas le lockfile contre
+      # elles — la quarantaine ne protégeait donc que la machine qui résout, et
+      # un lockfile fabriqué ailleurs avec une dérogation locale passait la CI
+      # sans un mot. C'est aussi la version qui écrit le lockfile en local :
+      # laisser la CI le relire avec une majeure de retard est une panne qui
+      # attend son heure.
       - uses: pnpm/action-setup@v6
         with:
-          version: 10
+          version: 11
 
       - uses: actions/setup-node@v7
         with:
