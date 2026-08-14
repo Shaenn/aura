@@ -23,9 +23,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Même version que `ci.yml`, et pour la même raison : voir le commentaire
+      # qui s'y trouve.
       - uses: pnpm/action-setup@v6
         with:
-          version: 10
+          version: 11
       - uses: actions/setup-node@v7
         with:
           node-version: 24.19.0
