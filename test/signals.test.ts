@@ -10,8 +10,9 @@
 //
 // Sur une machine sans corpus, tout se saute — c'est un filet, pas une porte.
 
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
+import { readdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { getSignals, scanFile, type SessionSignal } from '../server/diagnostics/signals.ts';
@@ -19,11 +20,48 @@ import { getUsage } from '../server/usage.ts';
 import { costOf } from '../server/pricing.ts';
 import { CONTEXT_CATEGORIES } from '../shared/context.ts';
 
-const HAS_CORPUS = existsSync(join(homedir(), '.claude', 'projects'));
+const PROJECTS = join(homedir(), '.claude', 'projects');
+const HAS_CORPUS = existsSync(PROJECTS);
 const ACTIVITY = join(import.meta.dirname, 'fixtures', 'activity.jsonl');
 
 /** Le corpus entier passe deux fois ; laisser le temps au premier scan. */
 const TIMEOUT = 300_000;
+
+/**
+ * L'état du corpus à l'instant t : chaque transcript par sa taille et sa date.
+ *
+ * Le corpus n'est pas un jeu d'essai figé, c'est le `~/.claude` vivant de la
+ * machine. Une session Claude Code qui écrit pendant qu'on le lit décale la
+ * seconde lecture par rapport à la première, et l'invariant compare alors deux
+ * instants au lieu de deux calculs. Mesuré : 671 transcripts, dont un modifié
+ * en quatre secondes par la seule session en cours.
+ *
+ * Deux empreintes identiques prouvent que rien n'a bougé entre elles.
+ */
+async function empreinteCorpus(): Promise<string> {
+  const lignes: string[] = [];
+  for (const projet of await readdir(PROJECTS)) {
+    let fichiers: string[];
+    try {
+      fichiers = await readdir(join(PROJECTS, projet));
+    } catch {
+      // Un projet supprimé entre l'énumération et la lecture est lui-même un
+      // mouvement, mais il sera vu par la différence des deux empreintes.
+      continue;
+    }
+    for (const nom of fichiers) {
+      if (!nom.endsWith('.jsonl')) continue;
+      const chemin = join(PROJECTS, projet, nom);
+      try {
+        const s = await stat(chemin);
+        lignes.push(`${chemin}:${s.size}:${s.mtimeMs}`);
+      } catch {
+        continue;
+      }
+    }
+  }
+  return lignes.sort().join('\n');
+}
 
 // ── Les mesures d'activité, sur une fixture écrite à la main ─────────────────
 //
@@ -114,34 +152,59 @@ describe('activité d’une session', () => {
 
 describe.skipIf(!HAS_CORPUS)('relevés par session', () => {
   let signals: SessionSignal[] = [];
+  let usage!: Awaited<ReturnType<typeof getUsage>>;
+  /** Le corpus a bougé pendant les deux lectures, et pendant la reprise aussi. */
+  let corpusMouvant = false;
 
-  it(
-    'produit un relevé par session',
-    async () => {
-      ({ signals } = await getSignals());
-      expect(signals.length).toBeGreaterThan(0);
-    },
-    TIMEOUT,
-  );
+  /**
+   * Les deux lectures dans le même souffle, et sous surveillance.
+   *
+   * Elles vivaient dans deux `it` distincts, séparés par le balayage complet du
+   * corpus — plusieurs secondes pendant lesquelles une session pouvait écrire.
+   * L'invariant échouait alors sur deux tokens : l'entrée non cachée d'une
+   * seule réponse d'API, arrivée entre les deux. Les rapprocher ne suffit pas à
+   * fermer la course, seulement à la réduire ; l'empreinte, elle, la détecte.
+   */
+  beforeAll(async () => {
+    for (let essai = 1; essai <= 2; essai++) {
+      const avant = await empreinteCorpus();
+      const releve = await getSignals();
+      const compte = await getUsage();
+      const apres = await empreinteCorpus();
+      signals = releve.signals;
+      usage = compte;
+      if (avant === apres) return;
+      if (essai === 2) corpusMouvant = true;
+    }
+  }, TIMEOUT);
 
-  it(
-    'totalise exactement comme la page Usage',
-    async () => {
-      const usage = await getUsage();
-      const sum = (pick: (s: SessionSignal) => number): number =>
-        signals.reduce((n, s) => n + pick(s), 0);
+  it('produit un relevé par session', () => {
+    expect(signals.length).toBeGreaterThan(0);
+  });
 
-      expect(sum((s) => s.tokens.input)).toBe(usage.totals.input);
-      expect(sum((s) => s.tokens.output)).toBe(usage.totals.output);
-      expect(sum((s) => s.tokens.cacheRead)).toBe(usage.totals.cacheRead);
-      expect(sum((s) => s.tokens.cacheCreate)).toBe(usage.totals.cacheCreate);
-      expect(sum((s) => s.turns + s.subagentTurns)).toBe(usage.totals.turns);
-      // Le coût est une somme de flottants : l'égalité stricte n'a pas de sens,
-      // mais le cent près, si.
-      expect(sum((s) => s.cost)).toBeCloseTo(usage.totals.cost, 2);
-    },
-    TIMEOUT,
-  );
+  it('totalise exactement comme la page Usage', (ctx) => {
+    // Sauter en le disant, jamais passer en silence : un test qui se tait
+    // quand il n'a pas pu mesurer vaut moins que pas de test du tout.
+    if (corpusMouvant) {
+      ctx.skip(
+        'le corpus a bougé pendant les deux lectures, reprise comprise : une session Claude Code écrivait.',
+      );
+      return;
+    }
+    const sum = (pick: (s: SessionSignal) => number): number =>
+      signals.reduce((n, s) => n + pick(s), 0);
+
+    expect(sum((s) => s.tokens.input)).toBe(usage.totals.input);
+    expect(sum((s) => s.tokens.output)).toBe(usage.totals.output);
+    expect(sum((s) => s.tokens.cacheRead)).toBe(usage.totals.cacheRead);
+    expect(sum((s) => s.tokens.cacheCreate)).toBe(usage.totals.cacheCreate);
+    expect(sum((s) => s.turns + s.subagentTurns)).toBe(usage.totals.turns);
+    // Le coût est une somme de flottants : l'égalité stricte n'a pas de sens,
+    // mais le cent près, si.
+    expect(sum((s) => s.cost)).toBeCloseTo(usage.totals.cost, 2);
+  });
+  // Plus de délai à accorder : les deux lectures ont eu lieu dans le
+  // `beforeAll`, ce test ne fait plus que sommer.
 
   it('ne déduit jamais un coût d’un modèle sans tarif', () => {
     for (const s of signals) {
