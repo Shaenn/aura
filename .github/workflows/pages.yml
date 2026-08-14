@@ -23,17 +23,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Même version que `ci.yml`, et pour la même raison : voir le commentaire
+      # qui s'y trouve.
       - uses: pnpm/action-setup@v6
         with:
-          version: 10
+          version: 11
       - uses: actions/setup-node@v7
         with:
           node-version: 24.19.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm site:build
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site/.vitepress/dist
 
@@ -45,4 +47,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
