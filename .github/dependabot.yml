@@ -23,6 +23,24 @@ updates:
     schedule:
       interval: weekly
       day: monday
+
+    # Aucune version fraîche. C'est le pendant du `minimumReleaseAge` de
+    # `pnpm-workspace.yaml`, et les deux gardes ne font pas le même travail :
+    # pnpm refuse d'installer, Dependabot refuse de proposer. Sans la seconde,
+    # une demande arrive régulièrement sur une version que la première rejette —
+    # une branche qu'on ne peut pas installer, donc pas juger.
+    #
+    # Trois jours plutôt qu'un : le délai ne coûte rien puisqu'il ne s'applique
+    # **pas** aux mises à jour de sécurité, qui continuent d'arriver le jour
+    # même. Ce qu'on retarde, ce sont les montées de confort ; ce qu'on gagne,
+    # c'est le temps qu'un mainteneur mette la main sur une publication qui ne
+    # vient pas de lui.
+    #
+    # C'est aussi le défaut de Dependabot — écrit ici parce qu'une garde qu'on
+    # n'a pas déclarée est une garde qu'on ne sait pas relire.
+    cooldown:
+      default-days: 3
+
     # Mesuré sur douze mois de publications des 36 dépendances directes : le lot
     # mineur bouge 52 semaines sur 52, le SDK 45 sur 52 — 265 versions — et 28
     # majeures sont franchies dans l'année, soit une tous les treize jours. Le
@@ -71,6 +89,8 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 3
     groups:
       actions:
         patterns: ['*']
