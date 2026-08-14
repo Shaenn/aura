@@ -27,3 +27,14 @@ strictDepBuilds: true
 # 0.3.231, publié six heures plus tôt, s'est installé accompagné de neuf lignes
 # d'exclusion ajoutées sans un mot.
 minimumReleaseAge: 1440
+
+# La vitrine tire une chaîne d'outils à elle. `vitepress` 1.6.4 — la dernière
+# publiée, la 2 n'existe qu'en alpha — épingle `vite@^5.4.14`, et la ligne 5 de
+# Vite n'a **jamais** reçu les correctifs : le plus bas est 6.4.3. Sans cette
+# ligne, quatre avis restent ouverts en permanence, dont un de gravité haute qui
+# vise Windows, la seule plateforme du projet.
+#
+# La portée compte : `vitepress>vite` et non `vite`. AURA elle-même est en
+# vite 8.2.1 ; un remplacement global la ferait *descendre* de deux majeures.
+overrides:
+  vitepress>vite: '^6.4.3'
