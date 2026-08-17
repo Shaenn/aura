@@ -66,7 +66,12 @@
 <script setup lang="ts">
 import { computed, ref, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { readMemory, readResource, type ResourceNode } from '@/services/projects';
+import {
+  readIncludedFile,
+  readMemory,
+  readResource,
+  type ResourceNode,
+} from '@/services/projects';
 import { readPlan } from '@/services/system';
 import { parseDoc, type KeySpec } from '@/utils/resourceFrontmatter';
 import { CATEGORY_META, FM_KEYS, renderBody, type ResourceSource } from './projectResources';
@@ -79,7 +84,7 @@ const props = withDefaults(
     slug: string;
     /** `null` ferme le dialogue. Ouvrir, c'est passer un nœud. */
     resource: ResourceNode | null;
-    /** Trois provenances, trois routes de lecture — voir `ResourceSource`. */
+    /** Quatre provenances, quatre routes de lecture — voir `ResourceSource`. */
     source?: ResourceSource;
   }>(),
   { source: 'resource' },
@@ -97,6 +102,17 @@ const content = ref('');
 const ext = ref('');
 const loading = ref(false);
 const error = ref('');
+
+// Chaque provenance a sa route ; un plan n'est pas ici, il se lit par son nom de
+// fichier et n'a pas de slug à passer.
+const READERS: Record<
+  Exclude<ResourceSource, 'plan'>,
+  (slug: string, path: string) => Promise<{ rel: string; content: string }>
+> = {
+  resource: readResource,
+  memory: readMemory,
+  included: readIncludedFile,
+};
 
 const icon = computed(() => {
   // Un document du dépôt se lit par la route de la mémoire, sans en être : la
@@ -118,7 +134,7 @@ async function load(node: ResourceNode): Promise<void> {
     const { content: c } =
       props.source === 'plan'
         ? await readPlan(node.rel)
-        : await (props.source === 'memory' ? readMemory : readResource)(props.slug, node.rel);
+        : await READERS[props.source](props.slug, node.rel);
     // Cliquer vite sur deux fichiers ne doit pas afficher le contenu du premier
     // sous le titre du second : une réponse qui n'est plus attendue est jetée.
     if (props.resource?.rel !== node.rel) return;

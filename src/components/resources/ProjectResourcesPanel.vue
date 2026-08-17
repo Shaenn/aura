@@ -3,15 +3,16 @@
     <header class="prp-head">
       <q-icon name="folder_open" size="16px" aria-hidden="true" />
       <span class="section-label">{{ t('resources.panelTitle') }}</span>
-      <!-- Ce que l'arbre montre, le compteur l'annonce — les plans compris, même
-           si le fichier vit hors du `.claude` du projet. Les dossiers inclus, eux,
-           n'y sont pas : ce volet ne les affiche pas, donc il ne les compte pas. -->
+      <!-- Ce que l'arbre montre, le compteur l'annonce — les plans et les dossiers
+           inclus compris, même si leurs fichiers vivent hors du `.claude` du
+           projet. -->
       <span v-if="data" class="prp-count font-mono">
         {{
           treeCount({
             resources: data.resources,
             memories: data.memories,
             repoDocs: data.repoDocs,
+            folders: data.folders,
             plans,
           })
         }}
@@ -45,13 +46,16 @@
       :resources="data.resources"
       :memories="data.memories"
       :repo-docs="data.repoDocs"
+      :folders="data.folders"
       :has-claude-dir="data.hasClaudeDir"
       :active-resource-rel="activeSource === 'resource' ? activeRel : ''"
       :active-memory-rel="activeSource === 'memory' ? activeRel : ''"
+      :active-included-rel="activeSource === 'included' ? activeRel : ''"
       :plans="plans"
       :active-plan-name="activeSource === 'plan' ? activeRel : ''"
       @open-resource="(r) => emit('open', r, 'resource')"
       @open-memory="(r) => emit('open', r, 'memory')"
+      @open-included="(r) => emit('open', r, 'included')"
       @open-plan="openPlan"
     />
   </div>
@@ -66,6 +70,10 @@
  * elles ne changent que si l'on édite un fichier, et relire l'arborescence au
  * rythme du flux serait du travail pur pour un résultat identique. Le
  * rechargement est donc un geste, pas une horloge.
+ *
+ * Les dossiers inclus s'y montrent comme dans la page Projet — c'est le même
+ * inventaire — mais sans `can-include` : on les lit ici, on les choisit là-bas.
+ * Un même réglage édité depuis deux écrans, c'est deux endroits où le corriger.
  */
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';

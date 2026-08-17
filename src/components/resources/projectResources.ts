@@ -13,11 +13,12 @@ import { AGENT_KEYS, RULE_KEYS, SKILL_KEYS, type KeySpec } from '@/utils/resourc
 /**
  * D'où vient le fichier qu'on lit, et donc par quelle route il se lit.
  *
- * Trois bacs à sable distincts côté serveur : le `.claude` du projet, les
- * CLAUDE.md de l'arborescence des sources, et `~/.claude/plans` — qui n'est même
- * pas dans le projet. Un `rel` ne dit pas d'où il sort ; cette étiquette le dit.
+ * Quatre bacs à sable distincts côté serveur : le `.claude` du projet, les
+ * CLAUDE.md de l'arborescence des sources, les dossiers que l'utilisateur a
+ * inclus, et `~/.claude/plans` — qui n'est même pas dans le projet. Un `rel` ne
+ * dit pas d'où il sort ; cette étiquette le dit.
  */
-export type ResourceSource = 'resource' | 'memory' | 'plan';
+export type ResourceSource = 'resource' | 'memory' | 'included' | 'plan';
 
 // ── Nœuds d'arbre ────────────────────────────────────────────────────────────
 // Déclarés ici plutôt que dans `RuleTree.vue` : `buildTree` les produit, et un
