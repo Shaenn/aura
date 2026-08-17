@@ -77,6 +77,16 @@
             <q-icon name="folder_open" size="16px" aria-hidden="true" />
             <span class="section-label">{{ t('pages.project.navTitle') }}</span>
             <span class="pd-count font-mono">{{ navCount }}</span>
+            <q-btn
+              flat
+              dense
+              round
+              size="sm"
+              icon="refresh"
+              :aria-label="t('resources.reloadAria')"
+              :disable="resourcesReloading"
+              @click="reloadResources"
+            />
           </header>
 
           <ProjectResourcesNav
@@ -328,7 +338,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref, computed, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useNotify } from '@/composables/useNotify';
@@ -365,11 +375,14 @@ const { t } = useI18n();
 // décider de ce qu'il ouvre. D'où le magasin plutôt qu'un état local.
 const settings = useSettingsStore();
 const router = useRouter();
+const route = useRoute();
 const $q = useQuasar();
 const { notifyError, notifyDone } = useNotify();
 
 const detail = ref<ProjectDetail | null>(null);
 const loading = ref(true);
+/** Le rechargement de l'inventaire seul, distinct du chargement de la page. */
+const resourcesReloading = ref(false);
 const error = ref('');
 const trFilter = ref('');
 
@@ -545,6 +558,69 @@ function resetViewer(): void {
   viewer.error = '';
 }
 
+/**
+ * Le fichier ouvert vit dans l'URL, pas seulement dans la visionneuse.
+ *
+ * C'est la seule mémoire qui survit à un rechargement du navigateur, et elle
+ * rend le lien partageable au passage. En `replace` : parcourir l'arbre n'est
+ * pas une navigation, et chaque clic empilé dans l'historique rendrait le retour
+ * arrière inutilisable.
+ */
+function rememberSelection(): void {
+  const f = viewer.source === 'plan' ? viewer.planName : viewer.rel;
+  if (route.query.src === viewer.source && route.query.f === f) return;
+  void router.replace({ query: { ...route.query, src: viewer.source, f } });
+}
+
+/** Vider la visionneuse, et l'URL avec — sans quoi le prochain F5 rouvrirait ce
+ * qu'on vient de fermer. */
+function clearSelection(): void {
+  resetViewer();
+  const query = { ...route.query };
+  delete query.src;
+  delete query.f;
+  void router.replace({ query });
+}
+
+const queryStr = (v: unknown): string => (typeof v === 'string' ? v : '');
+
+/**
+ * Rouvrir ce que dit l'URL, si ce fichier existe toujours dans l'inventaire.
+ *
+ * On ne se fie pas au seul `rel` : il ne veut dire quelque chose que dans son
+ * propre magasin, et un fichier retiré du disque — ou d'un dossier qu'on vient
+ * d'exclure — doit rendre la main à l'auto-sélection plutôt qu'ouvrir un vide.
+ */
+function restoreSelection(): boolean {
+  const d = detail.value;
+  if (!d) return false;
+  const rel = queryStr(route.query.f);
+  if (!rel) return false;
+  const src = queryStr(route.query.src);
+  const find = (list: ResourceNode[]): ResourceNode | undefined => list.find((r) => r.rel === rel);
+  if (src === 'plan') {
+    const p = projectPlans.value.find((x) => x.name === rel);
+    if (p) void openPlan(p);
+    return Boolean(p);
+  }
+  if (src === 'memory') {
+    const r = find([...d.memories, ...d.repoDocs]);
+    if (r) void openMemory(r);
+    return Boolean(r);
+  }
+  if (src === 'included') {
+    const r = find(d.folders.flatMap((folder) => folder.files));
+    if (r) void openIncluded(r);
+    return Boolean(r);
+  }
+  if (src === 'resource') {
+    const r = find(d.resources);
+    if (r) void openResource(r);
+    return Boolean(r);
+  }
+  return false;
+}
+
 /** Ces trois-là ne diffèrent que par leur lecteur — et donc par leur bac à sable. */
 async function openFile(
   source: 'resource' | 'memory' | 'included',
@@ -558,6 +634,7 @@ async function openFile(
   viewer.content = '';
   viewer.error = '';
   viewer.loading = true;
+  rememberSelection();
   try {
     const read =
       source === 'memory' ? readMemory : source === 'included' ? readIncludedFile : readResource;
@@ -588,7 +665,7 @@ async function applyFolders(folders: string[]): Promise<void> {
   // serait maintenant refusée, et le garder à l'écran promettrait un contenu
   // qu'on ne saurait plus relire.
   const stillCovered = folders.some((f) => viewer.rel.startsWith(`${f}/`));
-  if (viewer.source === 'included' && !stillCovered) resetViewer();
+  if (viewer.source === 'included' && !stillCovered) clearSelection();
   await refresh();
 }
 
@@ -607,6 +684,7 @@ async function openPlan(p: PlanInfo): Promise<void> {
   viewer.error = '';
   viewer.ext = 'md';
   viewer.loading = true;
+  rememberSelection();
   try {
     viewer.content = (await readPlan(p.name)).content;
   } catch (e) {
@@ -631,7 +709,7 @@ async function doDeletePlan(): Promise<void> {
     await deletePlan(viewer.planName);
     notifyDone(t('pages.project.planDeleted'));
     confirmPlanDelete.value = false;
-    resetViewer();
+    clearSelection();
     await loadPlans();
   } catch (e) {
     notifyError(e, t('pages.project.planDeleteError'));
@@ -698,6 +776,9 @@ async function refresh(): Promise<void> {
       { label: t('nav.projects'), to: { name: 'projects' } },
       { label: detail.value.name },
     ]);
+    // Le fichier qu'on lisait avant le rechargement l'emporte sur l'auto-sélection :
+    // revenir de force au CLAUDE.md racine ferait perdre sa page à chaque F5.
+    if (restoreSelection()) return;
     // Auto-sélection pour éviter un panneau vide. On suit l'ordre du navigateur :
     // le CLAUDE.md racine, sinon le README, sinon la première ressource, sinon le
     // premier plan (un projet peut n'avoir que des plans).
@@ -710,6 +791,27 @@ async function refresh(): Promise<void> {
     error.value = e instanceof Error ? e.message : t('pages.project.loadError');
   } finally {
     loading.value = false;
+  }
+}
+
+/**
+ * Recharger le seul inventaire, sans repartir de zéro.
+ *
+ * `refresh` remet la page à son état d'arrivée : elle vide la visionneuse et
+ * represélectionne le premier fichier. Ce n'est pas ce qu'on veut quand on vient
+ * d'éditer une ressource hors d'AURA et qu'on veut la voir apparaître dans
+ * l'arbre — le fichier ouvert doit le rester. On ne touche donc ni au fil
+ * d'Ariane, ni à la visionneuse, ni au voile de chargement de la page entière.
+ */
+async function reloadResources(): Promise<void> {
+  resourcesReloading.value = true;
+  try {
+    const [d] = await Promise.all([getProjectDetail(props.slug), loadPlans()]);
+    detail.value = d;
+  } catch (e) {
+    notifyError(e instanceof Error ? e.message : t('pages.project.loadError'));
+  } finally {
+    resourcesReloading.value = false;
   }
 }
 
@@ -899,6 +1001,7 @@ onMounted(refresh);
 .pd-count {
   font-size: var(--fs-sm);
   color: var(--dim);
+  margin-left: auto;
 }
 .pd-hooks {
   list-style: none;

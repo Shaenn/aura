@@ -13,7 +13,9 @@ import type { TranscriptEvent } from '../shared/transcript.ts';
 
 let clock = 0;
 
-function event(part: Partial<TranscriptEvent> & { kind: TranscriptEvent['kind'] }): TranscriptEvent {
+function event(
+  part: Partial<TranscriptEvent> & { kind: TranscriptEvent['kind'] },
+): TranscriptEvent {
   clock += 1000;
   return {
     uuid: `e${clock}`,
@@ -29,8 +31,7 @@ function event(part: Partial<TranscriptEvent> & { kind: TranscriptEvent['kind'] 
 const human = (text: string) =>
   event({ kind: 'user', origin: 'human', blocks: [{ kind: 'text', text }] });
 
-const answer = (text: string) =>
-  event({ kind: 'assistant', blocks: [{ kind: 'text', text }] });
+const answer = (text: string) => event({ kind: 'assistant', blocks: [{ kind: 'text', text }] });
 
 const command = (name: string) =>
   event({
