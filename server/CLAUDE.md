@@ -86,6 +86,10 @@ voix (`docs/voix.md`, déjà chargée). Trois choses, dans cet ordre — ce qu'A
   via `NODE_ENV` inline — incompatible PowerShell.
 - Port `8800` et non `8788` : ce dernier est celui d'une autre application locale.
 - `AURA_CLAUDE_DIR` surcharge le dossier géré.
+- `CLAUDE_CODE_PROJECT_DIR_NAME` **casse la résolution des transcripts, en silence**. Le
+  nom du dossier d'un projet est dérivé du `cwd` (`agent/slug.ts`, et sa lecture inverse
+  dans `src/utils/slug.ts`) ; depuis le CLI 2.1.234, cette variable permet de le choisir.
+  Posée, elle rend introuvables des transcripts qui existent, sans erreur ni trace.
 - **Les sessions de l'Atelier ont deux bornes**, toutes deux dans `agent/registry.ts` :
   `MAX_SESSIONS` (le parc refuse d'en ouvrir une de plus — `429`, pas `409`) et
   `IDLE_TTL_MS` (un balayeur ramasse celles que plus personne ne regarde). Une session
