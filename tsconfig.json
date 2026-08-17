@@ -4,13 +4,5 @@
   // the Quasar config forbids. It has its own tsconfig, checked by `pnpm typecheck`.
   // `site/` est le site vitrine : sa config est typée par VitePress, pas par le tsconfig
   // de l'application, dont il n'emprunte ni les alias ni le `lib: dom`.
-  "exclude": [
-    "./dist",
-    "./idea",
-    "./node_modules",
-    "./.quasar",
-    "./server",
-    "./site",
-    "./test"
-  ]
+  "exclude": ["./dist", "./idea", "./node_modules", "./.quasar", "./server", "./site", "./test"]
 }

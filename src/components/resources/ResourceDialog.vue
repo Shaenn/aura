@@ -66,12 +66,7 @@
 <script setup lang="ts">
 import { computed, ref, useId, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import {
-  readIncludedFile,
-  readMemory,
-  readResource,
-  type ResourceNode,
-} from '@/services/projects';
+import { readIncludedFile, readMemory, readResource, type ResourceNode } from '@/services/projects';
 import { readPlan } from '@/services/system';
 import { parseDoc, type KeySpec } from '@/utils/resourceFrontmatter';
 import { CATEGORY_META, FM_KEYS, renderBody, type ResourceSource } from './projectResources';

@@ -17,7 +17,10 @@ const head = (dir: string, body: string): string =>
 describe('manuel de skill', () => {
   it('lit le nom et le corps sous l’en-tête', () => {
     const doc = skillDocument(
-      head('C:\\Users\\jean.dupont\\Documents\\p\\.claude\\skills\\pipeline-feature', '# Pipeline\n\nDeux.'),
+      head(
+        'C:\\Users\\jean.dupont\\Documents\\p\\.claude\\skills\\pipeline-feature',
+        '# Pipeline\n\nDeux.',
+      ),
     );
     expect(doc?.name).toBe('pipeline-feature');
     expect(doc?.body).toBe('# Pipeline\n\nDeux.');
@@ -43,7 +46,10 @@ describe('manuel de skill', () => {
     // Le dossier d'une extension ne porte pas son préfixe : `…/superpowers/
     // 5.0.7/skills/brainstorming` pour un appel `superpowers:brainstorming`.
     const doc = skillDocument(
-      head('/home/jean.dupont/.claude/plugins/cache/o/superpowers/5.0.7/skills/brainstorming', '# B'),
+      head(
+        '/home/jean.dupont/.claude/plugins/cache/o/superpowers/5.0.7/skills/brainstorming',
+        '# B',
+      ),
       'superpowers:brainstorming',
     );
     expect(doc?.name).toBe('superpowers:brainstorming');
