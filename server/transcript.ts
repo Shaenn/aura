@@ -1074,6 +1074,15 @@ const STRUCTURED_RESULT: Record<string, readonly string[]> = {
   // L'identifiant que le harness attribue à la tâche créée — `{id, subject}`.
   // C'est la seule clé fiable pour raccrocher les `TaskUpdate` qui suivront à la
   // tâche qu'ils font avancer ; le rang de l'appel ne l'est pas.
+  //
+  // Cette entrée ne sert plus qu'à relire le passé, et ce n'est pas un oubli.
+  // Les outils de suivi de tâches — `TaskCreate`, `TaskGet`, `TaskUpdate`,
+  // `TaskList`, `TodoWrite` — sont sortis de la surface par défaut des modèles
+  // récents (CLI 2.1.233, en écho à un réglage serveur antérieur) : les sessions
+  // nouvelles n'en produisent plus. Les transcripts déjà écrits, eux, en sont
+  // pleins, et le rejeu doit continuer de les lire — d'où le maintien de la
+  // liste blanche et du raccrochage. Aucun réglage ne les rallume côté AURA :
+  // l'Atelier garde de quoi les afficher, sans exposer le choix.
   TaskCreate: ['task'],
   // Rien à retenir à plat : le seul champ utile de `Skill` est un tableau, et
   // il se lit dans `STRUCTURED_DERIVED`. L'entrée doit exister quand même —
