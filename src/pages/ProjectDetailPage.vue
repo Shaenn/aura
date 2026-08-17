@@ -77,6 +77,16 @@
             <q-icon name="folder_open" size="16px" aria-hidden="true" />
             <span class="section-label">{{ t('pages.project.navTitle') }}</span>
             <span class="pd-count font-mono">{{ navCount }}</span>
+            <q-btn
+              flat
+              dense
+              round
+              size="sm"
+              icon="refresh"
+              :aria-label="t('resources.reloadAria')"
+              :disable="resourcesReloading"
+              @click="reloadResources"
+            />
           </header>
 
           <ProjectResourcesNav
@@ -370,6 +380,8 @@ const { notifyError, notifyDone } = useNotify();
 
 const detail = ref<ProjectDetail | null>(null);
 const loading = ref(true);
+/** Le rechargement de l'inventaire seul, distinct du chargement de la page. */
+const resourcesReloading = ref(false);
 const error = ref('');
 const trFilter = ref('');
 
@@ -713,6 +725,27 @@ async function refresh(): Promise<void> {
   }
 }
 
+/**
+ * Recharger le seul inventaire, sans repartir de zéro.
+ *
+ * `refresh` remet la page à son état d'arrivée : elle vide la visionneuse et
+ * represélectionne le premier fichier. Ce n'est pas ce qu'on veut quand on vient
+ * d'éditer une ressource hors d'AURA et qu'on veut la voir apparaître dans
+ * l'arbre — le fichier ouvert doit le rester. On ne touche donc ni au fil
+ * d'Ariane, ni à la visionneuse, ni au voile de chargement de la page entière.
+ */
+async function reloadResources(): Promise<void> {
+  resourcesReloading.value = true;
+  try {
+    const [d] = await Promise.all([getProjectDetail(props.slug), loadPlans()]);
+    detail.value = d;
+  } catch (e) {
+    notifyError(e instanceof Error ? e.message : t('pages.project.loadError'));
+  } finally {
+    resourcesReloading.value = false;
+  }
+}
+
 onMounted(refresh);
 </script>
 
@@ -899,6 +932,7 @@ onMounted(refresh);
 .pd-count {
   font-size: var(--fs-sm);
   color: var(--dim);
+  margin-left: auto;
 }
 .pd-hooks {
   list-style: none;
