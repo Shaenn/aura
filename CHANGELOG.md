@@ -19,6 +19,39 @@ par cas.
 Une version se pose quand il y a quelque chose à annoncer, pas à chaque fusion. Une journée
 entière de montées de dépendances n'en produit aucune.
 
+## [1.2.0] — 2026-08-18
+
+Une version de la fiche projet : son volet de ressources retient enfin ce qu'on lui montre,
+au lieu de tout oublier dès qu'on tourne la tête.
+
+### Ce qui change pour vous
+
+- **Le fichier ouvert survit au rechargement.** La visionneuse ne gardait sa sélection qu'en
+  mémoire : un F5 sur la fiche d'un projet ramenait au `CLAUDE.md` racine, quelle que soit la
+  page qu'on était en train de lire. Le fichier ouvert vit maintenant dans l'adresse, ce qui
+  rend le lien partageable au passage. Et si ce fichier a disparu entre-temps — retiré du
+  disque, ou d'un dossier qu'on vient d'exclure — la sélection automatique reprend la main
+  plutôt que d'ouvrir un panneau vide.
+- **Le volet des ressources se recharge sans quitter l'écran.** Pour voir une ressource
+  éditée hors d'AURA, il fallait sortir de la page et y revenir. Un bouton la recharge sur
+  place, et sans faire perdre le fichier qu'on lisait.
+- **Les dossiers inclus se voient aussi dans le volet des sessions.** Ils étaient dans la
+  réponse du serveur, mais pas à l'écran. Un dossier qu'on a demandé à voir se voit
+  maintenant partout où l'arbre du projet se montre, sinon l'inclusion n'a de sens que sur un
+  écran.
+
+### Ce qui a été entretenu
+
+Le SDK d'agent, qui embarque le binaire de Claude Code et change donc le moteur qui écrit les
+transcripts — jugé en le faisant produire, pas en le compilant. Puis fastify, highlight.js,
+pinia et globals.
+
+Une conséquence est à connaître, et elle vient du moteur, pas d'AURA : **les listes de tâches
+ne s'écrivent plus dans les transcripts nouveaux.** Les outils qui les tenaient sont sortis de
+la surface par défaut des modèles récents. Le rejeu continue de les afficher partout où elles
+ont déjà été enregistrées ; il n'aura simplement plus rien à montrer sur ce point pour les
+sessions à venir.
+
 ## [1.1.0] — 2026-08-14
 
 Rien de neuf dans l'application : cette version est celle du socle, et de deux choses que
@@ -100,5 +133,6 @@ collées, reprise d'une session existante.
   externe, aucun secret dans le navigateur. Voir [SECURITY.md](SECURITY.md).
 - Windows, exclusivement — la seule plateforme sur laquelle l'application a tourné.
 
+[1.2.0]: https://github.com/Shaenn/aura/releases/tag/v1.2.0
 [1.1.0]: https://github.com/Shaenn/aura/releases/tag/v1.1.0
 [1.0.0]: https://github.com/Shaenn/aura/releases/tag/v1.0.0
