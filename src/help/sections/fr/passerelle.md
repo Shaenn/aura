@@ -45,17 +45,74 @@ Une ligne dans mon journal confirme l'ouverture et le nombre de conversations au
 
 ## Ce que vous pouvez me dire
 
-Une conversation tient **une** session à la fois.
+### Consulter, sans rien lancer
 
-| Message              | Ce que je fais                                     |
-| -------------------- | -------------------------------------------------- |
-| `/atelier <dossier>` | J'ouvre une session sur ce dossier                 |
-| `/sessions`          | Je liste ce qui tourne, toutes origines confondues |
-| `/stop`              | J'interromps le tour en cours                      |
-| `/fin`               | Je ferme la session de cette conversation          |
-| `/aide`              | Je rappelle ce qui précède                         |
+`/projets` ouvre un **écran de navigation** : un bouton par projet. Un clic, et ce même message se réécrit pour montrer **l'arborescence** du projet — `.claude/ 59`, `workflow/ 15`, puis les fichiers de la racine. On descend dossier par dossier ; un fichier ouvre son contenu.
+
+Un seul message pour tout le parcours, avec **◀ Dossier parent** à chaque étage. C'est délibéré : une conversation n'a pas de bouton précédent, et empiler une liste par clic laisserait derrière vous une file d'états morts qu'il faudrait remonter pour retrouver le fil.
+
+Quatre-vingts fichiers d'affilée ne se lisent pas. Les ranger par catégorie aurait été une réponse — mais une réponse inventée, alors que **les chemins en portent déjà une** : les « catégories » de la page Projet _sont_ les dossiers de `.claude`. Suivre l'arbre montre donc le projet tel qu'il est rangé, plutôt qu'un classement parallèle à retenir.
+
+Chaque dossier affiche le nombre de fichiers qu'il contient **à toute profondeur**. Et un dossier qui n'en contient qu'un autre est fondu avec lui — `rules/back/application` s'ouvre d'un seul clic, au lieu de trois écrans qui ne poseraient aucune question.
+
+Les commandes restent disponibles quand vous savez déjà où vous allez :
+
+| Message       | Ce que je fais                                                |
+| ------------- | ------------------------------------------------------------- |
+| `/projets`    | L'écran de navigation                                         |
+| `/projet <n>` | La racine d'un projet, directement                            |
+| `/voir <n>`   | Le contenu d'un fichier, par son rang dans la liste du projet |
+
+C'est **le même inventaire que la page Projet** — ni plus, ni moins. Les mêmes gardes s'appliquent donc mot pour mot : un fichier que je refuse d'ouvrir à l'écran, je le refuse ici aussi, et les secrets (`.env`, identifiants, clés) ne sont proposés nulle part.
+
+Rien de tout cela n'ouvre de session : aucun processus, aucun jeton dépensé, réponse immédiate. La racine d'un projet porte d'ailleurs un bouton **▶ Ouvrir l'Atelier ici**, qui évite d'avoir à retaper la commande.
+
+Un dernier point, parce qu'il se remarquera : ces écrans vivent dans ma mémoire, pas sur le disque. Après un redémarrage du service, les boutons d'un message plus ancien ne désignent plus rien — je vous le dis plutôt que de rester sans réaction.
+
+### Ce que devient un Markdown
+
+Je le **traduis** en document structuré, et non en texte décoré : titres à leur niveau, listes, citations, blocs de code colorés selon la langue déclarée, liens cliquables, et de **vrais tableaux, avec leurs bordures et leur ligne d'en-tête**.
+
+Un mot sur les tableaux, parce que c'est le cas qui décide de la lisibilité d'une spécification. Rendu en texte à chasse fixe, un tableau se disloque dès qu'il dépasse la largeur d'un téléphone : les colonnes passent à la ligne et l'alignement — sa seule raison d'être — disparaît. C'est pourquoi je passe par la messagerie enrichie, qui sait les dessiner pour de bon.
+
+Deux réserves, tirées de l'observation et non de la documentation :
+
+- une **case à cocher** (`- [ ]`, `- [x]`) n'est pas dessinée par les clients actuels, bien qu'elle existe dans le format. J'écris donc `☑︎` ou `☐︎` dans le texte : autrement, une liste de tâches perdrait l'état de chaque ligne sans que rien ne le signale ;
+- ce qui n'est **pas** du Markdown — un `settings.json`, un fichier de réglages — part en chasse fixe, sans transformation. Y voir des puces et des emphases inventerait une structure qui n'existe pas.
+
+Si un document malmène la traduction, je retombe sur une mise en forme simple, puis sur le texte nu. Un document laid vaut mieux qu'un document disparu.
+
+### Les documents longs
+
+Un message reste borné, même enrichi. Un document plus long arrive donc **en pages**, avec deux boutons **◀ Précédent** et **Suivant ▶** — l'en-tête dit où vous en êtes (`page 2 sur 7`). La borne est large : la plupart des documents tiennent en une seule page.
+
+La coupe tombe toujours sur une fin de ligne, jamais au milieu d'un mot. Et une page qui s'arrête à l'intérieur d'un bloc de code le referme, la suivante le rouvrant : sans cela, tout le reste du document s'afficherait comme du code.
+
+Le fichier est relu à chaque page. Il peut donc avoir changé entre deux pages — c'est voulu : vous lisez le disque, pas une copie prise il y a dix minutes.
+
+### Travailler
+
+| Message        | Ce que je fais                            |
+| -------------- | ----------------------------------------- |
+| `/atelier <n>` | J'ouvre une session sur ce projet         |
+| `/sessions`    | Je liste ce qui tourne, en deux groupes   |
+| `/stop`        | J'interromps le tour en cours             |
+| `/fin`         | Je ferme la session de cette conversation |
+| `/aide`        | Je rappelle ce qui précède                |
+
+Une conversation tient **une** session à la fois : en ouvrir une referme la précédente.
+
+`/sessions` répond en deux groupes, parce que ce ne sont pas les mêmes choses. **Ouvertes par AURA** : celles que je possède, et les seules à qui je puisse parler. **Ouvertes ailleurs** : celles que vous avez lancées dans un terminal — je les vois par leur fichier d'état, je ne les pilote pas. Les confondre ferait croire qu'un message peut atteindre une session de terminal, ce qui est faux.
 
 **Tout autre message part à la session comme un tour.** C'est le cas de loin le plus fréquent, et il ne demande aucune syntaxe.
+
+### Je n'ouvre que des projets connus
+
+`/atelier` n'accepte **que les projets que Claude Code connaît déjà** — ceux que `/projets` liste. Un dossier quelconque de la machine ne tombe sur rien : il n'y a pas de règle à contourner, seulement une liste dans laquelle il faut déjà figurer.
+
+C'est délibérément plus strict que l'Atelier à l'écran, où vous parcourez le disque librement. Devant l'écran, vous voyez ce que vous choisissez ; de loin, non — et un chemin mal tapé ouvrirait une session ailleurs sans que rien ne le signale.
+
+Le numéro, le chemin complet, le nom du projet ou son slug fonctionnent tous les quatre.
 
 Une commande que je ne connais pas vous est signalée plutôt qu'envoyée à l'agent — sans quoi une faute de frappe passerait pour une panne.
 

@@ -45,17 +45,74 @@ A line in my log confirms the opening and how many conversations are allowed. If
 
 ## What you can tell me
 
-One conversation holds **one** session at a time.
+### Browsing, without starting anything
 
-| Message             | What I do                                   |
-| ------------------- | ------------------------------------------- |
-| `/atelier <folder>` | I open a session on that folder             |
-| `/sessions`         | I list what is running, whatever started it |
-| `/stop`             | I interrupt the current turn                |
-| `/fin`              | I close this conversation's session         |
-| `/aide`             | I repeat the above                          |
+`/projets` opens a **navigation screen**: one button per project. Click, and that same message rewrites itself to show the project's **tree** — `.claude/ 59`, `workflow/ 15`, then the files at the root. You walk down folder by folder; a file opens its contents.
+
+A single message for the whole trip, with **◀ Parent folder** at every level. Deliberately so: a conversation has no back button, and stacking one list per click would leave a queue of dead states behind you to scroll past.
+
+Eighty files in a row cannot be read. Grouping them by category would have been one answer — but an invented one, when **the paths already carry a structure**: the Project page's "categories" _are_ the folders of `.claude`. Following the tree therefore shows the project as it is actually arranged, rather than a parallel classification to memorise.
+
+Every folder shows how many files it holds **at any depth**. And a folder whose only child is another folder is merged with it — `rules/back/application` opens in a single click, instead of three screens that would ask no question.
+
+The commands remain available when you already know where you are going:
+
+| Message       | What I do                                            |
+| ------------- | ---------------------------------------------------- |
+| `/projets`    | The navigation screen                                |
+| `/projet <n>` | A project's root, directly                           |
+| `/voir <n>`   | A file's contents, by its rank in the project's list |
+
+This is **the same inventory as the Project page** — no more, no less. The same guards therefore apply word for word: a file I refuse to open on screen I refuse here too, and secrets (`.env`, credentials, keys) are offered nowhere.
+
+None of this opens a session: no process, no tokens spent, an immediate answer. A project's root also carries an **▶ Open the Workshop here** button, saving you the command.
+
+One last point, since it will be noticed: these screens live in my memory, not on disk. After the service restarts, the buttons on an older message no longer point anywhere — I say so rather than sitting there doing nothing.
+
+### What becomes of a Markdown file
+
+I **translate** it into a structured document, not decorated text: headings at their level, lists, quotes, code blocks highlighted for the declared language, clickable links, and **real tables, with their borders and their header row**.
+
+A word on tables, because they decide whether a specification is readable at all. Rendered as monospaced text, a table falls apart as soon as it exceeds a phone's width: the columns wrap and the alignment — its whole reason for being — is gone. Hence the richer message format, which draws them properly.
+
+Two caveats, from observation rather than documentation:
+
+- a **checkbox** (`- [ ]`, `- [x]`) is not drawn by current clients, even though the format provides for it. So I write `☑︎` or `☐︎` into the text: otherwise a task list would lose the state of every line with nothing to signal it;
+- anything that is **not** Markdown — a `settings.json`, a settings file — goes out monospaced and untransformed. Seeing bullets and emphasis in it would invent a structure that is not there.
+
+If a document defeats the translation, I fall back to simple formatting, then to plain text. An ugly document beats a missing one.
+
+### Long documents
+
+A message is bounded, even a rich one. A longer document therefore arrives **in pages**, with **◀ Previous** and **Next ▶** buttons — the header says where you are (`page 2 of 7`). The bound is generous: most documents fit on a single page.
+
+The cut always falls on a line ending, never mid-word. And a page that stops inside a code block closes it, the next one reopening it: without that, the whole rest of the document would render as code.
+
+The file is re-read for each page. It may therefore have changed between two pages — deliberately so: you are reading the disk, not a copy taken ten minutes ago.
+
+### Working
+
+| Message        | What I do                             |
+| -------------- | ------------------------------------- |
+| `/atelier <n>` | I open a session on that project      |
+| `/sessions`    | I list what is running, in two groups |
+| `/stop`        | I interrupt the current turn          |
+| `/fin`         | I close this conversation's session   |
+| `/aide`        | I repeat the above                    |
+
+One conversation holds **one** session at a time: opening one closes the previous.
+
+`/sessions` answers in two groups, because they are not the same thing. **Opened by AURA**: the ones I own, and the only ones I can talk to. **Opened elsewhere**: the ones you started in a terminal — I see them through their state file, I do not drive them. Merging the two would suggest a message can reach a terminal session, which it cannot.
 
 **Any other message goes to the session as a turn.** That is by far the most frequent case, and it needs no syntax.
+
+### I only open known projects
+
+`/atelier` accepts **only projects Claude Code already knows** — the ones `/projets` lists. Any other folder on the machine matches nothing: there is no rule to get around, only a list you have to be in already.
+
+This is deliberately stricter than the Workshop on screen, where you browse the disk freely. At the screen you see what you pick; from afar you do not — and a mistyped path would open a session somewhere else with nothing to flag it.
+
+The number, the full path, the project name and its slug all work.
 
 A command I do not know is reported back to you rather than sent to the agent — otherwise a typo would look like a breakdown.
 
