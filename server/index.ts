@@ -28,6 +28,7 @@ import { registerUsage } from './routes/usage.ts';
 import { registerDiagnostics } from './routes/diagnostics.ts';
 import { registerEvents } from './routes/events.ts';
 import { registerAgent } from './routes/agent.ts';
+import { arretePasserelle, demarrePasserelle } from './passerelle/index.ts';
 import { stopAll } from './agent/registry.ts';
 import { stopPool } from './parse-pool.ts';
 
@@ -92,9 +93,19 @@ async function main(): Promise<void> {
   // qu'il se contente d'observer.
   registerAgent(app);
 
+  // La Passerelle : piloter l'Atelier depuis une messagerie. Inerte tant
+  // qu'aucun jeton n'est configuré — c'est le cas par défaut, et il le reste.
+  // Elle n'ouvre aucun port : son long-polling est sortant, et elle appelle le
+  // registre directement plutôt que de passer par l'API.
+  demarrePasserelle({
+    info: (m) => app.log.info(m),
+    warn: (m) => app.log.warn(m),
+  });
+
   // Un processus `claude` par session survivrait au serveur sans cela — et un
   // thread de lecture de transcript avec eux.
   app.addHook('onClose', () => {
+    arretePasserelle();
     stopAll();
     stopPool();
   });

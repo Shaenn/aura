@@ -1,0 +1,104 @@
+// Ce qu'un message venu de la messagerie veut dire, et qui a le droit de le dire.
+//
+// Tout ce qui décide est ici, et rien de ce qui décide n'appelle le réseau :
+// c'est ce qui rend la garde vérifiable par un test sans bot ni jeton. Le
+// client (`telegram.ts`) ne fait qu'apporter des chaînes ; la boucle
+// (`index.ts`) ne fait qu'exécuter des intentions.
+
+/** Ce qu'AURA a compris d'un message. Rien d'autre ne se commande d'ici. */
+export type Intention =
+  /** Ouvrir une session d'Atelier sur un dossier. */
+  | { kind: 'ouvrir'; cwd: string }
+  /** Un tour de plus dans la session de cette conversation. */
+  | { kind: 'parler'; texte: string }
+  /** Fermer la session de cette conversation. */
+  | { kind: 'fin' }
+  /** Ce qui tourne en ce moment, toutes conversations confondues. */
+  | { kind: 'sessions' }
+  /** Interrompre le tour en cours sans fermer la session. */
+  | { kind: 'stop' }
+  | { kind: 'aide' }
+  /**
+   * Rien à faire — un message vide, ou une commande qu'on ne sert pas.
+   *
+   * `raison` n'est pas une erreur à renvoyer telle quelle : elle dit à la
+   * boucle s'il y a lieu de répondre. Une commande inconnue mérite un mot ; un
+   * message vide n'en mérite aucun.
+   */
+  | { kind: 'ignorer'; raison: 'vide' | 'commande-inconnue'; commande?: string };
+
+/**
+ * Les conversations autorisées.
+ *
+ * Une liste blanche, jamais une liste noire : c'est la seule garde entre une
+ * messagerie publique et un poste de travail. Ce qui n'est pas un entier est
+ * écarté — un identifiant mal recopié ne doit pas devenir un `NaN` qui
+ * ressemble à une autorisation.
+ */
+export function lireChats(raw: string | undefined): Set<number> {
+  const chats = new Set<number>();
+  for (const part of (raw ?? '').split(',')) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    // `Number` accepterait `12 ` ou `0x10` ; on veut la forme que Telegram
+    // écrit, et elle seule. Le signe est admis : un groupe a un identifiant
+    // négatif.
+    if (!/^-?\d+$/.test(trimmed)) continue;
+    const id = Number(trimmed);
+    if (Number.isSafeInteger(id)) chats.add(id);
+  }
+  return chats;
+}
+
+/**
+ * Ce message vient-il d'une conversation autorisée ?
+ *
+ * Une liste vide n'autorise personne. C'est délibéré, et c'est l'inverse de la
+ * convention habituelle où « vide » veut dire « tout » : ici, l'omission ne peut
+ * pas ouvrir la machine au premier venu.
+ */
+export function autorise(chats: Set<number>, chatId: number): boolean {
+  return chats.has(chatId);
+}
+
+/** Le nom du dossier de travail d'une commande `/atelier`, s'il y en a un. */
+function argument(texte: string): string {
+  const i = texte.indexOf(' ');
+  return i === -1 ? '' : texte.slice(i + 1).trim();
+}
+
+/**
+ * Ce que veut un message.
+ *
+ * Une barre oblique en tête est une commande ; tout le reste est un tour à
+ * envoyer. Cette asymétrie est voulue : on parle à l'agent bien plus souvent
+ * qu'on ne le pilote, et le cas fréquent ne doit demander aucune syntaxe.
+ */
+export function parseIntention(brut: string): Intention {
+  const texte = brut.trim();
+  if (!texte) return { kind: 'ignorer', raison: 'vide' };
+  if (!texte.startsWith('/')) return { kind: 'parler', texte };
+
+  // Telegram suffixe les commandes du nom du bot dans un groupe : `/fin@monbot`.
+  const mot = (texte.split(/\s/)[0] ?? '').split('@')[0]?.toLowerCase() ?? '';
+  switch (mot) {
+    case '/atelier': {
+      const cwd = argument(texte);
+      // Sans dossier, il n'y a pas de session à ouvrir : c'est l'aide qui
+      // répond, elle porte la forme attendue.
+      return cwd ? { kind: 'ouvrir', cwd } : { kind: 'aide' };
+    }
+    case '/fin':
+      return { kind: 'fin' };
+    case '/sessions':
+      return { kind: 'sessions' };
+    case '/stop':
+      return { kind: 'stop' };
+    case '/aide':
+    case '/start':
+    case '/help':
+      return { kind: 'aide' };
+    default:
+      return { kind: 'ignorer', raison: 'commande-inconnue', commande: mot };
+  }
+}

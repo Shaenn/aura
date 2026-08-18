@@ -1,8 +1,15 @@
 // Server-side configuration for the BFF.
 //
-// AURA is a local, single-user tool: no external service, no secret. The only
-// knob is the port and an optional override of the managed .claude directory
-// (handy for tests or a sandboxed copy).
+// AURA is a local, single-user tool. Two knobs live here: the port, and an
+// optional override of the managed .claude directory (handy for tests or a
+// sandboxed copy).
+//
+// Il y a désormais une exception à « aucun service externe, aucun secret », et
+// elle est volontairement tenue à l'écart d'ici : la Passerelle
+// (`passerelle/index.ts`) lit `AURA_TELEGRAM_TOKEN` et `AURA_TELEGRAM_CHATS`
+// directement dans l'environnement. Ce jeton ne traverse donc pas `ServerEnv`,
+// que tout le serveur importe — il reste dans le seul module qui en a besoin, et
+// aucune route n'est en mesure de le renvoyer par mégarde.
 
 import { homedir } from 'node:os';
 import { join, normalize, sep } from 'node:path';

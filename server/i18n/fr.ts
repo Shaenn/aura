@@ -86,6 +86,40 @@ export default {
     noPowerShell: 'Aucun hôte PowerShell trouvé.',
   },
 
+  /**
+   * Ce qu'AURA dit dans une messagerie.
+   *
+   * Même charte qu'à l'écran, avec une contrainte de plus : l'interlocuteur ne
+   * voit pas l'Atelier. Un message doit donc porter son propre contexte — dire
+   * quelle session, quel dossier — là où l'écran le montrait déjà.
+   */
+  passerelle: {
+    aide: [
+      'Je pilote l’Atelier depuis cette conversation.',
+      '',
+      '/atelier <dossier> — j’ouvre une session sur ce dossier.',
+      '/sessions — ce qui tourne en ce moment.',
+      '/stop — j’interromps le tour en cours.',
+      '/fin — je ferme la session de cette conversation.',
+      '',
+      'Tout autre message part à la session comme un tour.',
+    ].join('\n'),
+    sessionOuverte: 'Session ouverte sur {cwd}. Écrivez-moi ce qu’il y a à faire.',
+    /** Le cas le plus fréquent après un redémarrage du serveur : le fil est rompu. */
+    aucunFil: 'Aucune session n’est ouverte ici. Ouvrez-en une avec /atelier <dossier>.',
+    aucuneSession: 'Rien ne tourne en ce moment.',
+    sessionFinie: 'La session s’est terminée.',
+    sessionEchouee: 'La session s’est arrêtée : {message}',
+    permission: 'Je voudrais utiliser {outil}.',
+    autoriser: 'Autoriser',
+    refuser: 'Refuser',
+    /** Le motif transmis au modèle, et non à l'utilisateur : il reste bref. */
+    refuseDeLoin: 'Refusé depuis la messagerie.',
+    questionTropRiche:
+      'Cette question demande un formulaire que je ne sais pas poser ici. Elle vous attend dans l’Atelier.',
+    commandeInconnue: 'Je ne connais pas {commande}. /aide donne ce que je sais faire.',
+  },
+
   hooks: {
     failed: 'Le hook a échoué (code {code}).',
     blocked: 'Le hook a empêché la poursuite du tour.',

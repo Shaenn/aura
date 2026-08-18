@@ -77,6 +77,32 @@ const en: Catalog = {
     noPowerShell: 'No PowerShell host found.',
   },
 
+  /** What AURA says in a messaging app. See the French catalogue for the why. */
+  passerelle: {
+    aide: [
+      'I drive the Workshop from this conversation.',
+      '',
+      '/atelier <folder> — I open a session on that folder.',
+      '/sessions — what is running right now.',
+      '/stop — I interrupt the current turn.',
+      '/fin — I close this conversation’s session.',
+      '',
+      'Any other message goes to the session as a turn.',
+    ].join('\n'),
+    sessionOuverte: 'Session open on {cwd}. Tell me what needs doing.',
+    aucunFil: 'No session is open here. Open one with /atelier <folder>.',
+    aucuneSession: 'Nothing is running right now.',
+    sessionFinie: 'The session ended.',
+    sessionEchouee: 'The session stopped: {message}',
+    permission: 'I would like to use {outil}.',
+    autoriser: 'Allow',
+    refuser: 'Deny',
+    refuseDeLoin: 'Denied from the messaging app.',
+    questionTropRiche:
+      'This question needs a form I cannot render here. It is waiting for you in the Workshop.',
+    commandeInconnue: 'I do not know {commande}. /aide lists what I can do.',
+  },
+
   hooks: {
     failed: 'The hook failed (code {code}).',
     blocked: 'The hook stopped the turn from continuing.',
