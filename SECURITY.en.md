@@ -9,7 +9,8 @@ application guarantees, what it does not, and how to report a flaw.
 ## The model
 
 AURA is a **local, single-user** tool. There is no account, no password, no external service:
-the boundary is the machine itself.
+the boundary is the machine itself. One feature, off by default, moves that boundary — see
+_The Gateway_ below.
 
 - The BFF **listens on `127.0.0.1` only**, with no option to open it up. No device on the
   network can reach it.
@@ -25,6 +26,37 @@ the boundary is the machine itself.
 - Every write is **previewed then confirmed**, backed up before replacement, and refused if the
   file changed on disk in the meantime.
 - Internal errors never return an absolute path: the detail stays in the server log.
+
+## The Gateway, and what it changes
+
+One feature alone steps outside this model, and **it exists only if you turn it on**: the
+Gateway, which links a messaging app to the Workshop so you can drive a session remotely. With
+no token configured it does not start, calls nothing, and everything above stays true word for
+word.
+
+What it does not change:
+
+- **It opens no port.** The exchange is outbound — the server goes and fetches messages. The
+  BFF still listens on `127.0.0.1` only, and the `Host` and `Sec-Fetch-Site` guards are
+  untouched.
+- **It does not go through the API.** It calls the session registry in the same process: no
+  route is opened, no request needs authenticating.
+
+What it does change, and what you should weigh:
+
+- **A secret now exists.** The bot token lives in `server/.env`, un-versioned. It does not
+  travel through the server's shared configuration and no route is able to hand it back.
+- **The server calls an external service.** Your messages travel through it.
+- **It is remote access to your machine.** Whoever writes in an allowed conversation can open
+  a session, have it run a command and approve a write. The allowlist of conversations is the
+  only guard against that: it is **required**, the Gateway refuses to start without it, and a
+  message from anywhere else gets no reply.
+- **The channel's safety becomes yours.** Anyone who gains access to an allowed conversation —
+  an unlocked device, a compromised account — gains that same power. AURA cannot tell them
+  apart from you.
+
+Permission requests are still raised, and still deny themselves when unanswered.
+`AURA_TELEGRAM_MODE=plan` opens remote sessions in plan mode, where nothing executes.
 
 ## What is not covered
 

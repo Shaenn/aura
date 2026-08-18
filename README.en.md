@@ -227,7 +227,7 @@ The detail — bounds, background work, resuming a session — is in
 
 ## The manual
 
-AURA ships its own manual: **18 pages** that do not merely describe where to click, but **why
+AURA ships its own manual: **19 pages** that do not merely describe where to click, but **why
 each screen is built the way it is** — why a permission that expires is denied and not granted,
 why the diagnostic thresholds are percentiles, why sub-agents get their own track. The `?` key
 opens the page matching the current screen.
@@ -235,7 +235,8 @@ opens the page matching the current screen.
 It reads online, without installing anything:
 
 [Concepts](https://shaenn.github.io/aura/en/guide/concepts) · [Session replay](https://shaenn.github.io/aura/en/guide/replay) ·
-[Workshop](https://shaenn.github.io/aura/en/guide/atelier) · [Active sessions](https://shaenn.github.io/aura/en/guide/sessions) ·
+[Workshop](https://shaenn.github.io/aura/en/guide/atelier) · [Gateway](https://shaenn.github.io/aura/en/guide/passerelle) ·
+[Active sessions](https://shaenn.github.io/aura/en/guide/sessions) ·
 [Diagnostic](https://shaenn.github.io/aura/en/guide/diagnostic) · [Usage & costs](https://shaenn.github.io/aura/en/guide/usage) ·
 [all the pages](https://shaenn.github.io/aura/en/guide/concepts)
 
@@ -284,6 +285,14 @@ leave the managed folder, whatever the number of `..`.
 
 The only process that talks to the outside is the Workshop agent, when you tell it to — and it
 uses the authentication of your Claude Code installation, not ours.
+
+One thing alone can change that, and turning it on is your call: the
+[Gateway](https://shaenn.github.io/aura/en/guide/passerelle), which links a messaging app to the
+Workshop so you can drive a session remotely. It is **inert by default** — with no token nothing
+starts and no call goes out. Turned on, it holds a secret and calls an external service, but
+**opens no port**: its exchange is outbound, the listener stays on `127.0.0.1`. The power it
+grants is that of remote access to your machine, and its allowlist of conversations is what
+closes it again — without one, it refuses to start.
 
 [SECURITY.en.md](SECURITY.en.md) details the server's guards, what they do not cover, and how to
 report a flaw.
@@ -349,13 +358,22 @@ The console window stays open: **it is the server**. Closing it stops AURA.
 
 ## Configuration
 
-None. Two optional variables, to set in the environment or in `server/.env` (git-ignored, read
-by `--env-file`):
+None. A few optional variables, to set in the environment or in `server/.env` (git-ignored,
+read by `--env-file`):
 
 | Variable          | Default     | Role                                                      |
 | ----------------- | ----------- | --------------------------------------------------------- |
 | `PORT`            | `8800`      | Server listening port — the target of Quasar's dev proxy. |
 | `AURA_CLAUDE_DIR` | `~/.claude` | Managed folder. Handy for working on a sandbox copy.      |
+
+The next three exist only for the [Gateway](https://shaenn.github.io/aura/en/guide/passerelle),
+and **everything stays off as long as the first one is absent**:
+
+| Variable              | Default   | Role                                                                      |
+| --------------------- | --------- | ------------------------------------------------------------------------- |
+| `AURA_TELEGRAM_TOKEN` | —         | The bot token. Absent: the Gateway does not exist.                        |
+| `AURA_TELEGRAM_CHATS` | —         | The allowed conversations. **Required**: without it, it refuses to start. |
+| `AURA_TELEGRAM_MODE`  | `default` | Permission mode of sessions opened from afar.                             |
 
 A new variable requires a full restart: hot reload does not re-read `--env-file`.
 

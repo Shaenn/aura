@@ -9,7 +9,8 @@ l'application garantit, ce qu'elle ne garantit pas, et comment signaler un défa
 ## Le modèle
 
 AURA est un outil **local et mono-utilisateur**. Il n'y a ni compte, ni mot de passe, ni
-service externe : la frontière est la machine elle-même.
+service externe : la frontière est la machine elle-même. Une seule fonctionnalité, éteinte par
+défaut, déplace cette frontière — voir _La Passerelle_ plus bas.
 
 - Le BFF **n'écoute que `127.0.0.1`**, sans option pour en sortir. Aucun appareil du réseau
   ne peut l'atteindre.
@@ -26,6 +27,40 @@ service externe : la frontière est la machine elle-même.
   refusée si le fichier a changé sur le disque entre-temps.
 - Les erreurs internes ne renvoient jamais de chemin absolu : le détail reste au journal du
   serveur.
+
+## La Passerelle, et ce qu'elle change
+
+Une seule fonctionnalité sort de ce modèle, et **elle n'existe que si vous l'activez** : la
+Passerelle, qui relie une messagerie à l'Atelier pour piloter une session à distance. Sans
+jeton configuré, elle ne démarre pas, n'appelle rien, et ce qui précède reste vrai mot pour
+mot.
+
+Ce qu'elle ne change pas :
+
+- **Elle n'ouvre aucun port.** L'échange est sortant — c'est le serveur qui va chercher les
+  messages. Le BFF continue de n'écouter que `127.0.0.1`, et les gardes `Host` et
+  `Sec-Fetch-Site` sont inchangées.
+- **Elle ne passe pas par l'API.** Elle appelle le registre de sessions dans le même
+  processus : aucune route n'est ouverte, aucune requête n'est à authentifier.
+
+Ce qu'elle change, et qu'il faut peser :
+
+- **Un secret existe désormais.** Le jeton du bot vit dans `server/.env`, non versionné. Il
+  ne traverse pas la configuration partagée du serveur et aucune route n'est en mesure de le
+  renvoyer.
+- **Le serveur appelle un service externe.** Vos messages transitent par ce service.
+- **C'est un accès distant à votre machine.** Qui écrit dans une conversation autorisée peut
+  ouvrir une session, lui faire exécuter une commande et approuver une écriture. La liste
+  blanche des conversations est la seule garde qui l'en empêche : elle est **obligatoire**,
+  la Passerelle refuse de démarrer sans elle, et un message venu d'ailleurs reste sans
+  réponse.
+- **La sûreté du canal devient la vôtre.** Quiconque obtient l'accès à une conversation
+  autorisée — appareil déverrouillé, compte compromis — obtient ce même pouvoir. AURA ne
+  peut pas le distinguer de vous.
+
+Les demandes de permission continuent d'être posées, et se refusent d'elles-mêmes sans
+réponse. `AURA_TELEGRAM_MODE=plan` ouvre les sessions distantes en mode plan, où rien ne
+s'exécute.
 
 ## Ce qui n'est pas couvert
 
