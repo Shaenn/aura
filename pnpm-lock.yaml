@@ -47,6 +47,9 @@ importers:
       mermaid:
         specifier: ^11.16.1
         version: 11.16.1
+      node-telegram-bot-api:
+        specifier: ^2.0.0
+        version: 2.0.0
       pinia:
         specifier: ^4.0.3
         version: 4.0.3(@vue/devtools-api@8.2.1)(typescript@6.0.3)(vue@3.5.41(typescript@6.0.3))
@@ -2975,6 +2978,10 @@ packages:
 
   node-releases@2.0.53:
     resolution: {integrity: sha512-D9UOmYG3UH1V+ENW56t5QXBwJw1YEY18ruVeus89Rw+SyIgjPkCO84bRzO3uNIYosJbNwiabWVn48o3uJLjxFQ==}
+    engines: {node: '>=18'}
+
+  node-telegram-bot-api@2.0.0:
+    resolution: {integrity: sha512-Gqo1HNYkIfYnHy25rEMKFFMVLqG+EUmH+C5HLsOguXi4WazaGWwIu9vigMLARv+cKONdU6x9Fj4lKNBLf7h/Uw==}
     engines: {node: '>=18'}
 
   nostics@1.2.0:
@@ -6926,6 +6933,8 @@ snapshots:
     optional: true
 
   node-releases@2.0.53: {}
+
+  node-telegram-bot-api@2.0.0: {}
 
   nostics@1.2.0: {}
 
