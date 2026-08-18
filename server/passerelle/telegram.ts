@@ -361,10 +361,6 @@ export class Telegram {
     }
   }
 
-  get arrete(): boolean {
-    return this.stopped;
-  }
-
   /** Coupe le long-polling en vol : la requête en attente est abandonnée. */
   stop(): void {
     this.stopped = true;
