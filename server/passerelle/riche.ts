@@ -85,7 +85,12 @@ export function fragments(ligne: string): RichText[] {
     if (m.index > reste) out.push(ligne.slice(reste, m.index));
     const [, code, libelle, url, gras, barre, penche, souligne] = m;
 
-    if (code !== undefined) out.push({ type: 'code', text: code });
+    // Le code littéral porte deux marques plutôt qu'une. `code` seul est rendu
+    // en chasse fixe teintée, ce qui suffit sur un grand écran mais se perd sur
+    // un téléphone — une nuance de couleur y devient invisible avant une
+    // différence de surface. `marked` ajoute un fond, et les deux se cumulent :
+    // mesuré, l'emboîtement fonctionne et son ordre est sans effet.
+    if (code !== undefined) out.push({ type: 'marked', text: { type: 'code', text: code } });
     else if (libelle !== undefined && url !== undefined) {
       // Une URL n'est reprise que si elle mène quelque part de connu : le reste
       // n'a rien à faire dans un lien qu'on relaie.

@@ -23,7 +23,14 @@ describe('fragments', () => {
   });
 
   it('garde le code littéral hors des autres transformations', () => {
-    expect(fragments('`a**b`')).toEqual([{ type: 'code', text: 'a**b' }]);
+    expect(fragments('`a**b`')).toEqual([{ type: 'marked', text: { type: 'code', text: 'a**b' } }]);
+  });
+
+  it('surligne le code, faute d’une teinte qui survive au téléphone', () => {
+    // `code` seul est rendu en chasse fixe teintée : lisible sur un grand
+    // écran, perdu sur un petit. `marked` y ajoute un fond — une différence de
+    // surface, non de couleur. Mesuré : l'emboîtement se cumule.
+    expect(fragments('`x`')).toEqual([{ type: 'marked', text: { type: 'code', text: 'x' } }]);
   });
 
   it('n’échappe rien : ces morceaux voyagent en JSON', () => {
