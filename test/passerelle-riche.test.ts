@@ -119,6 +119,43 @@ describe('enBlocs', () => {
     ]);
   });
 
+  it('lit l’alignement des colonnes dans la ligne de séparation', () => {
+    // Les deux-points portent une intention : une colonne de nombres alignée à
+    // droite dans la source doit l'être à l'écran. Une colonne sans eux
+    // n'impose rien.
+    const blocs = enBlocs('| a | b | c | d |\n|:---|---:|:---:|---|\n| 1 | 2 | 3 | 4 |');
+    const table = blocs[0] as { cells: { align?: string }[][] };
+    expect(table.cells[0]?.map((c) => c.align)).toEqual(['left', 'right', 'center', undefined]);
+  });
+
+  it('ne fait qu’une citation de lignes consécutives, et relit ce qu’elle porte', () => {
+    // Ligne à ligne, chaque ligne prenait son propre cadre — et une consigne
+    // numérotée à recopier perdait sa numérotation.
+    const blocs = enBlocs('> Bonjour.\n>\n> 1. premier\n> 2. second');
+    expect(blocs).toHaveLength(1);
+    const dedans = (blocs[0] as { blocks: { type: string }[] }).blocks;
+    expect(dedans.map((b) => b.type)).toEqual(['paragraph', 'list']);
+  });
+
+  it('imbrique les listes selon l’indentation de la source', () => {
+    // Aplatir remonterait un sous-point au rang de son parent, ce qui inverse
+    // le sens d'une consigne.
+    const blocs = enBlocs('1. vérifier :\n   - le journal ;\n   - la connexion.\n2. déployer');
+    const items = (blocs[0] as { items: { blocks: { type: string }[] }[] }).items;
+    expect(items).toHaveLength(2);
+    expect(items[0]?.blocks.map((b) => b.type)).toEqual(['paragraph', 'list']);
+    expect(items[1]?.blocks.map((b) => b.type)).toEqual(['paragraph']);
+  });
+
+  it('rattache la suite d’un élément long à son élément', () => {
+    // Sans cela, la deuxième ligne fermait la liste et le point suivant
+    // repartait à « 1 » dans un nouveau bloc.
+    const blocs = enBlocs('1. un point qui\n   court sur deux lignes\n2. le suivant');
+    expect(blocs).toHaveLength(1);
+    const items = (blocs[0] as { items: { blocks: { text: string[] }[] }[] }).items;
+    expect(items[0]?.blocks[0]?.text.join('')).toBe('1. un point qui court sur deux lignes');
+  });
+
   it('ferme chaque bloc dès que la ligne suivante ne lui appartient plus', () => {
     const blocs = enBlocs('# titre\n- puce\n| a |\ntexte');
     expect(blocs.map((b) => b.type)).toEqual(['heading', 'list', 'table', 'paragraph']);

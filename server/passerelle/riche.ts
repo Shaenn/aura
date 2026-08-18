@@ -19,10 +19,8 @@
 import type { RichBlockTableCell } from 'node-telegram-bot-api';
 
 // Les formes s'appuient sur celles de `node-telegram-bot-api` plutôt que d'être
-// redéclarées ici. C'est tout l'intérêt de la dépendance : elle **défend les
-// noms de champs**, là où l'API ne les défend pas. Un `header` écrit pour
-// `is_header` ne produit aucune erreur à l'exécution — l'API ignore ce qu'elle
-// ne connaît pas — et donnait un tableau sans en-tête, sans rien pour le dire.
+// redéclarées ici : c'est ce qui défend les noms de champs, pour la raison dite
+// plus haut.
 //
 // **Deux corrections, mesurées contre l'API et contre sa documentation.** Les
 // types de la bibliothèque sont faux sur ces points-là, et s'y conformer
@@ -115,6 +113,67 @@ function cellules(ligne: string): string[] {
 }
 
 /**
+ * L'alignement de chaque colonne, lu dans la ligne de séparation.
+ *
+ * Les deux-points du Markdown ne sont pas décoratifs : une colonne de nombres
+ * alignée à droite dans la source doit l'être à l'écran, sinon le tableau perd
+ * ce qui le rendait comparable. Rien de deviné — une colonne sans deux-points
+ * n'impose rien, et laisse le client décider.
+ */
+function alignements(separateur: string): (Cellule['align'] | undefined)[] {
+  return cellules(separateur).map((c) => {
+    const gauche = c.startsWith(':');
+    const droite = c.endsWith(':');
+    if (gauche && droite) return 'center';
+    if (droite) return 'right';
+    if (gauche) return 'left';
+    return undefined;
+  });
+}
+
+/**
+ * Un élément de liste, tel qu'il se lit dans la source.
+ *
+ * `indent` porte l'imbrication : deux espaces devant une puce en font la
+ * sous-puce de la précédente. `lignes` porte les retours à la ligne d'un
+ * élément long — un point numéroté qui court sur trois lignes est **un** point,
+ * pas trois.
+ */
+interface Element {
+  indent: number;
+  lignes: string[];
+}
+
+/**
+ * Une liste à partir d'éléments plats, l'imbrication reconstruite.
+ *
+ * L'indentation de la source est la seule information disponible : tout ce qui
+ * est plus rentré que le premier élément appartient à celui qui le précède, et
+ * la même règle s'applique un cran plus bas. Aplatir aurait remonté un
+ * sous-point au rang de son parent, ce qui inverse le sens d'une consigne.
+ */
+function listeDepuis(elements: Element[]): InputRichBlock {
+  const base = Math.min(...elements.map((e) => e.indent));
+  const groupes: { tete: Element; enfants: Element[] }[] = [];
+
+  for (const element of elements) {
+    const dernier = groupes[groupes.length - 1];
+    if (!dernier || element.indent <= base) groupes.push({ tete: element, enfants: [] });
+    else dernier.enfants.push(element);
+  }
+
+  return {
+    type: 'list',
+    items: groupes.map((g) => ({
+      blocks: [
+        { type: 'paragraph' as const, text: fragments(g.tete.lignes.join(' ')) },
+        ...(g.enfants.length ? [listeDepuis(g.enfants)] : []),
+      ],
+    })),
+  };
+}
+
+/**
  * Ce que devient une case à cocher, faute d'être rendue nativement.
  *
  * Les deux voies natives ont été essayées, et fermées :
@@ -146,7 +205,8 @@ export function enBlocs(markdown: string): InputRichBlock[] {
 
   let paragraphe: string[] = [];
   let tableau: string[] = [];
-  let liste: string[] = [];
+  let liste: Element[] = [];
+  let citation: string[] = [];
   let code: string[] | null = null;
   let langue = '';
 
@@ -159,7 +219,8 @@ export function enBlocs(markdown: string): InputRichBlock[] {
   const fermeTableau = (): void => {
     if (!tableau.length) return;
     const grille = tableau.filter((l) => !SEPARATEUR.test(l)).map(cellules);
-    const avaitSeparateur = tableau.some((l) => SEPARATEUR.test(l));
+    const separateur = tableau.find((l) => SEPARATEUR.test(l));
+    const aligne = separateur ? alignements(separateur) : [];
     tableau = [];
     if (!grille.length) return;
     blocs.push({
@@ -170,9 +231,10 @@ export function enBlocs(markdown: string): InputRichBlock[] {
       // La ligne d'alignement du Markdown est ce qui désigne l'en-tête. Sans
       // elle, la première ligne est une ligne comme une autre.
       cells: grille.map((rangee, i) =>
-        rangee.map((c) => ({
+        rangee.map((c, j) => ({
           text: fragments(c),
-          ...(i === 0 && avaitSeparateur ? { is_header: true as const } : {}),
+          ...(i === 0 && separateur ? { is_header: true as const } : {}),
+          ...(aligne[j] ? { align: aligne[j] } : {}),
         })),
       ),
     });
@@ -180,19 +242,31 @@ export function enBlocs(markdown: string): InputRichBlock[] {
 
   const fermeListe = (): void => {
     if (!liste.length) return;
-    blocs.push({
-      type: 'list',
-      items: liste.map((texte) => ({
-        blocks: [{ type: 'paragraph', text: fragments(texte) }],
-      })),
-    });
+    blocs.push(listeDepuis(liste));
     liste = [];
+  };
+
+  /**
+   * Une citation se relit entièrement, comme un document à elle seule.
+   *
+   * C'est ce qui lui rend ce qu'elle porte : une citation contenant une liste
+   * numérotée est fréquente — un message à recopier, une consigne — et la
+   * traiter ligne à ligne en faisait autant de citations d'une ligne, chacune
+   * dans son cadre. La récursion s'arrête d'elle-même : chaque tour retire un
+   * chevron.
+   */
+  const fermeCitation = (): void => {
+    if (!citation.length) return;
+    const dedans = enBlocs(citation.join('\n'));
+    citation = [];
+    if (dedans.length) blocs.push({ type: 'blockquote', blocks: dedans });
   };
 
   const fermeTout = (): void => {
     fermeParagraphe();
     fermeTableau();
     fermeListe();
+    fermeCitation();
   };
 
   for (const ligne of lignes) {
@@ -212,6 +286,18 @@ export function enBlocs(markdown: string): InputRichBlock[] {
       continue;
     }
 
+    // La citation se ramasse d'abord : un chevron l'emporte sur tout le reste,
+    // et ce qu'il y a derrière sera relu par la récursion.
+    const chevron = /^ {0,3}>\s?(.*)$/.exec(ligne);
+    if (chevron) {
+      fermeParagraphe();
+      fermeTableau();
+      fermeListe();
+      citation.push(chevron[1] ?? '');
+      continue;
+    }
+    fermeCitation();
+
     if (/^\s*\|.*\|\s*$/.test(ligne)) {
       fermeParagraphe();
       fermeListe();
@@ -220,27 +306,40 @@ export function enBlocs(markdown: string): InputRichBlock[] {
     }
     fermeTableau();
 
-    const puce = /^\s*[-*+]\s+(.*)$/.exec(ligne);
+    const puce = /^(\s*)[-*+]\s+(.*)$/.exec(ligne);
     if (puce) {
       fermeParagraphe();
-      const contenu = puce[1] ?? '';
+      const indent = (puce[1] ?? '').length;
+      const contenu = puce[2] ?? '';
       // `- [ ]` et `- [x]` : le symbole va dans le texte. La spec offre bien
       // `has_checkbox`, mais aucun client ne le rend aujourd'hui — l'état de la
       // tâche disparaîtrait sans laisser de trace. Voir `RichListItem`.
       const case_ = /^\[([ xX])\]\s+(.*)$/.exec(contenu);
       if (case_) {
         const prefixe = (case_[1] ?? '').toLowerCase() === 'x' ? COCHE.fait : COCHE.reste;
-        liste.push(prefixe + (case_[2] ?? ''));
-      } else liste.push(contenu);
+        liste.push({ indent, lignes: [prefixe + (case_[2] ?? '')] });
+      } else liste.push({ indent, lignes: [contenu] });
       continue;
     }
 
-    const numerotee = /^\s*(\d+)[.)]\s+(.*)$/.exec(ligne);
+    const numerotee = /^(\s*)(\d+)[.)]\s+(.*)$/.exec(ligne);
     if (numerotee) {
       fermeParagraphe();
       // Le numéro reste dans le texte : le client dessine ses propres puces et
       // ignore le `label` qui aurait dû le porter.
-      liste.push(`${numerotee[1] ?? ''}. ${numerotee[2] ?? ''}`);
+      liste.push({
+        indent: (numerotee[1] ?? '').length,
+        lignes: [`${numerotee[2] ?? ''}. ${numerotee[3] ?? ''}`],
+      });
+      continue;
+    }
+
+    // La suite d'un élément long : rentrée, sans marqueur, et pas un paragraphe.
+    // Sans ceci, la deuxième ligne d'un point numéroté fermait la liste, et le
+    // point suivant repartait à « 1 » dans un nouveau bloc.
+    const dernier = liste[liste.length - 1];
+    if (dernier && /^\s/.test(ligne) && ligne.trim()) {
+      dernier.lignes.push(ligne.trim());
       continue;
     }
     fermeListe();
@@ -254,16 +353,6 @@ export function enBlocs(markdown: string): InputRichBlock[] {
         type: 'heading',
         text: fragments(titre[2] ?? ''),
         size: (titre[1] ?? '#').length,
-      });
-      continue;
-    }
-
-    const citation = /^\s*>\s?(.*)$/.exec(ligne);
-    if (citation) {
-      fermeParagraphe();
-      blocs.push({
-        type: 'blockquote',
-        blocks: [{ type: 'paragraph', text: fragments(citation[1] ?? '') }],
       });
       continue;
     }
