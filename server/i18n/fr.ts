@@ -97,7 +97,13 @@ export default {
     aide: [
       'Je pilote l’Atelier depuis cette conversation.',
       '',
-      '/atelier <dossier> — j’ouvre une session sur ce dossier.',
+      'Consulter, sans rien lancer :',
+      '/projets — les projets que Claude Code connaît, numérotés.',
+      '/projet <n> — son arborescence : on descend dossier par dossier.',
+      '/voir <n> — le contenu d’un fichier de la dernière liste.',
+      '',
+      'Travailler :',
+      '/atelier <n> — j’ouvre une session sur ce projet.',
       '/sessions — ce qui tourne en ce moment.',
       '/stop — j’interromps le tour en cours.',
       '/fin — je ferme la session de cette conversation.',
@@ -105,9 +111,30 @@ export default {
       'Tout autre message part à la session comme un tour.',
     ].join('\n'),
     sessionOuverte: 'Session ouverte sur {cwd}. Écrivez-moi ce qu’il y a à faire.',
+    projets: 'Les projets que je connais. Le numéro sert à /projet et à /atelier.',
+    aucunProjet: 'Claude Code n’a encore travaillé sur aucun projet ici.',
+    /** La garde de l'Atelier à distance : on n'ouvre que ce qui est déjà connu. */
+    projetInconnu:
+      'Je ne reconnais pas ce projet. /projets donne ceux que j’ouvre, avec leur numéro.',
+    dossier: '{ou} — {total} fichiers.',
+    ouvrirIci: '▶ Ouvrir l’Atelier ici',
+    retourProjets: '◀ Projets',
+    remonter: '◀ Dossier parent',
+    /** L'état de navigation vit en mémoire : un redémarrage l'efface. */
+    navigationPerimee: 'Cette liste date d’avant mon redémarrage. Refaites /projets.',
+    projetVide: 'Je ne trouve rien à lire dans {nom}.',
+    aucuneListe: 'Choisissez d’abord un projet avec /projet <n>.',
+    fichierInconnu: 'Ce numéro ne désigne aucun fichier de la dernière liste.',
+    /** L'en-tête d'un document trop long pour un seul message. */
+    pageDe: '{fichier} — page {page} sur {total}',
+    precedent: '◀ Précédent',
+    suivant: 'Suivant ▶',
     /** Le cas le plus fréquent après un redémarrage du serveur : le fil est rompu. */
     aucunFil: 'Aucune session n’est ouverte ici. Ouvrez-en une avec /atelier <dossier>.',
     aucuneSession: 'Rien ne tourne en ce moment.',
+    /** Deux origines, et seule la première se pilote d'ici. */
+    sessionsAtelier: 'Ouvertes par AURA — je peux leur parler :',
+    sessionsAilleurs: 'Ouvertes ailleurs — je les vois, je ne les pilote pas :',
     sessionFinie: 'La session s’est terminée.',
     sessionEchouee: 'La session s’est arrêtée : {message}',
     permission: 'Je voudrais utiliser {outil}.',

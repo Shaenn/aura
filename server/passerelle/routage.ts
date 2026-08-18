@@ -7,8 +7,20 @@
 
 /** Ce qu'AURA a compris d'un message. Rien d'autre ne se commande d'ici. */
 export type Intention =
-  /** Ouvrir une session d'Atelier sur un dossier. */
-  | { kind: 'ouvrir'; cwd: string }
+  /**
+   * Ouvrir une session d'Atelier sur un projet.
+   *
+   * `ref` est un numéro de la dernière liste, ou un chemin. Dans les deux cas
+   * il désigne un **projet connu de Claude Code** : la boucle refuse le reste,
+   * et c'est là que se joue la garde, pas ici.
+   */
+  | { kind: 'ouvrir'; ref: string }
+  /** Les projets connus, numérotés pour les commandes suivantes. */
+  | { kind: 'projets' }
+  /** Choisir le projet à consulter, et lister ce qu'il porte. */
+  | { kind: 'projet'; ref: string }
+  /** Le contenu d'un fichier de la dernière liste. */
+  | { kind: 'voir'; ref: string }
   /** Un tour de plus dans la session de cette conversation. */
   | { kind: 'parler'; texte: string }
   /** Fermer la session de cette conversation. */
@@ -61,7 +73,13 @@ export function autorise(chats: Set<number>, chatId: number): boolean {
   return chats.has(chatId);
 }
 
-/** Le nom du dossier de travail d'une commande `/atelier`, s'il y en a un. */
+/**
+ * Ce qui suit la commande, s'il y a quelque chose.
+ *
+ * Tout ce qui reste après le premier espace, sans autre découpage : un chemin
+ * Windows porte des espaces, et le couper en mots ferait d'un dossier deux
+ * arguments dont aucun ne désignerait rien.
+ */
 function argument(texte: string): string {
   const i = texte.indexOf(' ');
   return i === -1 ? '' : texte.slice(i + 1).trim();
@@ -83,10 +101,21 @@ export function parseIntention(brut: string): Intention {
   const mot = (texte.split(/\s/)[0] ?? '').split('@')[0]?.toLowerCase() ?? '';
   switch (mot) {
     case '/atelier': {
-      const cwd = argument(texte);
-      // Sans dossier, il n'y a pas de session à ouvrir : c'est l'aide qui
-      // répond, elle porte la forme attendue.
-      return cwd ? { kind: 'ouvrir', cwd } : { kind: 'aide' };
+      const ref = argument(texte);
+      // Sans référence, il n'y a pas de session à ouvrir : on montre les
+      // projets, qui portent les numéros que cette commande attend.
+      return ref ? { kind: 'ouvrir', ref } : { kind: 'projets' };
+    }
+    case '/projets':
+      return { kind: 'projets' };
+    case '/projet': {
+      const ref = argument(texte);
+      return ref ? { kind: 'projet', ref } : { kind: 'projets' };
+    }
+    case '/voir': {
+      const ref = argument(texte);
+      // Sans référence, il n'y a rien à ouvrir — l'aide dit la forme attendue.
+      return ref ? { kind: 'voir', ref } : { kind: 'aide' };
     }
     case '/fin':
       return { kind: 'fin' };
