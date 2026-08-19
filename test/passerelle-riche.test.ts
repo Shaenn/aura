@@ -42,6 +42,18 @@ describe('fragments', () => {
     expect(fragments('SPEC-014_notes_projet.md')).toEqual(['SPEC-014_notes_projet.md']);
   });
 
+  it('relit le libellé d’un lien, dont la cible est écartée', () => {
+    // `[`chemin.md`](../ailleurs.md)` gardait ses accents graves à l'écran : le
+    // libellé n'était jamais analysé. Une cible relative reste refusée, mais
+    // son texte ne doit pas s'en trouver appauvri.
+    expect(fragments('[`0.livraison.md`](../livraison/0.livraison.md)')).toEqual([
+      { type: 'marked', text: { type: 'code', text: '0.livraison.md' } },
+    ]);
+    expect(fragments('[le **guide**](https://exemple.fr)')).toEqual([
+      { type: 'url', text: ['le ', { type: 'bold', text: 'guide' }], url: 'https://exemple.fr' },
+    ]);
+  });
+
   it('rend un lien, et refuse les protocoles qu’on ne relaie pas', () => {
     expect(fragments('[doc](https://exemple.fr)')).toEqual([
       { type: 'url', text: 'doc', url: 'https://exemple.fr' },

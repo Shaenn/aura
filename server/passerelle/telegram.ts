@@ -337,7 +337,15 @@ export class Telegram {
       try {
         await this.api.sendRichMessage({
           chat_id: chatId,
-          rich_message: { blocks: blocs },
+          rich_message: {
+            blocks: blocs,
+            // Sans cela, Telegram fabrique des liens dans notre dos. Le piège
+            // est propre à ce que la Passerelle affiche : `.md` est un domaine
+            // de premier niveau — la Moldavie —, si bien que `0.livraison.md`
+            // devient un lien vers un site qui n'existe pas. `.py`, `.pl`,
+            // `.sh`, `.io` en sont d'autres : un dépôt en est plein.
+            skip_entity_detection: true,
+          },
           ...markup,
         });
         return 'riche';

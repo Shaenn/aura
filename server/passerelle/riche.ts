@@ -77,6 +77,25 @@ const SEPARATEUR = /^\s*\|?[\s:|-]+\|[\s:|-]*$/;
  */
 export function fragments(ligne: string): RichText[] {
   const out: RichText[] = [];
+
+  /**
+   * Le contenu d'une marque, relu comme le reste.
+   *
+   * Sans cette relecture, `[`chemin.md`](…)` gardait ses accents graves à
+   * l'écran : le libellé d'un lien n'était jamais analysé, et le Markdown y
+   * restait littéral. La récursion s'arrête d'elle-même — chaque tour retire
+   * les délimiteurs, donc le texte décroît strictement.
+   *
+   * Un contenu sans balisage rend la chaîne telle quelle plutôt qu'un tableau
+   * d'un élément : c'est la même chose pour l'API, et c'est plus lisible au
+   * journal comme au test.
+   */
+  const interieur = (texte: string): RichText => {
+    const morceaux = fragments(texte);
+    const seul = morceaux[0];
+    return morceaux.length === 1 && typeof seul === 'string' ? seul : morceaux;
+  };
+
   const motif =
     /`([^`]+)`|\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*|~~([^~]+)~~|(?<![\w*])\*([^*\n]+)\*(?![\w*])|(?<![\w_])_([^_\n]+)_(?![\w_])/g;
 
@@ -93,13 +112,16 @@ export function fragments(ligne: string): RichText[] {
     if (code !== undefined) out.push({ type: 'marked', text: { type: 'code', text: code } });
     else if (libelle !== undefined && url !== undefined) {
       // Une URL n'est reprise que si elle mène quelque part de connu : le reste
-      // n'a rien à faire dans un lien qu'on relaie.
-      if (/^(https?:\/\/|mailto:)/i.test(url)) out.push({ type: 'url', text: libelle, url });
-      else out.push(libelle);
-    } else if (gras !== undefined) out.push({ type: 'bold', text: gras });
-    else if (barre !== undefined) out.push({ type: 'strikethrough', text: barre });
-    else if (penche !== undefined) out.push({ type: 'italic', text: penche });
-    else if (souligne !== undefined) out.push({ type: 'italic', text: souligne });
+      // n'a rien à faire dans un lien qu'on relaie. Le libellé, lui, garde sa
+      // mise en forme dans les deux cas — un lien écarté ne doit pas rendre son
+      // texte plus pauvre que s'il n'avait jamais été un lien.
+      if (/^(https?:\/\/|mailto:)/i.test(url)) {
+        out.push({ type: 'url', text: interieur(libelle), url });
+      } else out.push(...fragments(libelle));
+    } else if (gras !== undefined) out.push({ type: 'bold', text: interieur(gras) });
+    else if (barre !== undefined) out.push({ type: 'strikethrough', text: interieur(barre) });
+    else if (penche !== undefined) out.push({ type: 'italic', text: interieur(penche) });
+    else if (souligne !== undefined) out.push({ type: 'italic', text: interieur(souligne) });
 
     reste = m.index + m[0].length;
   }
