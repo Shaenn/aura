@@ -324,6 +324,29 @@ export class Telegram {
   }
 
   /**
+   * Déclare la liste que Telegram propose sous le `/`.
+   *
+   * `langue` absente pose la liste **par défaut**, celle que voit un client dont
+   * la langue n'a pas la sienne. Un échec ne coûte que l'autocomplétion : les
+   * commandes restent reconnues, puisque c'est `routage.ts` qui en juge et non
+   * cette déclaration.
+   */
+  async declare(
+    commandes: { command: string; description: string }[],
+    langue?: string,
+  ): Promise<boolean> {
+    try {
+      await this.api.setMyCommands({
+        commands: commandes,
+        ...(langue ? { language_code: langue } : {}),
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Envoie un document, du plus riche au plus sûr.
    *
    * Trois tentatives, dans cet ordre, et les deux premières sont le **même

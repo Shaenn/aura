@@ -94,22 +94,33 @@ export default {
    * quelle session, quel dossier — là où l'écran le montrait déjà.
    */
   passerelle: {
-    aide: [
-      'Je pilote l’Atelier depuis cette conversation.',
-      '',
-      'Consulter, sans rien lancer :',
-      '/projets — les projets que Claude Code connaît, numérotés.',
-      '/projet <n> — son arborescence : on descend dossier par dossier.',
-      '/voir <n> — le contenu d’un fichier de la dernière liste.',
-      '',
-      'Travailler :',
-      '/atelier <n> — j’ouvre une session sur ce projet.',
-      '/sessions — ce qui tourne en ce moment.',
-      '/stop — j’interromps le tour en cours.',
-      '/fin — je ferme la session de cette conversation.',
-      '',
-      'Tout autre message part à la session comme un tour.',
-    ].join('\n'),
+    /**
+     * L'aide se compose à partir de `passerelle/commandes.ts` : ces morceaux
+     * sont les seuls à écrire, et la liste des commandes n'est plus recopiée.
+     */
+    aideEntete: 'Je pilote l’Atelier depuis cette conversation.',
+    aidePied: 'Tout autre message part à la session comme un tour.',
+    aideConsulter: 'Consulter, sans rien lancer :',
+    aideTravailler: 'Travailler :',
+    /** L'argument d'une commande qui en prend un, tel qu'il s'écrit dans l'aide. */
+    aideArgument: '<n>',
+    /**
+     * Ce que fait chaque commande — une ligne, à la première personne.
+     *
+     * Elles servent deux fois : dans l'aide, et dans la liste que Telegram
+     * propose sous le `/`. La seconde les affiche seules, sans le reste du
+     * message : elles doivent donc se suffire à elles-mêmes.
+     */
+    commandes: {
+      projets: 'Les projets que Claude Code connaît, numérotés.',
+      projet: 'L’arborescence d’un projet : on descend dossier par dossier.',
+      voir: 'Le contenu d’un fichier de la dernière liste.',
+      atelier: 'J’ouvre une session sur ce projet.',
+      sessions: 'Ce qui tourne en ce moment.',
+      stop: 'J’interromps le tour en cours.',
+      fin: 'Je ferme la session de cette conversation.',
+      aide: 'Je répète ce que je sais faire.',
+    },
     sessionOuverte: 'Session ouverte sur {cwd}. Écrivez-moi ce qu’il y a à faire.',
     projets: 'Les projets que je connais. Le numéro sert à /projet et à /atelier.',
     aucunProjet: 'Claude Code n’a encore travaillé sur aucun projet ici.',

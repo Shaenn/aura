@@ -13,7 +13,7 @@
 // (`agent/registry.ts`), la file d'entrée et les demandes en attente
 // (`agent/runner.ts`), la forme des messages (`shared/agent.ts`).
 
-import { t } from '../i18n/index.ts';
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, t, withLocale } from '../i18n/index.ts';
 import { publicMessage } from '../errors.ts';
 import type { AgentUpsert, AskQuestion, PermissionAnswer } from '../../shared/agent.ts';
 import { isPermissionMode } from '../../shared/agent.ts';
@@ -49,6 +49,7 @@ import { paginer } from './markdown.ts';
 import { enBlocs, MAX_RICHE, type InputRichBlock } from './riche.ts';
 import { boutons, elargi, grille, Telegram } from './telegram.ts';
 import { Battement } from './activite.ts';
+import { aide, pourTelegram } from './commandes.ts';
 import type { InlineKeyboardMarkup } from 'node-telegram-bot-api';
 
 /**
@@ -682,7 +683,7 @@ async function traite(chatId: number, brut: string): Promise<void> {
       return;
 
     case 'aide':
-      await tg.envoie(chatId, t('passerelle.aide'));
+      await tg.envoie(chatId, aide());
       return;
 
     case 'sessions': {
@@ -882,6 +883,27 @@ export function demarrePasserelle(journal: Journal): void {
   void boucle(tg, chats, journal);
 }
 
+/**
+ * Pose la liste des commandes chez Telegram, une fois par langue.
+ *
+ * Elle y était saisie à la main dans `@BotFather`, donc hors du dépôt : rien
+ * n'empêchait d'y annoncer une commande retirée depuis. Elle vient désormais de
+ * la même table que le routage et l'aide.
+ *
+ * La langue de référence tient la liste **par défaut** — celle que voit un
+ * client dont la langue n'a pas la sienne. Les autres ont la leur, nommée.
+ *
+ * Rien de bloquant : un échec ne coûte que l'autocomplétion, et la Passerelle
+ * marche sans. On le journalise plutôt que d'y renoncer en silence.
+ */
+async function declareCommandes(tg: Telegram, journal: Journal): Promise<void> {
+  for (const langue of SUPPORTED_LOCALES) {
+    const liste = withLocale(langue, pourTelegram);
+    const ok = await tg.declare(liste, langue === DEFAULT_LOCALE ? undefined : langue);
+    if (!ok) journal.warn(`Passerelle : Telegram a refusé la liste des commandes (${langue}).`);
+  }
+}
+
 /** Le long-polling, jusqu'à l'extinction du serveur. */
 async function boucle(tg: Telegram, chats: Set<number>, journal: Journal): Promise<void> {
   const nom = await tg.identite();
@@ -891,6 +913,7 @@ async function boucle(tg: Telegram, chats: Set<number>, journal: Journal): Promi
     return;
   }
   journal.info(`Passerelle ouverte sur @${nom} — ${chats.size} conversation(s) autorisée(s).`);
+  await declareCommandes(tg, journal);
 
   tg.ecoute(
     // La garde passe avant tout traitement, et le silence est la réponse à un
