@@ -890,17 +890,25 @@ export function demarrePasserelle(journal: Journal): void {
  * n'empêchait d'y annoncer une commande retirée depuis. Elle vient désormais de
  * la même table que le routage et l'aide.
  *
- * La langue de référence tient la liste **par défaut** — celle que voit un
- * client dont la langue n'a pas la sienne. Les autres ont la leur, nommée.
+ * Chaque langue reçoit la sienne, **la référence comprise**, et le défaut la
+ * double. Cette redondance apparente est mesurée, pas décorative : n'ayant posé
+ * que le défaut pour le français, un client réglé en français demandait `fr`,
+ * ne trouvait rien, et n'affichait aucune commande — là où le client web
+ * retombait bien sur le défaut. Plutôt que de départager les deux, on ne laisse
+ * plus de repli à prendre.
  *
  * Rien de bloquant : un échec ne coûte que l'autocomplétion, et la Passerelle
  * marche sans. On le journalise plutôt que d'y renoncer en silence.
  */
 async function declareCommandes(tg: Telegram, journal: Journal): Promise<void> {
+  const rate = (quoi: string): void =>
+    journal.warn(`Passerelle : Telegram a refusé la liste des commandes (${quoi}).`);
+
+  // Le défaut : ce que voit un client dont la langue n'est pas des nôtres.
+  if (!(await tg.declare(withLocale(DEFAULT_LOCALE, pourTelegram)))) rate('défaut');
+
   for (const langue of SUPPORTED_LOCALES) {
-    const liste = withLocale(langue, pourTelegram);
-    const ok = await tg.declare(liste, langue === DEFAULT_LOCALE ? undefined : langue);
-    if (!ok) journal.warn(`Passerelle : Telegram a refusé la liste des commandes (${langue}).`);
+    if (!(await tg.declare(withLocale(langue, pourTelegram), langue))) rate(langue);
   }
 }
 
