@@ -123,6 +123,13 @@ viendrait pas l'emporterait dans son silence. Elle le rend replié, par le bloc 
 (voir `blocs-riches.md`) : c'est le seul repli explicite de l'API, l'« Afficher plus »
 automatique ne s'étant pas déclenché sur sept mille caractères.
 
+`ExitPlanMode` est la seule demande de permission que la Passerelle rend en entier
+(`passerelle/plan.ts`) : partout ailleurs le nom de l'outil et son chemin suffisent à juger,
+ici l'argument **est** la décision. Le CLI passe le markdown en clair dans `input.plan` — et
+`input.planFilePath` à côté, qui ne se lit pas de loin. Le rendu emprunte `envoieRendu`, dont
+les trois barreaux valent ici comme pour un document : le plan vient du modèle, sa structure
+n'est pas garantie.
+
 Les événements d'un fil se traitent **à la file** (`attache`) : deux `applique` lancés de front
 font des appels réseau qui arrivent dans l'ordre où Telegram les sert, et le résumé doublait
 l'annonce qui le précédait.

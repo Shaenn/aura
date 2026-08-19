@@ -136,6 +136,8 @@ const en: Catalog = {
     fenetrePleine: 'The window is {pourcent}% full — a compaction is coming.',
     permission: 'I would like to use {outil}.',
     autoriser: 'Allow',
+    plan: 'Here is the plan I propose. I write nothing before you approve it.',
+    approuver: 'Approve',
     refuser: 'Deny',
     refuseDeLoin: 'Denied from the messaging app.',
     questionEtape: '{header} — question {n} of {total}',

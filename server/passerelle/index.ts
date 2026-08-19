@@ -57,6 +57,7 @@ import {
   type Formulaire,
 } from './questions.ts';
 import { alerte, lignes as lignesEtat, nombre, part, type Fenetre } from './etat.ts';
+import { planPropose } from './plan.ts';
 import { contextLimitFor } from '../context.ts';
 import { configuredLongWindow } from '../claude/model.ts';
 import { Battement } from './activite.ts';
@@ -963,6 +964,24 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
       // laisser battre la bulle ferait croire le contraire.
       fil.battement.arrete();
       const demande = upsert.request;
+      const plan = planPropose(demande);
+      if (plan) {
+        // Le plan est le seul appel dont l'argument *est* la décision : le nom
+        // de l'outil n'apprend rien, et deux boutons sans le texte reviennent à
+        // faire approuver ce qu'on n'a pas lu.
+        const source = `${t('passerelle.plan')}\n\n${plan}`;
+        const coupe = source.length > PAGE_RICHE ? `${source.slice(0, PAGE_RICHE)}…` : source;
+        await tg.envoieRendu(
+          chatId,
+          enBlocs(coupe),
+          coupe,
+          boutons([
+            { texte: t('passerelle.approuver'), donnee: `p:${demande.id}:a` },
+            { texte: t('passerelle.refuser'), donnee: `p:${demande.id}:d` },
+          ]),
+        );
+        return;
+      }
       const quoi = demande.title || demande.displayName || demande.toolName;
       await tg.envoie(
         chatId,

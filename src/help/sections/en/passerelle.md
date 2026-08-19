@@ -142,6 +142,8 @@ A message from a conversation that is not allowed gets **no reply**. That is del
 
 When the agent wants a tool the mode does not let through, I send you a message with two buttons, **Allow** and **Deny**. Your answer unblocks the turn at once.
 
+A plan is the one exception: when the agent submits what it intends to do, the tool name teaches you nothing — the text is what you judge. So I send you the whole plan, formatted, with **Approve** and **Deny** below it. A very long plan is trimmed; it stays whole in the Workshop.
+
 The Workshop's deadline applies here too: **with no answer within fifteen minutes the request is denied**, never the reverse. A command started before you left will not stay suspended forever.
 
 ## Answering a question

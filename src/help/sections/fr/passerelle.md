@@ -142,6 +142,8 @@ Un message venu d'une conversation non autorisée reste **sans réponse**. C'est
 
 Quand l'agent veut employer un outil que le mode ne laisse pas passer, je vous envoie un message avec deux boutons, **Autoriser** et **Refuser**. Votre réponse débloque le tour immédiatement.
 
+Un plan fait exception, et il est le seul : quand l'agent soumet ce qu'il compte faire, le nom de l'outil n'apprend rien — c'est le texte qui se juge. Je vous envoie donc le plan entier, mis en forme, et les boutons **Approuver** et **Refuser** sous lui. Un plan très long est coupé ; il reste entier dans l'Atelier.
+
 L'échéance de l'Atelier s'applique ici aussi : **sans réponse au bout d'un quart d'heure, la demande est refusée**, jamais l'inverse. Une commande lancée avant de partir ne restera donc pas suspendue indéfiniment.
 
 ## Répondre à une question

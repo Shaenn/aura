@@ -212,6 +212,12 @@ export default {
       'Je vous signale que la fenêtre est occupée à {pourcent} % — une compaction approche.',
     permission: 'Je voudrais utiliser {outil}.',
     autoriser: 'Autoriser',
+    /**
+     * L'en-tête d'un plan soumis. Il dit ce que les boutons engagent : sans
+     * cela, « Approuver » sous un long document ne dit pas ce qui suit.
+     */
+    plan: 'Je vous propose ce plan. Je n’écris rien avant votre accord.',
+    approuver: 'Approuver',
     refuser: 'Refuser',
     /** Le motif transmis au modèle, et non à l'utilisateur : il reste bref. */
     refuseDeLoin: 'Refusé depuis la messagerie.',
