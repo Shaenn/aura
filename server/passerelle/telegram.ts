@@ -47,10 +47,29 @@ export interface BoutonPresse {
   donnee: string;
 }
 
+/**
+ * Ce qu'un envoi de document a donné : par quel barreau il est passé, et sous
+ * quel identifiant. Le second sert à réécrire le clavier d'un formulaire.
+ */
+export interface Rendu {
+  voie: 'riche' | 'nu' | 'brut';
+  messageId: number | null;
+}
+
 /** Un bouton : ce qu'il affiche, et ce qu'il renvoie quand on le presse. */
 export interface Bouton {
   texte: string;
   donnee: string;
+}
+
+/**
+ * Un libellé de bouton : Telegram les veut courts, et les tronque mal.
+ *
+ * Vit ici plutôt que chez l'appelant parce que c'est une borne de Telegram, au
+ * même titre que la largeur d'une rangée.
+ */
+export function tronqueBouton(texte: string): string {
+  return texte.length > 32 ? `${texte.slice(0, 31)}…` : texte;
 }
 
 /** Une rangée de boutons sous un message. */
@@ -324,6 +343,31 @@ export class Telegram {
   }
 
   /**
+   * Ne réécrit que le clavier d'un message, sans toucher à son texte.
+   *
+   * C'est la seule réécriture possible sur un message riche : la bibliothèque
+   * expose `sendRichMessage` mais **aucun** `editMessageRichText`. Cocher une
+   * case d'un formulaire passe donc par ici — et c'est de toute façon ce qu'on
+   * veut, la question au-dessus n'ayant aucune raison de bouger.
+   */
+  async reecritClavier(
+    chatId: number,
+    messageId: number,
+    clavier: InlineKeyboardMarkup,
+  ): Promise<boolean> {
+    try {
+      await this.api.editMessageReplyMarkup({
+        chat_id: chatId,
+        message_id: messageId,
+        reply_markup: clavier,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Déclare la liste que Telegram propose sous le `/`.
    *
    * `langue` absente pose la liste **par défaut**, celle que voit un client dont
@@ -373,7 +417,7 @@ export class Telegram {
     blocs: InputRichBlock[],
     brut: string,
     clavier?: InlineKeyboardMarkup,
-  ): Promise<'riche' | 'nu' | 'brut'> {
+  ): Promise<Rendu> {
     const markup = clavier ? { reply_markup: clavier } : {};
 
     // Sans cela, Telegram fabrique des liens dans notre dos. Le piège est
@@ -389,19 +433,23 @@ export class Telegram {
 
     if (blocs.length) {
       try {
-        await this.api.sendRichMessage(riche(blocs));
-        return 'riche';
+        const envoye = await this.api.sendRichMessage(riche(blocs));
+        return { voie: 'riche', messageId: envoye.message_id };
       } catch {
         /* la structure a été refusée ; le texte, lui, tient peut-être */
       }
     }
 
     try {
-      await this.api.sendRichMessage(riche([{ type: 'paragraph', text: borne(brut, MAX_RICHE) }]));
-      return 'nu';
+      const envoye = await this.api.sendRichMessage(
+        riche([{ type: 'paragraph', text: borne(brut, MAX_RICHE) }]),
+      );
+      return { voie: 'nu', messageId: envoye.message_id };
     } catch {
-      await this.envoie(chatId, brut, clavier);
-      return 'brut';
+      return {
+        voie: 'brut',
+        messageId: await this.envoieSuivi(chatId, borne(brut, MAX_TEXTE), clavier),
+      };
     }
   }
 

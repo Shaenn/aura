@@ -171,8 +171,19 @@ export default {
     refuser: 'Refuser',
     /** Le motif transmis au modèle, et non à l'utilisateur : il reste bref. */
     refuseDeLoin: 'Refusé depuis la messagerie.',
-    questionTropRiche:
-      'Cette question demande un formulaire que je ne sais pas poser ici. Elle vous attend dans l’Atelier.',
+    /**
+     * Le formulaire de l'Atelier, posé une question par écran.
+     *
+     * `questionLibre` porte la seule chose qu'aucun bouton ne dit : qu'on peut
+     * répondre autre chose que ce qui est offert. Sans elle, la possibilité
+     * existe sans que personne ne la découvre.
+     */
+    questionEtape: '{header} — question {n} sur {total}',
+    questionMultiple: 'Plusieurs réponses possibles.',
+    questionLibre: 'Pressez une option, ou écrivez votre réponse.',
+    questionValider: 'Valider',
+    questionExpiree:
+      'Personne n’a répondu à cette question dans le quart d’heure ; je l’ai laissée passer.',
     commandeInconnue: 'Je ne connais pas {commande}. /aide donne ce que je sais faire.',
     /**
      * La bulle éphémère montrée pendant qu'un tour travaille.

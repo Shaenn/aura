@@ -124,7 +124,15 @@ Quand l'agent veut employer un outil que le mode ne laisse pas passer, je vous e
 
 L'échéance de l'Atelier s'applique ici aussi : **sans réponse au bout d'un quart d'heure, la demande est refusée**, jamais l'inverse. Une commande lancée avant de partir ne restera donc pas suspendue indéfiniment.
 
-Une question à choix vous parvient de la même façon, en boutons. Si elle en compte plusieurs, je vous le dis sans y répondre à moitié : ce formulaire-là demande l'écran, et il vous attend dans l'Atelier.
+## Répondre à une question
+
+Quand l'agent vous demande de trancher, je vous pose le même formulaire que l'Atelier, **une question par message**. Chaque option arrive avec ce qui l'explique — sa description, et sa maquette quand elle en porte une. Le numéro devant le libellé est celui du bouton : Telegram rogne les boutons à trente-deux caractères, le texte au-dessus ne rogne rien.
+
+Une question qui attend **plusieurs réponses** se coche : chaque option bascule entre ☐ et ☑, et **Valider** conclut. Seul le clavier bouge à chaque clic — la question, elle, reste où vous la lisiez.
+
+Et si aucune option ne convient, **écrivez votre réponse** : tant qu'une question attend, un message ordinaire lui répond au lieu de partir comme un tour. Les commandes, elles, restent des commandes — `/stop` interrompt même sous une question.
+
+Sans réponse au bout d'un quart d'heure, la question passe : je retire les boutons et je vous le dis.
 
 ## Pendant que ça travaille
 
@@ -156,6 +164,6 @@ En revanche, une session **ne survit pas au redémarrage du service**. Si vous m
 
 ## Ce que cela ne remplace pas
 
-L'Atelier montre ce que la messagerie ne peut pas : le chemin exact qu'un outil vise, les maquettes d'une question, la fenêtre de contexte, les commandes lancées en arrière-plan. La Passerelle sert à lancer, surveiller et débloquer — pas à travailler à l'aveugle.
+L'Atelier montre ce que la messagerie ne peut pas : le chemin exact qu'un outil vise, la fenêtre de contexte, les commandes lancées en arrière-plan. La Passerelle sert à lancer, surveiller et débloquer — pas à travailler à l'aveugle.
 
 Les sessions ouvertes de loin sont des sessions comme les autres : elles apparaissent dans l'Atelier, se rejouent, et comptent dans l'**Usage** comme dans le **Diagnostic**.

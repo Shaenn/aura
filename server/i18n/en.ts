@@ -129,8 +129,11 @@ const en: Catalog = {
     autoriser: 'Allow',
     refuser: 'Deny',
     refuseDeLoin: 'Denied from the messaging app.',
-    questionTropRiche:
-      'This question needs a form I cannot render here. It is waiting for you in the Workshop.',
+    questionEtape: '{header} — question {n} of {total}',
+    questionMultiple: 'Several answers are expected.',
+    questionLibre: 'Tap an option, or write your own answer.',
+    questionValider: 'Confirm',
+    questionExpiree: 'Nobody answered this question within fifteen minutes; I let it go.',
     commandeInconnue: 'I do not know {commande}. /aide lists what I can do.',
     /** The ephemeral bubble shown while a turn is working. */
     activite: {

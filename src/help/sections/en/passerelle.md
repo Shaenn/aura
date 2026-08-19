@@ -124,7 +124,15 @@ When the agent wants a tool the mode does not let through, I send you a message 
 
 The Workshop's deadline applies here too: **with no answer within fifteen minutes the request is denied**, never the reverse. A command started before you left will not stay suspended forever.
 
-A multiple-choice question reaches you the same way, as buttons. If it holds several questions, I tell you rather than answering it halfway: that form needs the screen, and it is waiting for you in the Workshop.
+## Answering a question
+
+When the agent needs you to decide, I put the Workshop's own form to you, **one question per message**. Every option arrives with what explains it — its description, and its mockup where it has one. The number before the label is the button's: Telegram trims buttons to thirty-two characters, the text above trims nothing.
+
+A question expecting **several answers** is ticked: each option toggles between ☐ and ☑, and **Confirm** closes it. Only the keyboard moves on each tap — the question stays where you were reading it.
+
+And if no option fits, **write your answer**: while a question is waiting, an ordinary message answers it instead of going out as a turn. Commands stay commands — `/stop` still interrupts under a question.
+
+With no answer within fifteen minutes the question passes: I take the buttons away and say so.
 
 ## While it is working
 
@@ -156,6 +164,6 @@ A session does **not** survive a restart of the service, however. Write to me af
 
 ## What this does not replace
 
-The Workshop shows what a messaging app cannot: the exact path a tool targets, a question's mockups, the context window, the commands left running in the background. The Gateway is for starting, watching and unblocking — not for working blind.
+The Workshop shows what a messaging app cannot: the exact path a tool targets, the context window, the commands left running in the background. The Gateway is for starting, watching and unblocking — not for working blind.
 
 Sessions opened from afar are sessions like any other: they show up in the Workshop, they replay, and they count in **Usage** as in **Diagnostics**.

@@ -98,6 +98,13 @@ Le pouvoir accordé reste considérable — qui écrit dans une conversation aut
 lancer une commande et autoriser une écriture. Les demandes de permission partent en boutons ;
 sans réponse, le garde-fou d'`agent/runner.ts` les refuse après un quart d'heure.
 
+Les questions de l'agent (`ask-request`) suivent `passerelle/questions.ts`, qui porte le
+formulaire de `src/components/agent/AskPrompt.vue` : une question par message, le choix
+multiple qui se coche, et la réponse écrite quand aucune option ne convient. Deux contraintes
+mesurées le dessinent — **un message riche ne se réécrit pas** (la bibliothèque n'expose aucun
+`editMessageRichText`, seulement `editMessageReplyMarkup`), et `callback_data` tient 64 octets.
+Comme `routage.ts`, ce fichier décide sans réseau : c'est ce qui le rend testable.
+
 Une session pilotée d'ici **doit** rester abonnée (`runner.subscribe`) : c'est l'abonnement, et
 lui seul, qui la protège du balayeur d'`agent/registry.ts`.
 

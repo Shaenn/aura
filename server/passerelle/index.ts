@@ -15,7 +15,7 @@
 
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES, t, withLocale } from '../i18n/index.ts';
 import { publicMessage } from '../errors.ts';
-import type { AgentUpsert, AskQuestion, PermissionAnswer } from '../../shared/agent.ts';
+import type { AgentUpsert, PermissionAnswer } from '../../shared/agent.ts';
 import { isPermissionMode } from '../../shared/agent.ts';
 import {
   atCapacity,
@@ -48,6 +48,14 @@ import {
 import { paginer } from './markdown.ts';
 import { enBlocs, MAX_RICHE, type InputRichBlock } from './riche.ts';
 import { boutons, elargi, grille, Telegram } from './telegram.ts';
+import {
+  ecran as ecranQuestion,
+  formulaire,
+  presse,
+  repondLibre,
+  reponses,
+  type Formulaire,
+} from './questions.ts';
 import { Battement } from './activite.ts';
 import { aide, pourTelegram } from './commandes.ts';
 import type { InlineKeyboardMarkup } from 'node-telegram-bot-api';
@@ -72,10 +80,26 @@ interface Fil {
   runId: string;
   /** Se désabonner du runner quand le fil se défait. */
   detache: () => void;
+  /**
+   * L'abonnement a-t-il déjà rendu son premier `snapshot` ?
+   *
+   * `subscribe` émet le sien **avant** d'enregistrer l'abonné : le premier reçu
+   * est donc celui de l'abonnement par construction, et non par ressemblance.
+   * C'est ce qui permet de distinguer les deux sites d'émission sans deviner.
+   */
+  abonne: boolean;
   /** Les textes de l'assistant du tour en cours, par uuid. */
   tour: Map<string, string>;
-  /** Les questions en vol, pour retrouver l'option qu'un bouton désigne. */
-  asks: Map<string, AskQuestion[]>;
+  /** Les formulaires en vol, pour retrouver ce qu'un bouton désigne. */
+  asks: Map<string, Formulaire>;
+  /**
+   * Le formulaire qui capte le prochain message écrit, s'il y en a un.
+   *
+   * C'est ce qui rend possible la réponse hors menu — le « Other » du harnais.
+   * Il ne capte que ce qui serait parti comme un tour : les commandes restent
+   * des commandes sous une question.
+   */
+  attente: string | null;
   /** La bulle éphémère qui dit que ça travaille, et à quoi. */
   battement: Battement;
 }
@@ -542,6 +566,70 @@ async function repond(chatId: number, texte: string): Promise<void> {
   await tg.envoieRendu(chatId, enBlocs(source), source);
 }
 
+/**
+ * Pose l'étape courante d'un formulaire, et se met en attente d'une réponse.
+ *
+ * Un message neuf par étape, et non une réécriture : un message riche ne se
+ * réécrit pas — la bibliothèque n'expose aucun `editMessageRichText`. Ce n'est
+ * pas une perte ici, une question posée ayant sa place dans le fil à sa date.
+ */
+async function poseQuestion(chatId: number, fil: Fil, f: Formulaire): Promise<void> {
+  const tg = telegram;
+  if (!tg) return;
+  await desarme(chatId, f);
+  const vue = ecranQuestion(f);
+  const rendu = await tg.envoieRendu(chatId, vue.blocs, vue.brut, vue.clavier);
+  f.messageId = rendu.messageId;
+  fil.attente = f.id;
+}
+
+/**
+ * Retire le clavier de l'écran qu'on quitte.
+ *
+ * Sans cela, les boutons d'une étape déjà répondue restent pressables — et,
+ * comme ils ne portent qu'un rang, ils s'appliqueraient à la question suivante.
+ * Un clic destiné à la première question cocherait une option de la deuxième.
+ */
+async function desarme(chatId: number, f: Formulaire): Promise<void> {
+  if (f.messageId === null) return;
+  await telegram?.reecritClavier(chatId, f.messageId, { inline_keyboard: [] });
+  f.messageId = null;
+}
+
+/**
+ * Ce qu'une réponse partielle entraîne : cocher, passer à la suite, ou conclure.
+ *
+ * `questions.ts` décide, ce qui suit ne fait qu'émettre. Cocher ne réécrit que
+ * le clavier — la question au-dessus n'a aucune raison de bouger.
+ */
+async function avanceQuestion(
+  chatId: number,
+  fil: Fil,
+  f: Formulaire,
+  quoi: ReturnType<typeof presse>,
+): Promise<void> {
+  const tg = telegram;
+  if (!tg) return;
+
+  if (quoi === 'coche') {
+    if (f.messageId !== null)
+      await tg.reecritClavier(chatId, f.messageId, ecranQuestion(f).clavier);
+    return;
+  }
+  if (quoi === 'suivant') {
+    await poseQuestion(chatId, fil, f);
+    return;
+  }
+  if (quoi !== 'fini') return;
+
+  await desarme(chatId, f);
+  fil.asks.delete(f.id);
+  fil.attente = null;
+  // Le tour suspendu repart ici : `answerAsk` dénoue la promesse que l'outil
+  // MCP tient depuis `ask.ts`. Rien à attendre, la main revient aussitôt.
+  courant(chatId)?.answerAsk(f.id, reponses(f));
+}
+
 /** Ce fichier se lit-il comme du Markdown ? */
 function estMarkdown(rel: string): boolean {
   return /\.(md|markdown|mdx)$/i.test(rel);
@@ -563,11 +651,6 @@ function navigation(rang: number, index: number, total: number): InlineKeyboardM
   return boutons(paires);
 }
 
-/** Un libellé de bouton : Telegram les veut courts, et les tronque mal. */
-function tronqueBouton(texte: string): string {
-  return texte.length > 32 ? `${texte.slice(0, 31)}…` : texte;
-}
-
 /** Le mode de permission des sessions ouvertes de loin. */
 function mode(): string {
   const brut = (process.env.AURA_TELEGRAM_MODE ?? '').trim();
@@ -587,8 +670,10 @@ function attache(chatId: number, runner: SessionRunner): void {
   const fil: Fil = {
     runId: runner.session.runId,
     detache: () => {},
+    abonne: false,
     tour: new Map(),
     asks: new Map(),
+    attente: null,
     battement: new Battement(
       {
         brouillon: async (id, draft, texte) => {
@@ -640,10 +725,40 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
   if (!tg) return;
 
   switch (upsert.kind) {
-    // `snapshot` rejoue tout l'historique à l'abonnement : le renvoyer
-    // inonderait la conversation d'un travail déjà lu.
-    case 'snapshot':
+    /**
+     * `snapshot` a **deux** sites d'émission, et ils n'appellent pas la même
+     * réponse.
+     *
+     * Le premier est l'abonnement (`runner.ts`, `subscribe`) : il rejoue tout
+     * l'historique, et le renvoyer inonderait la conversation d'un travail déjà
+     * lu. Le second est `resetConversation` : le contexte vient d'être vidé, le
+     * CLI a ouvert un transcript neuf, et l'agent n'a plus aucun souvenir. Se
+     * taire là-dessus laisse parler à quelqu'un qui a tout oublié.
+     *
+     * La conversation ne peut pas le provoquer elle-même — `/clear` n'est pas
+     * une commande que `routage.ts` sert. Cela vient donc toujours d'ailleurs :
+     * de l'onglet de l'Atelier, ou du SDK lui-même. Raison de plus de le dire.
+     */
+    case 'snapshot': {
+      if (!fil.abonne) {
+        fil.abonne = true;
+        return;
+      }
+      fil.battement.arrete();
+      // Les textes du tour en cours parlent d'une conversation qui n'existe
+      // plus : les envoyer maintenant serait citer un souvenir effacé.
+      fil.tour.clear();
+      const dit = upsert.events
+        .filter((e) => e.kind === 'system')
+        .flatMap((e) => e.blocks)
+        .map((b) => b.text ?? '')
+        .join('\n')
+        .trim();
+      // Les mêmes mots qu'à l'écran (`agent.cleared`), et non une phrase de
+      // plus : une session lue de deux endroits ne raconte pas deux histoires.
+      if (dit) await tg.envoie(chatId, dit);
       return;
+    }
 
     case 'append-event':
     case 'replace-event': {
@@ -708,32 +823,35 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
     }
 
     case 'ask-request': {
+      // La balle est dans votre camp : laisser battre la bulle ferait croire
+      // qu'AURA travaille encore.
       fil.battement.arrete();
       const demande = upsert.request;
-      const premiere = demande.questions[0];
-      // Un formulaire à plusieurs questions ne se rend pas en boutons sans
-      // inventer un dialogue à étapes. On le dit plutôt que d'y répondre à
-      // moitié : l'écran de l'Atelier, lui, sait le poser en entier.
-      if (demande.questions.length !== 1 || !premiere) {
-        await tg.envoie(chatId, t('passerelle.questionTropRiche'));
-        return;
-      }
-      fil.asks.set(demande.id, demande.questions);
-      await tg.envoie(
-        chatId,
-        `${premiere.header}\n\n${premiere.question}`,
-        boutons(
-          premiere.options
-            .slice(0, 4)
-            .map((o, i) => ({ texte: tronqueBouton(o.label), donnee: `q:${demande.id}:${i}` })),
-        ),
-      );
+      if (!demande.questions.length) return;
+      const f = formulaire(demande.id, demande.questions);
+      fil.asks.set(demande.id, f);
+      await poseQuestion(chatId, fil, f);
       return;
     }
 
-    case 'ask-settled':
+    /**
+     * Reçu pour un formulaire **encore présent** : personne n'a répondu, et le
+     * garde-fou du quart d'heure (`runner.ts`) a tranché à notre place. Quand
+     * c'est nous qui répondons, l'entrée est déjà partie.
+     */
+    case 'ask-settled': {
+      const perime = fil.asks.get(upsert.id);
       fil.asks.delete(upsert.id);
+      if (fil.attente === upsert.id) fil.attente = null;
+      if (!perime) return;
+      // Sans cela, des boutons morts resteraient pressables sous une question
+      // que plus rien n'attend.
+      if (perime.messageId !== null) {
+        await tg.reecritClavier(chatId, perime.messageId, { inline_keyboard: [] });
+      }
+      await tg.envoie(chatId, t('passerelle.questionExpiree'));
       return;
+    }
 
     default:
       return;
@@ -859,6 +977,16 @@ async function traite(chatId: number, brut: string): Promise<void> {
         await tg.envoie(chatId, t('passerelle.aucunFil'));
         return;
       }
+      // Une question qui attend capte ce qui serait parti comme un tour : c'est
+      // le « Other » du harnais, et la seule façon de répondre ce qu'aucun
+      // bouton ne dit. L'interception vit **ici**, après `parseIntention` : sous
+      // une question, `/stop` et `/fin` restent des commandes.
+      const fil = fils.get(chatId);
+      const f = fil?.attente ? fil.asks.get(fil.attente) : undefined;
+      if (fil && f) {
+        await avanceQuestion(chatId, fil, f, repondLibre(f, intention.texte));
+        return;
+      }
       runner.send(intention.texte);
       return;
     }
@@ -914,11 +1042,9 @@ async function tranche(chatId: number, donnee: string): Promise<void> {
   }
 
   if (type === 'q') {
-    const question = fil.asks.get(id)?.[0];
-    const option = question?.options[Number(suffixe)];
-    if (!question || !option) return;
-    fil.asks.delete(id);
-    runner.answerAsk(id, { [question.question]: option.label });
+    const f = fil.asks.get(id);
+    if (!f) return;
+    await avanceQuestion(chatId, fil, f, presse(f, suffixe));
   }
 }
 
