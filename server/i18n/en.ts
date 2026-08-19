@@ -79,6 +79,16 @@ const en: Catalog = {
 
   /** What AURA says in a messaging app. See the French catalogue for the why. */
   passerelle: {
+    accueil: 'I drive the Claude Code Workshop from this conversation.',
+    accueilProjets: 'I know {n} projects.',
+    accueilUnProjet: 'I know one project.',
+    accueilAucunProjet: 'Claude Code has not worked on any project here yet.',
+    accueilSession: 'A session is already open here, on {cwd}.',
+    accueilTravaux: '{n} sessions are running right now.',
+    accueilUnTravail: 'One session is running right now.',
+    menuProjets: 'Projects',
+    menuSessions: 'Sessions',
+    menuAide: 'Help',
     aideEntete: 'I drive the Workshop from this conversation.',
     aidePied: 'Any other message goes to the session as a turn.',
     aideConsulter: 'Browsing, without starting anything:',

@@ -118,10 +118,17 @@ describe('parseIntention', () => {
     });
   });
 
-  it('accepte les trois portes d’entrée de l’aide', () => {
-    for (const mot of ['/aide', '/start', '/help']) {
+  it('accepte les deux noms de l’aide', () => {
+    for (const mot of ['/aide', '/help']) {
       expect(parseIntention(mot)).toEqual({ kind: 'aide' });
     }
+  });
+
+  it('distingue l’accueil de l’aide', () => {
+    // `/start` est le geste que Telegram propose de lui-même à qui ouvre la
+    // conversation : il arrive avant qu'on sache quoi demander. Une liste de
+    // commandes ne répond pas à ça, d'où deux intentions et non un alias.
+    expect(parseIntention('/start')).toEqual({ kind: 'accueil' });
   });
 
   it('ne confond pas un chemin en début de message avec une commande', () => {

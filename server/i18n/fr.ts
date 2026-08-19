@@ -98,6 +98,24 @@ export default {
      * L'aide se compose à partir de `passerelle/commandes.ts` : ces morceaux
      * sont les seuls à écrire, et la liste des commandes n'est plus recopiée.
      */
+    /**
+     * L'accueil, et il constate plutôt qu'il ne se présente.
+     *
+     * `docs/voix.md` range l'accueil parmi les surfaces où AURA parle d'elle :
+     * le « je » doit y porter une information que la formulation impersonnelle
+     * ne portait pas. D'où l'état du parc et de la conversation, plutôt qu'un
+     * sommaire de ce que les boutons montrent déjà.
+     */
+    accueil: 'Je pilote l’Atelier de Claude Code depuis cette conversation.',
+    accueilProjets: 'Je connais {n} projets.',
+    accueilUnProjet: 'Je connais un projet.',
+    accueilAucunProjet: 'Claude Code n’a encore travaillé sur aucun projet ici.',
+    accueilSession: 'Une session est déjà ouverte ici, sur {cwd}.',
+    accueilTravaux: '{n} sessions tournent en ce moment.',
+    accueilUnTravail: 'Une session tourne en ce moment.',
+    menuProjets: 'Projets',
+    menuSessions: 'Sessions',
+    menuAide: 'Aide',
     aideEntete: 'Je pilote l’Atelier depuis cette conversation.',
     aidePied: 'Tout autre message part à la session comme un tour.',
     aideConsulter: 'Consulter, sans rien lancer :',

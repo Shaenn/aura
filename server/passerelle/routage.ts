@@ -31,6 +31,15 @@ export type Intention =
   | { kind: 'stop' }
   | { kind: 'aide' }
   /**
+   * La première rencontre : ce que je suis, ce que je vois, et par où entrer.
+   *
+   * Distincte de l'aide, qu'elle doublait jusqu'ici. `/start` est le geste que
+   * Telegram propose de lui-même à qui ouvre la conversation : il arrive avant
+   * qu'on sache quoi demander, et une liste de commandes ne répond pas à ça.
+   * L'aide, elle, est une référence — on y revient en sachant ce qu'on cherche.
+   */
+  | { kind: 'accueil' }
+  /**
    * Rien à faire — un message vide, ou une commande qu'on ne sert pas.
    *
    * `raison` n'est pas une erreur à renvoyer telle quelle : elle dit à la
@@ -123,8 +132,9 @@ export function parseIntention(brut: string): Intention {
       return { kind: 'sessions' };
     case '/stop':
       return { kind: 'stop' };
-    case '/aide':
     case '/start':
+      return { kind: 'accueil' };
+    case '/aide':
     case '/help':
       return { kind: 'aide' };
     default:

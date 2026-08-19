@@ -11,7 +11,12 @@ import { aide, COMMANDES, pourTelegram } from '../server/passerelle/commandes.ts
 import { parseIntention } from '../server/passerelle/routage.ts';
 import { SUPPORTED_LOCALES, withLocale } from '../server/i18n/index.ts';
 
-/** Les alias reconnus mais volontairement absents de la table. */
+/**
+ * Reconnues, mais volontairement hors de la table.
+ *
+ * `/help` double `/aide`, et Telegram propose `/start` de lui-même à qui ouvre
+ * la conversation. Les annoncer ferait une liste qui se répète.
+ */
 const ALIAS = ['/start', '/help'];
 
 describe('COMMANDES', () => {

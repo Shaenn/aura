@@ -232,6 +232,86 @@ async function ecranProjets(chatId: number, neuf: boolean): Promise<void> {
   await ecran(chatId, t('passerelle.projets'), grille(cases));
 }
 
+/**
+ * Ce qui tourne, des deux sources qui ne se recouvrent pas.
+ *
+ * Le registre ne connaît que les sessions qu'AURA possède ; celles qu'on a
+ * lancées dans un terminal n'y figurent pas et n'y figureront jamais — elles
+ * n'existent que par leur fichier d'état sous `~/.claude/sessions`. N'en montrer
+ * qu'une des deux faisait répondre « rien ne tourne » à quelqu'un qui regardait
+ * une session tourner.
+ */
+async function etatDesSessions(): Promise<string> {
+  const atelier = listSessions();
+  const systeme = await sessionsActives();
+  // Une session de l'Atelier a aussi son fichier d'état : sans ce filtre, elle
+  // se compterait deux fois.
+  const runIds = new Set(atelier.map((s) => s.sessionId).filter(Boolean));
+  const ailleurs = systeme.filter((s) => !runIds.has(s.sessionId));
+
+  if (!atelier.length && !ailleurs.length) return t('passerelle.aucuneSession');
+
+  const lignes: string[] = [];
+  if (atelier.length) {
+    lignes.push(t('passerelle.sessionsAtelier'));
+    for (const s of atelier) lignes.push(`• ${s.cwd} — ${s.status}`);
+  }
+  if (ailleurs.length) {
+    if (lignes.length) lignes.push('');
+    lignes.push(t('passerelle.sessionsAilleurs'));
+    for (const s of ailleurs) {
+      const etat = s.status ?? '?';
+      lignes.push(`• ${s.cwd || '?'} — ${etat}${s.waitingFor ? ` (${s.waitingFor})` : ''}`);
+    }
+  }
+  return lignes.join('\n');
+}
+
+/**
+ * L'accueil : ce que je suis, ce que je vois, et par où entrer.
+ *
+ * Il **constate** au lieu de se présenter, parce que `docs/voix.md` le range
+ * parmi les surfaces où le « je » doit porter une information que la
+ * formulation impersonnelle ne portait pas. Le nombre de projets et l'état de
+ * la conversation sont cette information ; « voici le menu » ne l'aurait pas
+ * été, les boutons étant déjà à l'écran.
+ *
+ * Il prend la place du message de navigation, si bien qu'un clic sur « Les
+ * projets » le **réécrit** au lieu d'empiler : l'accueil devient la première
+ * marche du même parcours que l'arborescence, pas un écran à part.
+ */
+async function ecranAccueil(chatId: number): Promise<void> {
+  const v = vue(chatId);
+  v.projets = await listProjects();
+
+  const lignes = [t('passerelle.accueil')];
+  if (!v.projets.length) lignes.push(t('passerelle.accueilAucunProjet'));
+  else if (v.projets.length === 1) lignes.push(t('passerelle.accueilUnProjet'));
+  else lignes.push(t('passerelle.accueilProjets', { n: v.projets.length }));
+
+  // Ce que cette conversation tient déjà passe avant le parc : c'est la seule
+  // ligne qui parle de vous plutôt que de la machine.
+  const sien = courant(chatId);
+  const parc = listSessions().length;
+  if (sien) lignes.push(t('passerelle.accueilSession', { cwd: sien.session.cwd }));
+  else if (parc === 1) lignes.push(t('passerelle.accueilUnTravail'));
+  else if (parc > 1) lignes.push(t('passerelle.accueilTravaux', { n: parc }));
+
+  // Une commande tapée mérite son message, à sa date — comme `/projet`.
+  v.messageId = null;
+  await ecran(
+    chatId,
+    lignes.join('\n'),
+    // En rangée et non en `solo` : `solo` sert à détacher une action d'une
+    // liste, et ici il n'y a pas de liste — les trois sont du même rang.
+    grille([
+      { texte: t('passerelle.menuProjets'), donnee: 'n:r' },
+      { texte: t('passerelle.menuSessions'), donnee: 'n:s' },
+      { texte: t('passerelle.menuAide'), donnee: 'n:h' },
+    ]),
+  );
+}
+
 /** Charge l'inventaire d'un projet et montre sa fiche. */
 async function ouvreProjet(chatId: number, projet: ProjectSummary): Promise<void> {
   const tg = telegram;
@@ -303,6 +383,19 @@ async function navigue(chatId: number, ordre: string, argument: string): Promise
 
   if (ordre === 'r') {
     await ecranProjets(chatId, false);
+    return;
+  }
+
+  // Les deux sorties de l'accueil. Elles produisent du **contenu**, pas un pas
+  // de navigation : elles partent donc dans leur propre message et laissent
+  // l'accueil en place, là où « Les projets » le réécrit. C'est la même règle
+  // que `/voir`, qui n'écrase jamais l'arborescence qu'on parcourait.
+  if (ordre === 's') {
+    await tg.envoie(chatId, await etatDesSessions());
+    return;
+  }
+  if (ordre === 'h') {
+    await tg.envoie(chatId, aide());
     return;
   }
 
@@ -686,41 +779,13 @@ async function traite(chatId: number, brut: string): Promise<void> {
       await tg.envoie(chatId, aide());
       return;
 
-    case 'sessions': {
-      // Deux sources, et elles ne se recouvrent pas. Le registre ne connaît que
-      // les sessions qu'AURA possède ; celles qu'on a lancées dans un terminal
-      // n'y figurent pas et n'y figureront jamais — elles n'existent que par
-      // leur fichier d'état sous `~/.claude/sessions`. N'en montrer qu'une des
-      // deux faisait répondre « rien ne tourne » à quelqu'un qui regardait une
-      // session tourner.
-      const atelier = listSessions();
-      const systeme = await sessionsActives();
-      // Une session de l'Atelier a aussi son fichier d'état : sans ce filtre,
-      // elle se compterait deux fois.
-      const runIds = new Set(atelier.map((s) => s.sessionId).filter(Boolean));
-      const ailleurs = systeme.filter((s) => !runIds.has(s.sessionId));
-
-      if (!atelier.length && !ailleurs.length) {
-        await tg.envoie(chatId, t('passerelle.aucuneSession'));
-        return;
-      }
-
-      const lignes: string[] = [];
-      if (atelier.length) {
-        lignes.push(t('passerelle.sessionsAtelier'));
-        for (const s of atelier) lignes.push(`• ${s.cwd} — ${s.status}`);
-      }
-      if (ailleurs.length) {
-        if (lignes.length) lignes.push('');
-        lignes.push(t('passerelle.sessionsAilleurs'));
-        for (const s of ailleurs) {
-          const etat = s.status ?? '?';
-          lignes.push(`• ${s.cwd || '?'} — ${etat}${s.waitingFor ? ` (${s.waitingFor})` : ''}`);
-        }
-      }
-      await tg.envoie(chatId, lignes.join('\n'));
+    case 'sessions':
+      await tg.envoie(chatId, await etatDesSessions());
       return;
-    }
+
+    case 'accueil':
+      await ecranAccueil(chatId);
+      return;
 
     case 'projets':
       await ecranProjets(chatId, true);
