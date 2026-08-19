@@ -95,6 +95,7 @@ Le fichier est relu à chaque page. Il peut donc avoir changé entre deux pages 
 | Message        | Ce que je fais                            |
 | -------------- | ----------------------------------------- |
 | `/atelier <n>` | J'ouvre une session sur ce projet         |
+| `/etat`        | Où en est la session d'ici, et sa fenêtre |
 | `/sessions`    | Je liste ce qui tourne, en deux groupes   |
 | `/stop`        | J'interromps le tour en cours             |
 | `/fin`         | Je ferme la session de cette conversation |
@@ -105,6 +106,22 @@ Une conversation tient **une** session à la fois : en ouvrir une referme la pr�
 `/sessions` répond en deux groupes, parce que ce ne sont pas les mêmes choses. **Ouvertes par AURA** : celles que je possède, et les seules à qui je puisse parler. **Ouvertes ailleurs** : celles que vous avez lancées dans un terminal — je les vois par leur fichier d'état, je ne les pilote pas. Les confondre ferait croire qu'un message peut atteindre une session de terminal, ce qui est faux.
 
 **Tout autre message part à la session comme un tour.** C'est le cas de loin le plus fréquent, et il ne demande aucune syntaxe.
+
+### La fenêtre de contexte, vue de loin
+
+De près, l'onglet **Contexte** de l'Atelier montre ce que la session a fait entrer dans sa fenêtre. De loin, on ne voyait rien : la conversation dit ce que l'agent répond, jamais la place qu'il lui reste. `/etat` comble ce trou.
+
+```
+C:\devl\tos — claude-opus-5, mode default
+
+Fenêtre : 112 400 / 200 000 tokens — 56 %
+```
+
+Le modèle figure là parce que **la limite en dépend** : 200 000 tokens, ou un million sur une fenêtre longue. Un pourcentage sans son dénominateur ne se vérifie pas.
+
+Le chiffre est **exact**, et c'est le même que celui de l'onglet Contexte — je le relève sur les réponses du modèle, qui portent le compte réel. Ce qui est relu du cache y est compté : cela occupe la fenêtre exactement comme le reste, seul le prix diffère.
+
+Deux cas où je ne montre pas de chiffre, plutôt que d'en inventer un : quand aucune session n'est ouverte ici, et quand la session vient de naître sans qu'aucun tour ait encore répondu — il n'y a alors rien à relever.
 
 ### Je n'ouvre que des projets connus
 
@@ -146,7 +163,9 @@ Deux réserves, que je préfère dire : cette bulle demande une **conversation p
 
 ## Ce que je ne vous envoie pas
 
-**La réponse de l'agent en fin de tour, et les demandes qui attendent une décision.** Rien d'autre.
+**La réponse de l'agent en fin de tour, et les demandes qui attendent une décision.** Rien d'autre — à deux exceptions près, et elles ont la même raison d'être.
+
+Je vous préviens quand **la fenêtre a été compactée**, avec les deux chiffres qui rendent le fait utile : ce dont on part, et ce qu'il en reste. Et je vous le dis **une fois** quand la fenêtre passe les 80 % — une seule, puis je me tais jusqu'à la prochaine compaction. Ces deux-là font exception parce qu'elles sont le seul cas où quelque chose change **sans que vous y soyez pour rien** : une compaction ne s'annonce pas, et de loin, rien ne la laisserait deviner. Tout le reste, vous l'avez demandé.
 
 Ni les tokens au fil de leur écriture, ni le détail de ce qu'un outil a lu ou écrit. Une messagerie n'est pas une timeline : y déverser un flux le rendrait illisible et noierait ce qui demande une réponse. Le fil complet est dans l'Atelier, et le **Rejeu** le garde.
 

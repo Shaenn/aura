@@ -45,6 +45,9 @@ export const COMMANDES: readonly Commande[] = [
   { nom: 'projet', argument: true, groupe: 'consulter' },
   { nom: 'voir', argument: true, groupe: 'consulter' },
   { nom: 'atelier', argument: true, groupe: 'travailler' },
+  // Avant `/sessions`, et l'ordre dit la différence : celle-ci regarde la
+  // session de cette conversation, celle-là compte le parc.
+  { nom: 'etat', groupe: 'travailler' },
   { nom: 'sessions', groupe: 'travailler' },
   { nom: 'stop', groupe: 'travailler' },
   { nom: 'fin', groupe: 'travailler' },

@@ -56,6 +56,9 @@ import {
   reponses,
   type Formulaire,
 } from './questions.ts';
+import { alerte, lignes as lignesEtat, part, type Fenetre } from './etat.ts';
+import { contextLimitFor } from '../context.ts';
+import { configuredLongWindow } from '../claude/model.ts';
 import { Battement } from './activite.ts';
 import { aide, pourTelegram } from './commandes.ts';
 import type { InlineKeyboardMarkup } from 'node-telegram-bot-api';
@@ -100,6 +103,15 @@ interface Fil {
    * des commandes sous une question.
    */
   attente: string | null;
+  /**
+   * Le remplissage de la fenêtre a-t-il déjà été signalé ?
+   *
+   * Une fois suffit : redire à chaque tour qu'on est au-dessus du seuil
+   * n'apprendrait rien et ferait d'un avertissement un bruit de fond. Une
+   * compaction le remet à faux — la fenêtre a le droit de se remplir à nouveau,
+   * et de le dire à nouveau.
+   */
+  alerte: boolean;
   /** La bulle éphémère qui dit que ça travaille, et à quoi. */
   battement: Battement;
 }
@@ -289,6 +301,73 @@ async function etatDesSessions(): Promise<string> {
     }
   }
   return lignes.join('\n');
+}
+
+/**
+ * La fenêtre d'une session, rapportée à la limite de son modèle.
+ *
+ * `contextLimitFor` fait le travail délicat, et il vaut de rappeler pourquoi il
+ * existe : un modèle à fenêtre longue s'enregistre **sans** son suffixe `[1m]`,
+ * si bien que l'identifiant ne suffit pas à trancher. Deux preuves le
+ * remplacent, et la session les porte toutes deux — le plus grand contexte
+ * observé (`max`), et le modèle tel qu'il a été choisi dans les réglages.
+ */
+async function fenetreDe(runner: SessionRunner): Promise<Fenetre> {
+  const releve = runner.contextWindow;
+  const { cwd, model, resolvedModel } = runner.session;
+  return {
+    tokens: releve.tokens,
+    limite: contextLimitFor([resolvedModel ?? model], releve.max, await configuredLongWindow(cwd)),
+  };
+}
+
+/**
+ * Dit une fois que la fenêtre se remplit, puis se tait.
+ *
+ * C'est la seule chose qu'AURA avance d'elle-même à propos du contexte, et la
+ * règle de silence de `docs/voix.md` la justifie : le « je » porte ici une
+ * information que rien à l'écran ne donne — de loin, on ne voit pas la fenêtre.
+ * Répéter à chaque tour, en revanche, n'apprendrait plus rien.
+ */
+async function signaleFenetre(chatId: number, fil: Fil): Promise<void> {
+  const tg = telegram;
+  const runner = getRunner(fil.runId);
+  if (!tg || !runner) return;
+
+  const ratio = part(await fenetreDe(runner));
+  if (!alerte(fil.alerte, ratio)) return;
+  fil.alerte = true;
+  await tg.envoie(chatId, t('passerelle.fenetrePleine', { pourcent: Math.round(ratio * 100) }));
+}
+
+/**
+ * Où en est la session de cette conversation.
+ *
+ * La fenêtre est ce qu'une conversation ne montre jamais d'elle-même : on voit
+ * ce que l'agent répond, jamais la place qu'il lui reste. De près, l'Atelier
+ * l'affiche ; de loin, il n'y avait rien.
+ */
+async function ecranEtat(chatId: number): Promise<void> {
+  const tg = telegram;
+  if (!tg) return;
+
+  const runner = courant(chatId);
+  if (!runner) {
+    await tg.envoie(chatId, t('passerelle.aucunFil'));
+    return;
+  }
+
+  const { cwd, model, resolvedModel } = runner.session;
+  const fenetre = await fenetreDe(runner);
+  await tg.envoie(
+    chatId,
+    lignesEtat(
+      fenetre,
+      cwd,
+      resolvedModel || model || t('passerelle.etatModeleInconnu'),
+      mode(),
+    ).join('\n'),
+  );
 }
 
 /**
@@ -674,6 +753,7 @@ function attache(chatId: number, runner: SessionRunner): void {
     tour: new Map(),
     asks: new Map(),
     attente: null,
+    alerte: false,
     battement: new Battement(
       {
         brouillon: async (id, draft, texte) => {
@@ -748,6 +828,9 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
       // Les textes du tour en cours parlent d'une conversation qui n'existe
       // plus : les envoyer maintenant serait citer un souvenir effacé.
       fil.tour.clear();
+      // Le contexte est vide : la fenêtre a de nouveau le droit de se remplir,
+      // et de le signaler. Même raison qu'après une compaction.
+      fil.alerte = false;
       const dit = upsert.events
         .filter((e) => e.kind === 'system')
         .flatMap((e) => e.blocks)
@@ -763,6 +846,30 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
     case 'append-event':
     case 'replace-event': {
       const event = upsert.event;
+
+      /**
+       * La compaction : le seul moment où la fenêtre change sans qu'on ait
+       * touché à rien.
+       *
+       * L'événement porte ses chiffres mais **pas de texte** — ses `blocks` sont
+       * vides. Il n'y a donc rien à relayer : la phrase se compose ici, avec les
+       * deux nombres qui la rendent utile. « J'ai compacté » sans eux ne dirait
+       * pas si l'on repart de dix mille tokens ou de cent mille.
+       */
+      if (event.kind === 'compaction' && event.compaction) {
+        // La fenêtre repart de bas : elle a de nouveau le droit de se remplir,
+        // et de le signaler.
+        fil.alerte = false;
+        await tg.envoie(
+          chatId,
+          t('passerelle.compaction', {
+            avant: event.compaction.preTokens,
+            apres: event.compaction.postTokens,
+          }),
+        );
+        return;
+      }
+
       if (event.kind !== 'assistant' || event.isSidechain) return;
       const texte = event.blocks
         .filter((b) => b.kind === 'text')
@@ -801,6 +908,10 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
       } else if (upsert.status === 'ended') {
         await tg.envoie(chatId, t('passerelle.sessionFinie'));
         defait(chatId, false);
+      } else {
+        // Après la réponse, jamais avant : ce qu'on attendait passe d'abord, et
+        // l'avertissement ne s'interpose pas entre la question et sa réponse.
+        await signaleFenetre(chatId, fil);
       }
       return;
     }
@@ -895,6 +1006,10 @@ async function traite(chatId: number, brut: string): Promise<void> {
 
     case 'aide':
       await tg.envoie(chatId, aide());
+      return;
+
+    case 'etat':
+      await ecranEtat(chatId);
       return;
 
     case 'sessions':

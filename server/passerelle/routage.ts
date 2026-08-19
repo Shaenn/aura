@@ -25,6 +25,14 @@ export type Intention =
   | { kind: 'parler'; texte: string }
   /** Fermer la session de cette conversation. */
   | { kind: 'fin' }
+  /**
+   * Où en est la session de cette conversation, et sa fenêtre de contexte.
+   *
+   * Distincte de `sessions`, qui compte le parc : celle-ci regarde la vôtre. De
+   * loin, c'est la seule façon de savoir s'il reste de la place — la fenêtre est
+   * ce qu'une conversation ne montre jamais d'elle-même.
+   */
+  | { kind: 'etat' }
   /** Ce qui tourne en ce moment, toutes conversations confondues. */
   | { kind: 'sessions' }
   /** Interrompre le tour en cours sans fermer la session. */
@@ -128,6 +136,8 @@ export function parseIntention(brut: string): Intention {
     }
     case '/fin':
       return { kind: 'fin' };
+    case '/etat':
+      return { kind: 'etat' };
     case '/sessions':
       return { kind: 'sessions' };
     case '/stop':

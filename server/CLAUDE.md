@@ -105,6 +105,15 @@ mesurées le dessinent — **un message riche ne se réécrit pas** (la biblioth
 `editMessageRichText`, seulement `editMessageReplyMarkup`), et `callback_data` tient 64 octets.
 Comme `routage.ts`, ce fichier décide sans réseau : c'est ce qui le rend testable.
 
+`/etat` rend la fenêtre de contexte, et le chiffre ne peut pas diverger de la page Contexte :
+`SessionRunner` le relève sur `message.message.usage` comme
+`input + cache_read + cache_creation`, **la somme même** dont `transcript.ts` ancre un tour
+(`settleTurn`). Le runner relève et ne juge pas ; la limite vient de `contextLimitFor`, qui
+n'est pas facultatif — un modèle à fenêtre longue s'enregistre **sans** son suffixe `[1m]`, et
+seules deux preuves la révèlent : un contexte observé au-dessus de 200 k, ou les réglages
+(`claude/model.ts`). Le seuil d'alerte de `passerelle/etat.ts` recopie le garde-fou de
+`contextFill` (`diagnostics/thresholds.ts`) ; un test tient les deux nombres égaux.
+
 Une session pilotée d'ici **doit** rester abonnée (`runner.subscribe`) : c'est l'abonnement, et
 lui seul, qui la protège du balayeur d'`agent/registry.ts`.
 

@@ -100,6 +100,13 @@ describe('parseIntention', () => {
     expect(parseIntention('/voir 7')).toEqual({ kind: 'voir', ref: '7' });
   });
 
+  it('distingue l’état de cette session du parc entier', () => {
+    // Deux commandes voisines qui ne répondent pas à la même question : `/etat`
+    // regarde la session d'ici et sa fenêtre, `/sessions` compte le parc.
+    expect(parseIntention('/etat')).toEqual({ kind: 'etat' });
+    expect(parseIntention('/sessions')).toEqual({ kind: 'sessions' });
+  });
+
   it('retombe sur les projets quand /projet n’a pas d’argument', () => {
     expect(parseIntention('/projet')).toEqual({ kind: 'projets' });
   });

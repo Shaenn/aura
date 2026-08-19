@@ -134,6 +134,7 @@ export default {
       projet: 'L’arborescence d’un projet : on descend dossier par dossier.',
       voir: 'Le contenu d’un fichier de la dernière liste.',
       atelier: 'J’ouvre une session sur ce projet.',
+      etat: 'Où en est la session d’ici, et sa fenêtre de contexte.',
       sessions: 'Ce qui tourne en ce moment.',
       stop: 'J’interromps le tour en cours.',
       fin: 'Je ferme la session de cette conversation.',
@@ -166,6 +167,39 @@ export default {
     sessionsAilleurs: 'Ouvertes ailleurs — je les vois, je ne les pilote pas :',
     sessionFinie: 'La session s’est terminée.',
     sessionEchouee: 'La session s’est arrêtée : {message}',
+    /**
+     * L'état de la session, et d'abord sa fenêtre.
+     *
+     * L'en-tête reste **nominal** : ce sont des étiquettes de données, et le
+     * modèle y figure parce que la limite en dépend — un pourcentage sans son
+     * dénominateur ne se vérifie pas.
+     *
+     * `etatSansReleve` n'est pas une excuse mais un fait : rien n'a encore été
+     * demandé au modèle, donc il n'y a pas de fenêtre à annoncer. Montrer un
+     * zéro se lirait comme une mesure, alors que c'est l'absence de mesure.
+     */
+    etatEntete: '{cwd} — {modele}, mode {mode}',
+    /** Avant `init`, le SDK n'a pas encore dit quel modèle il emploie. */
+    etatModeleInconnu: 'modèle inconnu',
+    etatFenetre: 'Fenêtre : {tokens} / {limite} tokens — {pourcent} %',
+    etatSansReleve: 'Aucun tour n’a encore répondu : je n’ai pas de relevé de la fenêtre.',
+    /**
+     * Une compaction, dite avec ses chiffres.
+     *
+     * C'est le seul moment où la fenêtre change sans que vous ayez rien fait :
+     * le « je » y porte une information que rien d'autre ne donne. Les chiffres
+     * ne sont pas du zèle — sans eux, « j'ai compacté » ne dit pas si l'on est
+     * reparti de dix mille tokens ou de cent mille.
+     */
+    compaction: 'J’ai compacté la conversation : {avant} tokens ramenés à {apres}.',
+    /**
+     * Le franchissement du seuil, dit une fois et pas davantage.
+     *
+     * `docs/voix.md` range la recommandation parmi les surfaces où AURA parle
+     * d'elle : elle conseille, elle ne se contente pas de mesurer.
+     */
+    fenetrePleine:
+      'Je vous signale que la fenêtre est occupée à {pourcent} % — une compaction approche.',
     permission: 'Je voudrais utiliser {outil}.',
     autoriser: 'Autoriser',
     refuser: 'Refuser',
