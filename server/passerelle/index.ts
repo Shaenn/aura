@@ -97,6 +97,15 @@ interface Fil {
   /** Les formulaires en vol, pour retrouver ce qu'un bouton désigne. */
   asks: Map<string, Formulaire>;
   /**
+   * Les messages qui portent encore des boutons de permission, par demande.
+   *
+   * Ce qu'il faut pour les retirer une fois la demande tranchée. Le désarmement
+   * se fait sur `permission-settled` et non sur le clic : c'est le seul endroit
+   * qui voie aussi les réponses données depuis l'Atelier et les refus du
+   * garde-fou du quart d'heure.
+   */
+  permissions: Map<string, number>;
+  /**
    * Le formulaire qui capte le prochain message écrit, s'il y en a un.
    *
    * C'est ce qui rend possible la réponse hors menu — le « Other » du harnais.
@@ -753,6 +762,7 @@ function attache(chatId: number, runner: SessionRunner): void {
     abonne: false,
     tour: new Map(),
     asks: new Map(),
+    permissions: new Map(),
     attente: null,
     alerte: false,
     battement: new Battement(
@@ -971,7 +981,7 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
         // faire approuver ce qu'on n'a pas lu.
         const source = `${t('passerelle.plan')}\n\n${plan}`;
         const coupe = source.length > PAGE_RICHE ? `${source.slice(0, PAGE_RICHE)}…` : source;
-        await tg.envoieRendu(
+        const rendu = await tg.envoieRendu(
           chatId,
           enBlocs(coupe),
           coupe,
@@ -980,10 +990,11 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
             { texte: t('passerelle.refuser'), donnee: `p:${demande.id}:d` },
           ]),
         );
+        if (rendu.messageId !== null) fil.permissions.set(demande.id, rendu.messageId);
         return;
       }
       const quoi = demande.title || demande.displayName || demande.toolName;
-      await tg.envoie(
+      const messageId = await tg.envoieSuivi(
         chatId,
         t('passerelle.permission', { outil: quoi }),
         boutons([
@@ -991,6 +1002,23 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
           { texte: t('passerelle.refuser'), donnee: `p:${demande.id}:d` },
         ]),
       );
+      if (messageId !== null) fil.permissions.set(demande.id, messageId);
+      return;
+    }
+
+    /**
+     * La demande est tranchée : ses boutons n'ont plus rien à trancher.
+     *
+     * Reçu quelle que soit la main qui a répondu — la messagerie, l'Atelier, ou
+     * le garde-fou du quart d'heure. Les laisser en place ferait douter que le
+     * clic ait porté, et un fil relu plus tard donnerait à croire que la
+     * question attend encore.
+     */
+    case 'permission-settled': {
+      const messageId = fil.permissions.get(upsert.id);
+      fil.permissions.delete(upsert.id);
+      if (messageId === undefined) return;
+      await tg.reecritClavier(chatId, messageId, { inline_keyboard: [] });
       return;
     }
 

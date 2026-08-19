@@ -144,6 +144,8 @@ Quand l'agent veut employer un outil que le mode ne laisse pas passer, je vous e
 
 Un plan fait exception, et il est le seul : quand l'agent soumet ce qu'il compte faire, le nom de l'outil n'apprend rien — c'est le texte qui se juge. Je vous envoie donc le plan entier, mis en forme, et les boutons **Approuver** et **Refuser** sous lui. Un plan très long est coupé ; il reste entier dans l'Atelier.
 
+Une fois la demande tranchée, les boutons disparaissent du message — que la réponse soit venue d'ici, de l'Atelier, ou du délai qui a expiré. Un fil relu plus tard ne donne donc pas à croire qu'une question attend encore.
+
 L'échéance de l'Atelier s'applique ici aussi : **sans réponse au bout d'un quart d'heure, la demande est refusée**, jamais l'inverse. Une commande lancée avant de partir ne restera donc pas suspendue indéfiniment.
 
 ## Répondre à une question

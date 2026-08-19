@@ -130,6 +130,10 @@ ici l'argument **est** la décision. Le CLI passe le markdown en clair dans `inp
 les trois barreaux valent ici comme pour un document : le plan vient du modèle, sa structure
 n'est pas garantie.
 
+Les boutons d'une permission se retirent sur `permission-settled` et non sur le clic : ce
+seul point de passage voit aussi les réponses données dans l'Atelier et les refus du garde-fou
+du quart d'heure.
+
 Les événements d'un fil se traitent **à la file** (`attache`) : deux `applique` lancés de front
 font des appels réseau qui arrivent dans l'ordre où Telegram les sert, et le résumé doublait
 l'annonce qui le précédait.
