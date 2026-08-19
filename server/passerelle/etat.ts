@@ -9,7 +9,7 @@
 // emploie (`transcript.ts`, `settleTurn`). Ce fichier ne fait que le rapporter à
 // la fenêtre du modèle et juger s'il y a lieu d'en parler.
 
-import { t } from '../i18n/index.ts';
+import { locale, t } from '../i18n/index.ts';
 
 /**
  * À partir d'où la fenêtre mérite qu'on en parle sans qu'on ait rien demandé.
@@ -90,11 +90,27 @@ export function alerte(deja: boolean, ratio: number): boolean {
 }
 
 /**
- * Un nombre de tokens tel qu'on le lit d'un coup d'œil.
+ * Un nombre de tokens tel qu'on le lit d'un coup d'œil : `31 k`, `1 M`.
  *
- * L'espace fine insécable est celle du français typographique, et elle tient
- * dans un message : sans elle, `112400` se compte à la main.
+ * La notation compacte plutôt que les milliers séparés, et ce n'est pas un goût :
+ * `30 527 / 1 000 000` demande de compter les chiffres des deux côtés pour
+ * comprendre le rapport, quand `31 k / 1 M` le donne. Sur un téléphone, où
+ * cette ligne est lue en une œillade, c'est la différence entre lire et
+ * déchiffrer. La précision perdue ne manque à personne — le pourcentage, lui,
+ * est à côté.
+ *
+ * Aucune décimale, et c'est délibéré : les deux seules limites qui existent —
+ * 200 k et 1 M — sont exactes, et un `1,0 M` laisserait croire à un arrondi qui
+ * n'a pas eu lieu.
+ *
+ * `Intl` plutôt qu'un formatage à la main parce que la forme compacte est une
+ * affaire de langue : `31 k` en français, `31K` en anglais, séparateur décimal
+ * compris. L'écrire soi-même serait recopier une table que la plateforme tient
+ * déjà.
  */
-function nombre(n: number): string {
-  return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+export function nombre(n: number): string {
+  return new Intl.NumberFormat(locale(), {
+    notation: 'compact',
+    maximumFractionDigits: 0,
+  }).format(n);
 }

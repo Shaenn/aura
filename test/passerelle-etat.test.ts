@@ -84,12 +84,21 @@ describe('ce que /etat écrit', () => {
     expect(texte).toContain('C:\\devl\\tos');
   });
 
-  it('sépare les milliers d’une espace insécable', () => {
-    // Sans elle, Telegram est libre de couper le nombre en fin de ligne — et un
-    // nombre coupé en deux se relit deux fois.
-    const texte = lignes(fenetre(112_400), 'x', 'y', 'default').join('\n');
-    expect(texte).toContain('112\u202f400');
-    expect(texte).not.toContain('112400');
+  it('abrège les nombres plutôt que de les faire compter', () => {
+    // `30 527 / 1 000 000` demande de compter les chiffres des deux côtés pour
+    // saisir le rapport ; `31 k / 1 M` le donne. C'est lu sur un téléphone.
+    const texte = lignes(fenetre(30_527, 1_000_000), 'x', 'y', 'default').join('\n');
+    expect(texte).toContain('31 k');
+    expect(texte).toContain('1 M');
+    expect(texte).not.toContain('30527');
+    expect(texte).not.toContain('1000000');
+  });
+
+  it('n’affiche aucune décimale : les limites sont exactes', () => {
+    // Un « 1,0 M » laisserait croire à un arrondi qui n'a pas eu lieu.
+    const texte = lignes(fenetre(100_000, 200_000), 'x', 'y', 'default').join('\n');
+    expect(texte).toContain('200 k');
+    expect(texte).not.toMatch(/[.,]0/);
   });
 });
 

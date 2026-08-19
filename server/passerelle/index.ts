@@ -56,7 +56,7 @@ import {
   reponses,
   type Formulaire,
 } from './questions.ts';
-import { alerte, lignes as lignesEtat, part, type Fenetre } from './etat.ts';
+import { alerte, lignes as lignesEtat, nombre, part, type Fenetre } from './etat.ts';
 import { contextLimitFor } from '../context.ts';
 import { configuredLongWindow } from '../claude/model.ts';
 import { Battement } from './activite.ts';
@@ -863,8 +863,11 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
         await tg.envoie(
           chatId,
           t('passerelle.compaction', {
-            avant: event.compaction.preTokens,
-            apres: event.compaction.postTokens,
+            // Le même format que `/etat`, sans quoi la conversation dirait
+            // « 31 k » ici et « 30549 » deux lignes plus bas pour la même
+            // fenêtre.
+            avant: nombre(event.compaction.preTokens),
+            apres: nombre(event.compaction.postTokens),
           }),
         );
         return;
