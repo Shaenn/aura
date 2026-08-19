@@ -123,6 +123,18 @@ const en: Catalog = {
     questionTropRiche:
       'This question needs a form I cannot render here. It is waiting for you in the Workshop.',
     commandeInconnue: 'I do not know {commande}. /aide lists what I can do.',
+    /** The ephemeral bubble shown while a turn is working. */
+    activite: {
+      ligne: '{quoi} — {duree}',
+      requesting: 'Request in flight',
+      thinking: 'Thinking',
+      writing: 'Writing',
+      compacting: 'Compacting context',
+      retrying: 'Retry {attempt}/{max}',
+      toolUnnamed: 'Tool running',
+      secondes: '{n}s',
+      minutes: '{min}m {s}s',
+    },
   },
 
   hooks: {

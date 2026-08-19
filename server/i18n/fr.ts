@@ -145,6 +145,26 @@ export default {
     questionTropRiche:
       'Cette question demande un formulaire que je ne sais pas poser ici. Elle vous attend dans l’Atelier.',
     commandeInconnue: 'Je ne connais pas {commande}. /aide donne ce que je sais faire.',
+    /**
+     * La bulle éphémère montrée pendant qu'un tour travaille.
+     *
+     * Les mêmes libellés qu'à l'écran (`src/i18n/fr/agent.ts`) : une session
+     * lue de deux endroits ne doit pas raconter deux histoires. Ils sont
+     * recopiés plutôt que partagés — le serveur ne connaît pas `src/`, et une
+     * dépendance dans ce sens serait pire que ce doublon.
+     */
+    activite: {
+      ligne: '{quoi} — {duree}',
+      requesting: 'Requête en cours',
+      thinking: 'Réflexion',
+      writing: 'Rédaction',
+      compacting: 'Compactage du contexte',
+      retrying: 'Nouvelle tentative {attempt}/{max}',
+      /** La phase `tool` n'a pas de libellé : elle se nomme de ses outils. */
+      toolUnnamed: 'Outil en cours',
+      secondes: '{n} s',
+      minutes: '{min} min {s} s',
+    },
   },
 
   hooks: {

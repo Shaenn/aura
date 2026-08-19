@@ -18,7 +18,10 @@
 // `guard.ts` n'a rien de nouveau à trancher. Aucun port ne s'ouvre pour ceci.
 
 import { Api, Bot } from 'node-telegram-bot-api';
-import type { InlineKeyboardMarkup } from 'node-telegram-bot-api';
+import type {
+  InlineKeyboardMarkup,
+  InputRichBlock as InputRichBlockLib,
+} from 'node-telegram-bot-api';
 import type { InputRichBlock } from './riche.ts';
 
 /** Un message reçu, réduit à ce dont la Passerelle a besoin. */
@@ -366,6 +369,54 @@ export class Telegram {
     } catch {
       await this.envoie(chatId, brut, clavier);
       return 'brut';
+    }
+  }
+
+  /**
+   * Un brouillon éphémère — la bulle montrée pendant qu'un tour travaille.
+   *
+   * Ce n'est pas un message : il expire au bout de trente secondes, ne persiste
+   * pas dans le fil, et deux envois portant le même `draftId` s'**animent** au
+   * lieu de s'empiler. C'est ce qui permet de montrer une activité sans
+   * déverser un flux dans la conversation.
+   *
+   * Deux réserves mesurées : la méthode ne vaut que pour une **conversation
+   * privée**, et le client web ne la rend pas — seuls les clients mobiles le
+   * font aujourd'hui. Un échec est donc l'ordinaire ici, jamais une panne : on
+   * se tait plutôt que de le journaliser à chaque battement.
+   */
+  async brouillon(chatId: number, draftId: number, texte: string): Promise<void> {
+    try {
+      await this.api.sendRichMessageDraft({
+        chat_id: chatId,
+        draft_id: draftId,
+        rich_message: {
+          // La première des deux corrections de `riche.ts` : le `RichText` de la
+          // bibliothèque n'admet pas la chaîne nue, que l'API accepte pourtant
+          // — sans quoi aucun texte simple ne serait exprimable. La conversion
+          // ne porte que sur ce point-là.
+          blocks: [{ type: 'thinking', text: texte } as unknown as InputRichBlockLib],
+          skip_entity_detection: true,
+        },
+      });
+    } catch {
+      /* un signe de vie qui ne s'affiche pas ne casse rien */
+    }
+  }
+
+  /**
+   * « Aura est en train d'écrire… » dans l'en-tête de la conversation.
+   *
+   * Le compagnon du brouillon, et non son doublon : celui-ci fonctionne en
+   * **groupe** comme en privé, et sur tous les clients. Là où le brouillon dit
+   * ce qui se passe, celui-ci dit seulement que quelque chose se passe — et
+   * c'est ce qui reste quand l'autre ne s'affiche pas.
+   */
+  async saisie(chatId: number): Promise<void> {
+    try {
+      await this.api.sendChatAction({ chat_id: chatId, action: 'typing' });
+    } catch {
+      /* idem */
     }
   }
 

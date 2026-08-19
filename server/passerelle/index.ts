@@ -48,6 +48,7 @@ import {
 import { echappe, enHtml, paginer } from './markdown.ts';
 import { enBlocs, MAX_RICHE, type InputRichBlock } from './riche.ts';
 import { boutons, elargi, grille, Telegram } from './telegram.ts';
+import { Battement } from './activite.ts';
 import type { InlineKeyboardMarkup } from 'node-telegram-bot-api';
 
 /**
@@ -83,7 +84,18 @@ interface Fil {
   tour: Map<string, string>;
   /** Les questions en vol, pour retrouver l'option qu'un bouton désigne. */
   asks: Map<string, AskQuestion[]>;
+  /** La bulle éphémère qui dit que ça travaille, et à quoi. */
+  battement: Battement;
 }
+
+/**
+ * L'identifiant du brouillon d'une conversation.
+ *
+ * Il doit être non nul, et rester le même pour que Telegram anime la bulle au
+ * lieu d'en empiler une par changement. Un compteur suffit : rien ne le relie à
+ * la session, et un brouillon ne survit pas trente secondes à son émission.
+ */
+let prochainBrouillon = 1;
 
 /**
  * Ce qu'une conversation a sous les yeux, hors session.
@@ -463,11 +475,24 @@ function mode(): string {
  * serait ramassée au bout d'une demi-heure, en pleine conversation.
  */
 function attache(chatId: number, runner: SessionRunner): void {
+  const tg = telegram;
   const fil: Fil = {
     runId: runner.session.runId,
     detache: () => {},
     tour: new Map(),
     asks: new Map(),
+    battement: new Battement(
+      {
+        brouillon: async (id, draft, texte) => {
+          await tg?.brouillon(id, draft, texte);
+        },
+        saisie: async (id) => {
+          await tg?.saisie(id);
+        },
+      },
+      chatId,
+      prochainBrouillon++,
+    ),
   };
   fil.detache = runner.subscribe((upsert) => {
     void applique(chatId, fil, upsert);
@@ -485,6 +510,7 @@ function defait(chatId: number, ferme: boolean): void {
   const fil = fils.get(chatId);
   if (!fil) return;
   fil.detache();
+  fil.battement.arrete();
   fils.delete(chatId);
   if (ferme) removeRunner(fil.runId);
 }
@@ -521,12 +547,19 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
       return;
     }
 
+    // Le seul flux qu'on relaie, et il ne devient pas un message : la bulle
+    // éphémère qui dit que ça travaille. Voir `activite.ts`.
+    case 'activity':
+      fil.battement.montre(upsert.activity);
+      return;
+
     case 'status': {
       if (upsert.status === 'working') {
         fil.tour.clear();
         return;
       }
       // Fin de tour : le moment où il y a enfin quelque chose à dire.
+      fil.battement.arrete();
       const dit = [...fil.tour.values()].join('\n\n').trim();
       fil.tour.clear();
       if (dit) await tg.envoie(chatId, tronque(dit));
@@ -542,6 +575,9 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
     }
 
     case 'permission-request': {
+      // La balle est dans votre camp : ce n'est plus AURA qui travaille, et
+      // laisser battre la bulle ferait croire le contraire.
+      fil.battement.arrete();
       const demande = upsert.request;
       const quoi = demande.title || demande.displayName || demande.toolName;
       await tg.envoie(
@@ -556,6 +592,7 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
     }
 
     case 'ask-request': {
+      fil.battement.arrete();
       const demande = upsert.request;
       const premiere = demande.questions[0];
       // Un formulaire à plusieurs questions ne se rend pas en boutons sans
