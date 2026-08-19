@@ -48,6 +48,7 @@ export const COMMANDES: readonly Commande[] = [
   // Avant `/sessions`, et l'ordre dit la différence : celle-ci regarde la
   // session de cette conversation, celle-là compte le parc.
   { nom: 'etat', groupe: 'travailler' },
+  { nom: 'compacter', groupe: 'travailler' },
   { nom: 'sessions', groupe: 'travailler' },
   { nom: 'stop', groupe: 'travailler' },
   { nom: 'fin', groupe: 'travailler' },

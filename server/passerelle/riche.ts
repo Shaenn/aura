@@ -59,6 +59,15 @@ export type InputRichBlock =
   | { type: 'list'; items: { blocks: InputRichBlock[] }[] }
   | { type: 'pre'; text: RichText; language?: string }
   | { type: 'blockquote'; blocks: InputRichBlock[] }
+  /**
+   * Le seul repli que l'API offre, et il est **explicite**.
+   *
+   * Rien en Markdown ne le déclenche : il ne sort donc pas d'`enBlocs` mais se
+   * pose à la main, autour d'un document qu'on ne veut pas déverser. Le
+   * « Afficher plus » automatique d'un message long n'en tient pas lieu —
+   * mesuré, il ne s'est pas déclenché sur un résumé de sept mille caractères.
+   */
+  | { type: 'details'; summary: RichText; blocks: InputRichBlock[]; is_open?: true }
   | { type: 'divider' };
 
 /** Ce qu'un message riche accepte — huit fois la borne de `sendMessage`. */

@@ -104,6 +104,7 @@ describe('parseIntention', () => {
     // Deux commandes voisines qui ne répondent pas à la même question : `/etat`
     // regarde la session d'ici et sa fenêtre, `/sessions` compte le parc.
     expect(parseIntention('/etat')).toEqual({ kind: 'etat' });
+    expect(parseIntention('/compacter')).toEqual({ kind: 'compacter' });
     expect(parseIntention('/sessions')).toEqual({ kind: 'sessions' });
   });
 

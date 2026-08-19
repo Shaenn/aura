@@ -33,6 +33,14 @@ export type Intention =
    * ce qu'une conversation ne montre jamais d'elle-même.
    */
   | { kind: 'etat' }
+  /**
+   * Compacter la conversation sans attendre que la fenêtre déborde.
+   *
+   * Le seul cas où l'on relaie une commande de Claude Code, et il se justifie
+   * par la surface : de loin, on voit la fenêtre se remplir sans pouvoir rien y
+   * faire — `/etat` disait le problème, celle-ci le règle.
+   */
+  | { kind: 'compacter' }
   /** Ce qui tourne en ce moment, toutes conversations confondues. */
   | { kind: 'sessions' }
   /** Interrompre le tour en cours sans fermer la session. */
@@ -138,6 +146,8 @@ export function parseIntention(brut: string): Intention {
       return { kind: 'fin' };
     case '/etat':
       return { kind: 'etat' };
+    case '/compacter':
+      return { kind: 'compacter' };
     case '/sessions':
       return { kind: 'sessions' };
     case '/stop':

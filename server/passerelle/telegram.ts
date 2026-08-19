@@ -317,6 +317,44 @@ export class Telegram {
   }
 
   /**
+   * Un document long, plié derrière son titre, que le lecteur ouvre s'il veut.
+   *
+   * Le bloc `details` est le **seul** repli que l'API offre explicitement, et il
+   * a été essayé avant d'être employé — voir `blocs-riches.md`, où le piège est
+   * rappelé : l'API accepte en silence les champs qu'elle ne connaît pas, si
+   * bien qu'un nom fautif ne produit pas d'erreur mais un bloc muet.
+   *
+   * Le « Afficher plus » automatique d'un message long ne le remplace pas :
+   * mesuré, il ne s'est pas déclenché sur un résumé de sept mille caractères, et
+   * la conversation se retrouvait noyée.
+   *
+   * Le contenu passe par `enBlocs` comme n'importe quel document : ce qui est
+   * plié garde ses titres, ses listes et son code. Le repli n'est pas une
+   * dégradation, seulement une place qu'on ne prend pas.
+   */
+  async envoieReplie(chatId: number, titre: string, blocs: InputRichBlock[]): Promise<boolean> {
+    try {
+      await this.api.sendRichMessage({
+        chat_id: chatId,
+        rich_message: {
+          // Même conversion que `brouillon`, et pour la même raison : le
+          // `RichText` de la bibliothèque n'admet pas la chaîne nue, que l'API
+          // accepte pourtant — sans quoi aucun titre simple ne serait exprimable.
+          blocks: [
+            { type: 'details', summary: titre, blocks: blocs },
+          ] as unknown as InputRichBlockLib[],
+          skip_entity_detection: true,
+        },
+      });
+      return true;
+    } catch {
+      // Un repli refusé ne vaut pas de perdre le contenu : l'appelant retombe
+      // sur un envoi ordinaire.
+      return false;
+    }
+  }
+
+  /**
    * Réécrit un message déjà envoyé.
    *
    * Rend `false` si Telegram refuse — un message trop vieux, supprimé, ou dont

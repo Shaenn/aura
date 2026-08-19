@@ -92,14 +92,15 @@ Le fichier est relu à chaque page. Il peut donc avoir changé entre deux pages 
 
 ### Travailler
 
-| Message        | Ce que je fais                            |
-| -------------- | ----------------------------------------- |
-| `/atelier <n>` | J'ouvre une session sur ce projet         |
-| `/etat`        | Où en est la session d'ici, et sa fenêtre |
-| `/sessions`    | Je liste ce qui tourne, en deux groupes   |
-| `/stop`        | J'interromps le tour en cours             |
-| `/fin`         | Je ferme la session de cette conversation |
-| `/aide`        | Je rappelle ce qui précède                |
+| Message        | Ce que je fais                             |
+| -------------- | ------------------------------------------ |
+| `/atelier <n>` | J'ouvre une session sur ce projet          |
+| `/etat`        | Où en est la session d'ici, et sa fenêtre  |
+| `/compacter`   | Je compacte la conversation, sans attendre |
+| `/sessions`    | Je liste ce qui tourne, en deux groupes    |
+| `/stop`        | J'interromps le tour en cours              |
+| `/fin`         | Je ferme la session de cette conversation  |
+| `/aide`        | Je rappelle ce qui précède                 |
 
 Une conversation tient **une** session à la fois : en ouvrir une referme la précédente.
 
@@ -120,6 +121,8 @@ Fenêtre : 112 400 / 200 000 tokens — 56 %
 Le modèle figure là parce que **la limite en dépend** : 200 000 tokens, ou un million sur une fenêtre longue. Un pourcentage sans son dénominateur ne se vérifie pas.
 
 Le chiffre est **exact**, et c'est le même que celui de l'onglet Contexte — je le relève sur les réponses du modèle, qui portent le compte réel. Ce qui est relu du cache y est compté : cela occupe la fenêtre exactement comme le reste, seul le prix diffère.
+
+`/compacter` n'attend pas que la fenêtre déborde. C'est la **seule** commande de Claude Code que je relaie, et la surface le justifie : de loin, on voyait la fenêtre se remplir sans pouvoir rien y faire — `/etat` disait le problème, celle-ci le règle.
 
 Deux cas où je ne montre pas de chiffre, plutôt que d'en inventer un : quand aucune session n'est ouverte ici, et quand la session vient de naître sans qu'aucun tour ait encore répondu — il n'y a alors rien à relever.
 
@@ -165,7 +168,7 @@ Deux réserves, que je préfère dire : cette bulle demande une **conversation p
 
 **La réponse de l'agent en fin de tour, et les demandes qui attendent une décision.** Rien d'autre — à deux exceptions près, et elles ont la même raison d'être.
 
-Je vous préviens quand **la fenêtre a été compactée**, avec les deux chiffres qui rendent le fait utile : ce dont on part, et ce qu'il en reste. Et je vous le dis **une fois** quand la fenêtre passe les 80 % — une seule, puis je me tais jusqu'à la prochaine compaction. Ces deux-là font exception parce qu'elles sont le seul cas où quelque chose change **sans que vous y soyez pour rien** : une compaction ne s'annonce pas, et de loin, rien ne la laisserait deviner. Tout le reste, vous l'avez demandé.
+Je vous préviens quand **la fenêtre a été compactée**, avec les deux chiffres qui rendent le fait utile : ce dont on part, et ce qu'il en reste. Le résumé suit dans un second message, **replié** : c'est la conversation entière réécrite, et c'est tout ce qui reste dans la fenêtre — le lire, c'est savoir ce que l'agent a gardé. Vous le dépliez si vous le voulez ; sinon il ne prend que trois lignes. Et je vous le dis **une fois** quand la fenêtre passe les 80 % — une seule, puis je me tais jusqu'à la prochaine compaction. Ces deux-là font exception parce qu'elles sont le seul cas où quelque chose change **sans que vous y soyez pour rien** : une compaction ne s'annonce pas, et de loin, rien ne la laisserait deviner. Tout le reste, vous l'avez demandé.
 
 Ni les tokens au fil de leur écriture, ni le détail de ce qu'un outil a lu ou écrit. Une messagerie n'est pas une timeline : y déverser un flux le rendrait illisible et noierait ce qui demande une réponse. Le fil complet est dans l'Atelier, et le **Rejeu** le garde.
 

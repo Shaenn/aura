@@ -114,6 +114,19 @@ seules deux preuves la révèlent : un contexte observé au-dessus de 200 k, ou 
 (`claude/model.ts`). Le seuil d'alerte de `passerelle/etat.ts` recopie le garde-fou de
 `contextFill` (`diagnostics/thresholds.ts`) ; un test tient les deux nombres égaux.
 
+`/compacter` est la **seule** commande de Claude Code que la Passerelle relaie, et elle passe
+par la file d'entrée comme un tour. Le résumé qu'une compaction produit n'arrive **pas** avec
+la frontière : le SDK l'envoie juste après, dans un message `user` marqué `isSynthetic` dont le
+contenu est une chaîne. `runner.ts` le capte et le pose sur l'événement de compaction par un
+`replace-event` — la compaction s'annonce donc tout de suite, sans quoi un résumé qui ne
+viendrait pas l'emporterait dans son silence. Elle le rend replié, par le bloc riche `details`
+(voir `blocs-riches.md`) : c'est le seul repli explicite de l'API, l'« Afficher plus »
+automatique ne s'étant pas déclenché sur sept mille caractères.
+
+Les événements d'un fil se traitent **à la file** (`attache`) : deux `applique` lancés de front
+font des appels réseau qui arrivent dans l'ordre où Telegram les sert, et le résumé doublait
+l'annonce qui le précédait.
+
 Une session pilotée d'ici **doit** rester abonnée (`runner.subscribe`) : c'est l'abonnement, et
 lui seul, qui la protège du balayeur d'`agent/registry.ts`.
 

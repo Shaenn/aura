@@ -92,14 +92,15 @@ The file is re-read for each page. It may therefore have changed between two pag
 
 ### Working
 
-| Message        | What I do                                 |
-| -------------- | ----------------------------------------- |
-| `/atelier <n>` | I open a session on that project          |
-| `/etat`        | Where this session stands, and its window |
-| `/sessions`    | I list what is running, in two groups     |
-| `/stop`        | I interrupt the current turn              |
-| `/fin`         | I close this conversation's session       |
-| `/aide`        | I repeat the above                        |
+| Message        | What I do                                   |
+| -------------- | ------------------------------------------- |
+| `/atelier <n>` | I open a session on that project            |
+| `/etat`        | Where this session stands, and its window   |
+| `/compacter`   | I compact the conversation, without waiting |
+| `/sessions`    | I list what is running, in two groups       |
+| `/stop`        | I interrupt the current turn                |
+| `/fin`         | I close this conversation's session         |
+| `/aide`        | I repeat the above                          |
 
 One conversation holds **one** session at a time: opening one closes the previous.
 
@@ -120,6 +121,8 @@ Window: 112 400 / 200 000 tokens — 56%
 The model is there because **the limit depends on it**: 200,000 tokens, or a million on a long window. A percentage without its denominator cannot be checked.
 
 The figure is **exact**, and it is the same one the Context tab shows — I read it off the model's replies, which carry the real count. What is read back from cache counts too: it takes up the window exactly like the rest, only the price differs.
+
+`/compacter` does not wait for the window to fill. It is the **only** Claude Code command I relay, and the surface justifies it: from afar you could watch the window fill with no way to act — `/etat` stated the problem, this one settles it.
 
 Two cases where I show no figure rather than invent one: when no session is open here, and when a session is newborn and no turn has answered yet — there is nothing to read.
 
@@ -165,7 +168,7 @@ Two caveats I would rather state: the bubble needs a **private conversation** an
 
 **The agent's answer at the end of a turn, and the requests awaiting a decision.** Nothing else — with two exceptions, and they share one reason.
 
-I tell you when **the window has been compacted**, with the two figures that make the fact useful: what it started from, and what is left. And I say it **once** when the window passes 80% — once only, then I keep quiet until the next compaction. Those two are exceptions because they are the only case where something changes **without you having anything to do with it**: a compaction gives no warning, and from afar nothing would let you guess. Everything else, you asked for.
+I tell you when **the window has been compacted**, with the two figures that make the fact useful: what it started from, and what is left. The summary follows in a second message, **folded**: it is the whole conversation rewritten, and it is all that remains in the window — reading it is knowing what the agent kept. Unfold it if you want to; otherwise it takes three lines. And I say it **once** when the window passes 80% — once only, then I keep quiet until the next compaction. Those two are exceptions because they are the only case where something changes **without you having anything to do with it**: a compaction gives no warning, and from afar nothing would let you guess. Everything else, you asked for.
 
 Not the tokens as they are written, not the detail of what a tool read or wrote. A messaging app is not a timeline: pouring a stream into it would make it unreadable and drown what needs an answer. The full thread is in the Workshop, and the **Replay** keeps it.
 

@@ -135,6 +135,7 @@ export default {
       voir: 'Le contenu d’un fichier de la dernière liste.',
       atelier: 'J’ouvre une session sur ce projet.',
       etat: 'Où en est la session d’ici, et sa fenêtre de contexte.',
+      compacter: 'Je compacte la conversation sans attendre que la fenêtre déborde.',
       sessions: 'Ce qui tourne en ce moment.',
       stop: 'J’interromps le tour en cours.',
       fin: 'Je ferme la session de cette conversation.',
@@ -192,6 +193,15 @@ export default {
      * reparti de dix mille tokens ou de cent mille.
      */
     compaction: 'J’ai compacté la conversation : {avant} tokens ramenés à {apres}.',
+    /**
+     * Le titre du résumé, et la raison d'un second message.
+     *
+     * Le résumé est un document — la conversation entière réécrite —, pas une
+     * phrase. Il part donc comme les autres documents, et Telegram le replie de
+     * lui-même derrière un « Afficher plus ». C'est ce qui reste dans la fenêtre
+     * après la compaction : le lire, c'est savoir ce que l'agent a gardé.
+     */
+    compactionResume: 'Ce que j’ai gardé de la conversation',
     /**
      * Le franchissement du seuil, dit une fois et pas davantage.
      *

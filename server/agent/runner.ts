@@ -153,6 +153,15 @@ export class SessionRunner {
    * décider s'il mérite qu'on en parle est l'affaire de qui l'affiche.
    */
   private readonly fenetre = { tokens: 0, max: 0 };
+  /**
+   * La compaction qui attend son résumé, s'il y en a une.
+   *
+   * Le SDK envoie la frontière, puis **séparément** le résumé — un message
+   * `user` marqué `isSynthetic`, dont le contenu est la conversation entière
+   * réécrite. Mesuré : il suit immédiatement, et rien d'autre ne s'intercale.
+   * Ce champ est ce qui relie les deux, et il ne vit qu'entre eux.
+   */
+  private compactionSansResume: string | null = null;
   /** Ce que la session a lancé en arrière-plan, et qui lui survit. */
   private readonly shells = new ShellTracker();
   private shellPoll: ReturnType<typeof setInterval> | null = null;
@@ -859,6 +868,30 @@ export class SessionRunner {
     if (total > this.fenetre.max) this.fenetre.max = total;
   }
 
+  /**
+   * Le message qui suit une compaction porte-t-il son résumé ?
+   *
+   * Trois conditions, et les trois comptent. Une compaction doit attendre —
+   * sinon le message est un tour ordinaire. `isSynthetic` distingue le résumé du
+   * `<local-command-stdout>` qui le suit, lequel porte `isReplay` et ne dit que
+   * « Compacted ». Et le contenu doit être une **chaîne** : un tour ordinaire
+   * porte une liste de blocs, jamais du texte nu.
+   *
+   * Rendre `true` consomme le message : il n'a rien à faire dans le fil sous sa
+   * forme brute — c'est la conversation entière réécrite, et `onUser` n'en
+   * tirerait de toute façon rien, n'y cherchant que des résultats d'outils.
+   */
+  private capteResume(message: Rec): boolean {
+    const uuid = this.compactionSansResume;
+    if (!uuid || message.isSynthetic !== true) return false;
+    this.compactionSansResume = null;
+
+    const contenu = rec(message.message).content;
+    if (typeof contenu !== 'string') return false;
+    this.emit(this.translator.attachSummary(uuid, contenu));
+    return true;
+  }
+
   private consume(message: Rec): void {
     // Avant tout dispatch : la plupart des messages qui disent où en est l'agent
     // ne produisent aucun événement de timeline, et sortaient donc par le
@@ -895,7 +928,10 @@ export class SessionRunner {
           const avant = num(meta.pre_tokens);
           if (avant > this.fenetre.max) this.fenetre.max = avant;
           this.fenetre.tokens = num(meta.post_tokens);
-          this.emit(this.translator.appendCompaction(message));
+          const upserts = this.translator.appendCompaction(message);
+          const premier = upserts[0];
+          this.compactionSansResume = premier?.kind === 'append-event' ? premier.event.uuid : null;
+          this.emit(upserts);
           return;
         }
         // Le CLI pousse la liste entière dès qu'elle bouge — un Skill découvert
@@ -916,6 +952,7 @@ export class SessionRunner {
         this.emit(this.translator.onAssistant(message));
         return;
       case 'user':
+        if (this.capteResume(message)) return;
         this.emit(this.translator.onUser(message));
         return;
       case 'result':

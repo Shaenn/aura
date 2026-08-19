@@ -767,8 +767,22 @@ function attache(chatId: number, runner: SessionRunner): void {
       prochainBrouillon++,
     ),
   };
+  /**
+   * Les événements se traitent **à la file**, jamais de front.
+   *
+   * Chaque `applique` fait des appels réseau, et deux envois lancés en parallèle
+   * arrivent dans l'ordre où Telegram les sert, pas dans celui où la session les
+   * a produits. Mesuré : le résumé d'une compaction — un gros message riche —
+   * doublait l'annonce qui le précédait, si bien que la conversation expliquait
+   * après coup ce qu'elle venait de montrer.
+   *
+   * Une promesse chaînée suffit, et rien ne s'y perd : `applique` avale déjà ses
+   * propres erreurs, le `catch` n'est là que pour qu'une exception inattendue ne
+   * casse pas la file elle-même.
+   */
+  let file: Promise<void> = Promise.resolve();
   fil.detache = runner.subscribe((upsert) => {
-    void applique(chatId, fil, upsert);
+    file = file.then(() => applique(chatId, fil, upsert)).catch(() => {});
   });
   fils.set(chatId, fil);
 }
@@ -857,6 +871,31 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
        * pas si l'on repart de dix mille tokens ou de cent mille.
        */
       if (event.kind === 'compaction' && event.compaction) {
+        /**
+         * Le résumé n'arrive pas avec la frontière : il la complète, une
+         * fraction de seconde plus tard, par un `replace-event` sur le même
+         * événement. D'où ces deux messages plutôt qu'un — et c'est aussi bien,
+         * car ce sont deux choses. Le fait tient en une ligne ; le résumé est un
+         * document, et il se replie de lui-même comme n'importe quel document
+         * long.
+         */
+        if (upsert.kind === 'replace-event') {
+          const resume = event.blocks
+            .filter((b) => b.kind === 'text')
+            .map((b) => b.text ?? '')
+            .join('\n\n')
+            .trim();
+          if (!resume) return;
+          const titre = t('passerelle.compactionResume');
+          const source = resume.length > PAGE_RICHE ? `${resume.slice(0, PAGE_RICHE)}…` : resume;
+          // Le repli refusé, on préfère un document déplié à un document perdu :
+          // c'est la même règle que la cascade de `envoieRendu`.
+          if (!(await tg.envoieReplie(chatId, titre, enBlocs(source)))) {
+            await repond(chatId, `${titre}\n\n${source}`);
+          }
+          return;
+        }
+
         // La fenêtre repart de bas : elle a de nouveau le droit de se remplir,
         // et de le signaler.
         fil.alerte = false;
@@ -1014,6 +1053,20 @@ async function traite(chatId: number, brut: string): Promise<void> {
     case 'etat':
       await ecranEtat(chatId);
       return;
+
+    case 'compacter': {
+      const runner = courant(chatId);
+      if (!runner) {
+        await tg.envoie(chatId, t('passerelle.aucunFil'));
+        return;
+      }
+      // La seule commande de Claude Code qu'on relaie, et elle passe par la file
+      // d'entrée comme un tour : c'est le CLI qui compacte, pas nous. Rien à
+      // annoncer ici — la frontière de compaction s'annoncera d'elle-même, avec
+      // ses chiffres, quand elle arrivera.
+      runner.send('/compact');
+      return;
+    }
 
     case 'sessions':
       await tg.envoie(chatId, await etatDesSessions());
