@@ -430,6 +430,29 @@ async function page(chatId: number, rang: number, numero: number): Promise<void>
   );
 }
 
+/**
+ * La réponse de l'agent, rendue comme un document.
+ *
+ * Elle en est un : un agent écrit du Markdown — titres, listes, tableaux,
+ * chemins entre accents graves. L'envoyer en texte nu affichait ses barres
+ * verticales et ses dièses, et c'était le rendu le plus souvent lu de toute la
+ * Passerelle, plus souvent qu'aucun fichier.
+ *
+ * Deux différences avec `envoieFichier`, et elles tiennent à ce qu'une réponse
+ * n'est pas un fichier : pas d'en-tête — on sait qui parle —, et pas de
+ * pagination. Une réponse trop longue est **coupée**, comme avant : tourner la
+ * page suppose de pouvoir relire la source, or celle-ci ne vit que dans la
+ * session.
+ */
+async function repond(chatId: number, texte: string): Promise<void> {
+  const tg = telegram;
+  if (!tg) return;
+  // La borne du riche est huit fois celle d'un message ordinaire : ce qui était
+  // coupé à 4 000 caractères passe désormais entier dans presque tous les cas.
+  const source = texte.length > PAGE_RICHE ? `${texte.slice(0, PAGE_RICHE)}…` : texte;
+  await tg.envoieRendu(chatId, enBlocs(source), enHtml(source), tronque(source));
+}
+
 /** Ce fichier se lit-il comme du Markdown ? */
 function estMarkdown(rel: string): boolean {
   return /\.(md|markdown|mdx)$/i.test(rel);
@@ -562,7 +585,7 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
       fil.battement.arrete();
       const dit = [...fil.tour.values()].join('\n\n').trim();
       fil.tour.clear();
-      if (dit) await tg.envoie(chatId, tronque(dit));
+      if (dit) await repond(chatId, dit);
 
       if (upsert.status === 'failed') {
         await tg.envoie(chatId, t('passerelle.sessionEchouee', { message: upsert.error ?? '' }));
