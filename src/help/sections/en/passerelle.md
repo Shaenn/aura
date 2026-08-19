@@ -126,13 +126,25 @@ The Workshop's deadline applies here too: **with no answer within fifteen minute
 
 A multiple-choice question reaches you the same way, as buttons. If it holds several questions, I tell you rather than answering it halfway: that form needs the screen, and it is waiting for you in the Workshop.
 
+## While it is working
+
+A turn can run for ten minutes without a single byte arriving. So, for as long as it lasts, I show a **bubble saying what I am doing and since when** — `Read, Grep — 1m 12s`. The same labels as on screen: one session read from two places must not tell two stories.
+
+That bubble is not a message. It does not stay in the thread, cannot be re-read, and disappears as soon as the answer arrives. That is what sets it apart from a stream: it occupies one place, always the same, instead of stacking up.
+
+It stops the moment the ball is in your court — end of turn, permission request, question. Letting it beat while I wait on you would suggest I am still working.
+
+Two caveats I would rather state: the bubble needs a **private conversation** and a **mobile** client. On the web, or in a group, it does not show. What remains then is the "typing…" in the header, which says less but works everywhere.
+
 ## What I do not send you
 
 **The agent's answer at the end of a turn, and the requests awaiting a decision.** Nothing else.
 
-Not the tokens as they are written, not the activity line, not the detail of the tools used. A messaging app is not a timeline: pouring a token stream into it would make it unreadable and drown what needs an answer. The full thread is in the Workshop, and the **Replay** keeps it.
+Not the tokens as they are written, not the detail of what a tool read or wrote. A messaging app is not a timeline: pouring a stream into it would make it unreadable and drown what needs an answer. The full thread is in the Workshop, and the **Replay** keeps it.
 
-A very long answer is cut rather than lost — truncated text can be read, a failed send cannot be seen.
+The answer itself is a document, and I render it as one — the same tables, headings and lists as for a file. It is what you read most often here; it would be the last place to leave raw Markdown.
+
+A very long answer is cut rather than lost — truncated text can be read, a failed send cannot be seen. The cut is generous: five times what an ordinary message takes.
 
 ## The two bounds, and what protects you
 

@@ -542,9 +542,13 @@ function defait(chatId: number, ferme: boolean): void {
  * Ce qu'une conversation reçoit d'une session.
  *
  * Volontairement peu : le texte de fin de tour, les demandes qui attendent un
- * humain, et la fin de la session. Ni les `text-delta`, ni l'activité, ni les
- * entrées d'outils — une messagerie n'est pas une timeline, et un flux de tokens
- * y serait illisible.
+ * humain, et la fin de la session. Ni les `text-delta`, ni les entrées d'outils
+ * — une messagerie n'est pas une timeline, et un flux de tokens y serait
+ * illisible.
+ *
+ * L'activité fait exception, et une seule : elle ne devient pas un message mais
+ * une bulle éphémère, qui s'efface sans rien laisser dans le fil. Voir
+ * `activite.ts`.
  */
 async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<void> {
   const tg = telegram;

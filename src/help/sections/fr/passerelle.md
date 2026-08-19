@@ -126,13 +126,25 @@ L'échéance de l'Atelier s'applique ici aussi : **sans réponse au bout d'un qu
 
 Une question à choix vous parvient de la même façon, en boutons. Si elle en compte plusieurs, je vous le dis sans y répondre à moitié : ce formulaire-là demande l'écran, et il vous attend dans l'Atelier.
 
+## Pendant que ça travaille
+
+Un tour peut durer dix minutes sans qu'un octet n'arrive. Je montre donc, le temps qu'il dure, une **bulle qui dit ce que je fais et depuis quand** — `Read, Grep — 1 min 12`. Les mêmes libellés qu'à l'écran : une même session lue de deux endroits ne doit pas raconter deux histoires.
+
+Cette bulle n'est pas un message. Elle ne reste pas dans le fil, ne se relit pas, et disparaît dès que la réponse arrive. C'est ce qui la distingue d'un flux : elle occupe une place, toujours la même, au lieu de s'empiler.
+
+Elle s'arrête dès que la balle passe dans votre camp — fin de tour, demande de permission, question. La laisser battre pendant que j'attends votre réponse ferait croire que je travaille encore.
+
+Deux réserves, que je préfère dire : cette bulle demande une **conversation privée** et un client **mobile**. Sur le web, ou dans un groupe, elle ne s'affiche pas. Il reste alors le « en train d'écrire… » de l'en-tête, qui dit moins mais qui passe partout.
+
 ## Ce que je ne vous envoie pas
 
 **La réponse de l'agent en fin de tour, et les demandes qui attendent une décision.** Rien d'autre.
 
-Ni les tokens au fil de leur écriture, ni la ligne d'activité, ni le détail des outils employés. Une messagerie n'est pas une timeline : y déverser un flux de tokens le rendrait illisible et noierait ce qui demande une réponse. Le fil complet est dans l'Atelier, et le **Rejeu** le garde.
+Ni les tokens au fil de leur écriture, ni le détail de ce qu'un outil a lu ou écrit. Une messagerie n'est pas une timeline : y déverser un flux le rendrait illisible et noierait ce qui demande une réponse. Le fil complet est dans l'Atelier, et le **Rejeu** le garde.
 
-Une réponse très longue est coupée plutôt que perdue — un texte tronqué se lit, un envoi échoué ne se voit pas.
+La réponse elle-même est un document, et je la rends comme tel — mêmes tableaux, mêmes titres, mêmes listes que pour un fichier. C'est ce que vous lisez le plus souvent ici ; ce serait le dernier endroit où laisser du Markdown brut.
+
+Une réponse très longue est coupée plutôt que perdue — un texte tronqué se lit, un envoi échoué ne se voit pas. La coupe est large : cinq fois ce qu'un message ordinaire accepte.
 
 ## Les deux bornes, et ce qui vous protège
 
