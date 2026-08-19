@@ -1,9 +1,8 @@
 // Markdown → messages riches de Telegram (Bot API 10.1).
 //
 // `sendMessage` n'affiche qu'un sous-ensemble de HTML : ni titres, ni listes,
-// **ni tableaux** — `<table>` y est refusé net. C'est ce qui obligeait à rendre
-// un tableau en chasse fixe, où il se disloque dès qu'il dépasse la largeur d'un
-// téléphone.
+// **ni tableaux** — `<table>` y est refusé net. Un tableau n'y tient qu'en
+// chasse fixe, où il se disloque dès qu'il dépasse la largeur d'un téléphone.
 //
 // `sendRichMessage` est une autre API, et elle change la donne : des blocs
 // structurés en JSON plutôt qu'un balisage, avec de vrais tableaux — bordures

@@ -10,8 +10,8 @@
 //  - la boucle de long-polling, son acquittement et ses reprises.
 //
 // Ce qui reste à nous, parce que la bibliothèque ne le fournit pas : la cascade
-// de replis d'un document (riche → HTML → texte nu), et la garde qui filtre les
-// conversations avant tout traitement.
+// de replis d'un document (blocs → bloc unique → texte nu), et la garde qui
+// filtre les conversations avant tout traitement.
 //
 // Le long-polling reste **sortant**, et c'est la raison d'être du dispositif :
 // AURA continue de n'écouter que la boucle locale (`server/index.ts`), et
@@ -22,7 +22,15 @@ import type {
   InlineKeyboardMarkup,
   InputRichBlock as InputRichBlockLib,
 } from 'node-telegram-bot-api';
-import type { InputRichBlock } from './riche.ts';
+import { MAX_RICHE, type InputRichBlock } from './riche.ts';
+
+/** Ce qu'un message ordinaire accepte. Le riche en prend huit fois plus. */
+const MAX_TEXTE = 4_000;
+
+/** Coupe à la borne, plutôt que de laisser l'API refuser le message entier. */
+function borne(texte: string, max: number): string {
+  return texte.length > max ? `${texte.slice(0, max - 1)}…` : texte;
+}
 
 /** Un message reçu, réduit à ce dont la Passerelle a besoin. */
 export interface MessageEntrant {
@@ -246,12 +254,17 @@ export class Telegram {
     });
   }
 
-  /** Envoie un texte. `clavier` ajoute des boutons sous le message. */
+  /**
+   * Envoie un texte. `clavier` ajoute des boutons sous le message.
+   *
+   * La coupe est faite ici et non chez l'appelant : c'est une borne de
+   * Telegram, et un module qui compose un message n'a pas à la connaître.
+   */
   async envoie(chatId: number, texte: string, clavier?: InlineKeyboardMarkup): Promise<void> {
     try {
       await this.api.sendMessage({
         chat_id: chatId,
-        text: texte,
+        text: borne(texte, MAX_TEXTE),
         ...(clavier ? { reply_markup: clavier } : {}),
       });
     } catch {
@@ -313,15 +326,20 @@ export class Telegram {
   /**
    * Envoie un document, du plus riche au plus sûr.
    *
-   * Trois tentatives, dans cet ordre, et chacune sait faire ce que la suivante
-   * ne fait pas :
+   * Trois tentatives, dans cet ordre, et les deux premières sont le **même
+   * appel** — ce qui change entre elles est la structure, pas le format :
    *
-   *  1. **`sendRichMessage`** — de vrais tableaux, avec bordures, et 32 768
-   *     caractères. C'est la seule voie qui rende un tableau lisible.
-   *  2. **HTML** — pas de tableaux, mais du gras, du code et des citations.
-   *     Sert si l'API riche est indisponible sur ce compte ou refuse le
-   *     document.
-   *  3. **texte nu** — ne peut échouer que si le réseau est coupé.
+   *  1. **les blocs** — de vrais tableaux, avec bordures. C'est la seule voie
+   *     qui rende un tableau lisible.
+   *  2. **un bloc unique** — le document tel quel dans un seul `paragraph`.
+   *     Les retours à la ligne et les lignes vides sont conservés (mesuré) : on
+   *     perd la mise en forme, on garde la mise en page. Sert si c'est la
+   *     *structure* qui a été refusée — trop de blocs, imbrication trop
+   *     profonde —, et il garde les 32 768 caractères et le repli « Afficher
+   *     plus » du message riche.
+   *  3. **texte nu** — un message ordinaire, donc **coupé à 4 000
+   *     caractères**. Ne sert que si l'API riche est indisponible sur ce
+   *     compte, et c'est le seul barreau qui perde du contenu.
    *
    * Ce n'est pas de la prudence de principe : le contenu vient de documents
    * qu'on n'a pas écrits, et un seul bloc mal formé fait échouer l'envoi entier.
@@ -330,42 +348,34 @@ export class Telegram {
   async envoieRendu(
     chatId: number,
     blocs: InputRichBlock[],
-    html: string,
     brut: string,
     clavier?: InlineKeyboardMarkup,
-  ): Promise<'riche' | 'html' | 'brut'> {
+  ): Promise<'riche' | 'nu' | 'brut'> {
     const markup = clavier ? { reply_markup: clavier } : {};
+
+    // Sans cela, Telegram fabrique des liens dans notre dos. Le piège est
+    // propre à ce que la Passerelle affiche : `.md` est un domaine de premier
+    // niveau — la Moldavie —, si bien que `0.livraison.md` devient un lien vers
+    // un site qui n'existe pas. `.py`, `.pl`, `.sh`, `.io` en sont d'autres :
+    // un dépôt en est plein.
+    const riche = (blocks: InputRichBlock[]) => ({
+      chat_id: chatId,
+      rich_message: { blocks, skip_entity_detection: true },
+      ...markup,
+    });
 
     if (blocs.length) {
       try {
-        await this.api.sendRichMessage({
-          chat_id: chatId,
-          rich_message: {
-            blocks: blocs,
-            // Sans cela, Telegram fabrique des liens dans notre dos. Le piège
-            // est propre à ce que la Passerelle affiche : `.md` est un domaine
-            // de premier niveau — la Moldavie —, si bien que `0.livraison.md`
-            // devient un lien vers un site qui n'existe pas. `.py`, `.pl`,
-            // `.sh`, `.io` en sont d'autres : un dépôt en est plein.
-            skip_entity_detection: true,
-          },
-          ...markup,
-        });
+        await this.api.sendRichMessage(riche(blocs));
         return 'riche';
       } catch {
-        /* on tente la mise en forme simple */
+        /* la structure a été refusée ; le texte, lui, tient peut-être */
       }
     }
 
     try {
-      await this.api.sendMessage({
-        chat_id: chatId,
-        text: html,
-        parse_mode: 'HTML',
-        link_preview_options: { is_disabled: true },
-        ...markup,
-      });
-      return 'html';
+      await this.api.sendRichMessage(riche([{ type: 'paragraph', text: borne(brut, MAX_RICHE) }]));
+      return 'nu';
     } catch {
       await this.envoie(chatId, brut, clavier);
       return 'brut';

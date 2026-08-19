@@ -45,7 +45,7 @@ import {
   type Entree,
   type Noeud,
 } from './projets.ts';
-import { echappe, enHtml, paginer } from './markdown.ts';
+import { paginer } from './markdown.ts';
 import { enBlocs, MAX_RICHE, type InputRichBlock } from './riche.ts';
 import { boutons, elargi, grille, Telegram } from './telegram.ts';
 import { Battement } from './activite.ts';
@@ -65,15 +65,6 @@ interface Journal {
   info: (message: string) => void;
   warn: (message: string) => void;
 }
-
-/**
- * Ce qu'un message peut peser chez Telegram.
- *
- * Une réponse d'agent dépasse volontiers cette taille. On tronque plutôt que de
- * laisser l'envoi échouer en silence : un texte coupé se lit, un texte perdu ne
- * se voit pas.
- */
-const MAX_TEXTE = 4_000;
 
 /** Ce que la Passerelle garde d'une conversation. */
 interface Fil {
@@ -419,12 +410,10 @@ async function page(chatId: number, rang: number, numero: number): Promise<void>
     { type: 'heading', text: entete, size: 3 },
     ...(markdown ? enBlocs(source) : [{ type: 'pre' as const, text: source }]),
   ];
-  const corps = markdown ? enHtml(source) : `<pre>${echappe(source)}</pre>`;
 
   await tg.envoieRendu(
     chatId,
     blocs,
-    `<b>${echappe(entete)}</b>\n\n${corps}`,
     `${entete}\n\n${source}`,
     navigation(rang, index, pages.length),
   );
@@ -450,7 +439,7 @@ async function repond(chatId: number, texte: string): Promise<void> {
   // La borne du riche est huit fois celle d'un message ordinaire : ce qui était
   // coupé à 4 000 caractères passe désormais entier dans presque tous les cas.
   const source = texte.length > PAGE_RICHE ? `${texte.slice(0, PAGE_RICHE)}…` : texte;
-  await tg.envoieRendu(chatId, enBlocs(source), enHtml(source), tronque(source));
+  await tg.envoieRendu(chatId, enBlocs(source), source);
 }
 
 /** Ce fichier se lit-il comme du Markdown ? */
@@ -472,10 +461,6 @@ function navigation(rang: number, index: number, total: number): InlineKeyboardM
   if (index < total)
     paires.push({ texte: t('passerelle.suivant'), donnee: `v:${rang}:${index + 1}` });
   return boutons(paires);
-}
-
-function tronque(texte: string): string {
-  return texte.length > MAX_TEXTE ? `${texte.slice(0, MAX_TEXTE)}…` : texte;
 }
 
 /** Un libellé de bouton : Telegram les veut courts, et les tronque mal. */
@@ -632,7 +617,7 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
       fil.asks.set(demande.id, demande.questions);
       await tg.envoie(
         chatId,
-        tronque(`${premiere.header}\n\n${premiere.question}`),
+        `${premiere.header}\n\n${premiere.question}`,
         boutons(
           premiere.options
             .slice(0, 4)
@@ -722,7 +707,7 @@ async function traite(chatId: number, brut: string): Promise<void> {
           lignes.push(`• ${s.cwd || '?'} — ${etat}${s.waitingFor ? ` (${s.waitingFor})` : ''}`);
         }
       }
-      await tg.envoie(chatId, tronque(lignes.join('\n')));
+      await tg.envoie(chatId, lignes.join('\n'));
       return;
     }
 

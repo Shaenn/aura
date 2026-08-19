@@ -80,7 +80,7 @@ Two caveats, from observation rather than documentation:
 - a **checkbox** (`- [ ]`, `- [x]`) is not drawn by current clients, even though the format provides for it. So I write `☑︎` or `☐︎` into the text: otherwise a task list would lose the state of every line with nothing to signal it;
 - anything that is **not** Markdown — a `settings.json`, a settings file — goes out monospaced and untransformed. Seeing bullets and emphasis in it would invent a structure that is not there.
 
-If a document defeats the translation, I fall back to simple formatting, then to plain text. An ugly document beats a missing one.
+If a document defeats the translation, I send it to you **exactly as written**, in one piece: I lose the formatting, I keep the layout and the length. An ugly document beats a missing one.
 
 ### Long documents
 

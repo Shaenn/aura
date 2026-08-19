@@ -59,11 +59,12 @@ Elles sont dans la spec, section _Rich Message Limits_ :
 | Pièces jointes                                | 50      | sans objet — on n'envoie aucun média       |
 | Colonnes d'un tableau                         | 20      | non — un tableau de dépôt en a rarement 20 |
 
-**La borne des 500 blocs n'est pas gardée**, et c'est la seule qui puisse mordre : la
-pagination compte des caractères, pas des blocs. Un document fait d'une longue liste — six
-cents lignes courtes — tiendrait sous 32 768 caractères tout en dépassant les 500 items.
-L'envoi échouerait alors et retomberait sur le HTML, donc rien ne se perd : c'est pour cela
-que ce n'est pas corrigé, et non parce que le cas n'existe pas.
+**La borne des 500 blocs n'est pas gardée** — la pagination compte des caractères, pas des
+blocs — mais elle l'est de fait : couper la source à 70 % de 32 768 caractères borne
+mécaniquement ce qu'une page peut produire. Mesuré sur tous les `.md` de deux dépôts réels,
+162 pages : le pire document en produit **377**. La borne n'a donc pas été atteinte, et un
+document assez dense pour la franchir retomberait sur le bloc unique d'`envoieRendu`, qui
+n'en compte qu'un. Rien ne se perd, et c'est pour cela que ce n'est pas corrigé.
 
 ---
 

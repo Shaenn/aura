@@ -80,7 +80,7 @@ Deux réserves, tirées de l'observation et non de la documentation :
 - une **case à cocher** (`- [ ]`, `- [x]`) n'est pas dessinée par les clients actuels, bien qu'elle existe dans le format. J'écris donc `☑︎` ou `☐︎` dans le texte : autrement, une liste de tâches perdrait l'état de chaque ligne sans que rien ne le signale ;
 - ce qui n'est **pas** du Markdown — un `settings.json`, un fichier de réglages — part en chasse fixe, sans transformation. Y voir des puces et des emphases inventerait une structure qui n'existe pas.
 
-Si un document malmène la traduction, je retombe sur une mise en forme simple, puis sur le texte nu. Un document laid vaut mieux qu'un document disparu.
+Si un document malmène la traduction, je vous l'envoie **tel qu'il est écrit**, d'un seul tenant : je perds la mise en forme, je garde la mise en page et la longueur. Un document laid vaut mieux qu'un document disparu.
 
 ### Les documents longs
 
