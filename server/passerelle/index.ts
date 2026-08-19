@@ -330,7 +330,13 @@ async function navigue(chatId: number, ordre: string, argument: string): Promise
   if (ordre === 'd') {
     const dossier = descendre(v.racine, v.chemin);
     const enfant = dossier?.enfants[Number(argument)];
-    if (!enfant || enfant.fichier) return;
+    // L'arbre a changé sous le message : le rang ne désigne plus le dossier
+    // qu'on a montré, ou plus un dossier du tout. On le dit, comme partout
+    // ailleurs — un bouton sans effet passe pour une panne.
+    if (!enfant || enfant.fichier) {
+      await tg.envoie(chatId, t('passerelle.navigationPerimee'));
+      return;
+    }
     v.chemin.push(enfant.nom);
     await ecranDossier(chatId, projet);
     return;
@@ -570,7 +576,11 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
         fil.tour.clear();
         return;
       }
-      // Fin de tour : le moment où il y a enfin quelque chose à dire.
+      // Tout ce qui n'est plus `working` vide le tour, `waiting` compris — et
+      // c'est voulu. `waiting`, c'est l'agent qui s'arrête pour vous demander
+      // quelque chose : ce qu'il a écrit avant part **maintenant**, et la
+      // demande suit avec ses boutons. On voit ce qu'il veut faire avant d'avoir
+      // à le trancher, au lieu de choisir à l'aveugle puis de lire pourquoi.
       fil.battement.arrete();
       const dit = [...fil.tour.values()].join('\n\n').trim();
       fil.tour.clear();
@@ -790,13 +800,20 @@ async function traite(chatId: number, brut: string): Promise<void> {
 }
 
 /**
- * Un bouton pressé : une permission tranchée, ou une question répondue.
+ * Un bouton pressé : un pas de navigation, une page tournée, une permission
+ * tranchée, une question répondue.
  *
- * Rien à attendre ici — les deux réponses dénouent une promesse tenue côté
- * runner et rendent la main aussitôt. C'est le tour suspendu qui repart, pas
- * cet appel.
+ * Tout est attendu, y compris ce qui n'a rien à rendre. Détacher une promesse
+ * ici la sortirait du `try` de l'appelant **et** du crochet d'erreur de la
+ * bibliothèque : un disque qui répond mal pendant une navigation deviendrait un
+ * rejet non traité, et Node termine le process là-dessus. Un clic emporterait
+ * le serveur et les sessions de l'Atelier avec lui.
+ *
+ * Trancher une permission ou une question, en revanche, rend bien la main
+ * aussitôt : les deux dénouent une promesse tenue côté runner. C'est le tour
+ * suspendu qui repart, pas cet appel.
  */
-function tranche(chatId: number, donnee: string): void {
+async function tranche(chatId: number, donnee: string): Promise<void> {
   const [type, id, suffixe] = donnee.split(':');
   if (!type || !id) return;
 
@@ -807,12 +824,12 @@ function tranche(chatId: number, donnee: string): void {
   // La navigation seule admet un ordre sans argument — « retour », « ouvrir
   // ici » n'ont rien à désigner.
   if (type === 'n') {
-    void navigue(chatId, id, suffixe ?? '');
+    await navigue(chatId, id, suffixe ?? '');
     return;
   }
   if (!suffixe) return;
   if (type === 'v') {
-    void page(chatId, Number(id), Number(suffixe));
+    await page(chatId, Number(id), Number(suffixe));
     return;
   }
 
@@ -888,11 +905,10 @@ async function boucle(tg: Telegram, chats: Set<number>, journal: Journal): Promi
     },
     async (bouton) => {
       try {
-        tranche(bouton.chatId, bouton.donnee);
+        await tranche(bouton.chatId, bouton.donnee);
       } catch (e) {
         journal.warn(`Passerelle : ${publicMessage(e)}`);
       }
-      return Promise.resolve();
     },
     (message) => journal.warn(`Passerelle : ${message}`),
   );
