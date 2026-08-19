@@ -26,6 +26,8 @@ Three things, better weighed before than after.
 
 I refuse to start if that list is missing. An oversight must not open the machine to the first comer.
 
+A bot, though, opens from anywhere: its name is worldwide. A stranger who finds it gets nothing — their conversation is not on the list, and I do not even answer to say so. Nor do they see the menu of my commands: I declare it for allowed conversations only.
+
 ## Turning it on
 
 1. Create a bot with `@BotFather` on Telegram, which gives you a token.

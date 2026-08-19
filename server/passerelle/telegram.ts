@@ -412,16 +412,40 @@ export class Telegram {
    * la langue n'a pas la sienne. Un échec ne coûte que l'autocomplétion : les
    * commandes restent reconnues, puisque c'est `routage.ts` qui en juge et non
    * cette déclaration.
+   *
+   * `chatId` restreint la déclaration à **une** conversation. Sans lui, la liste
+   * est posée sur la portée par défaut — celle que voit quiconque ouvre le bot,
+   * y compris un inconnu à qui l'on ne répondra jamais. Le menu lui dirait ce
+   * que cette machine sait faire ; la portée par conversation le réserve à qui a
+   * déjà le droit de s'en servir.
    */
   async declare(
     commandes: { command: string; description: string }[],
     langue?: string,
+    chatId?: number,
   ): Promise<boolean> {
     try {
       await this.api.setMyCommands({
         commands: commandes,
+        ...(chatId === undefined ? {} : { scope: { type: 'chat', chat_id: chatId } }),
         ...(langue ? { language_code: langue } : {}),
       });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Efface la liste posée sur la portée par défaut.
+   *
+   * Telegram range ses listes par langue autant que par portée : effacer le
+   * défaut sans langue ne touche pas celle qu'un client français avait reçue. Il
+   * faut donc passer sur chacune, et c'est l'appelant qui les connaît.
+   */
+  async efface(langue?: string): Promise<boolean> {
+    try {
+      await this.api.deleteMyCommands(langue ? { language_code: langue } : {});
       return true;
     } catch {
       return false;

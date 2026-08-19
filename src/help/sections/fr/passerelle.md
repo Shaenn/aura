@@ -26,6 +26,8 @@ Trois choses, et il vaut mieux les peser avant qu'après.
 
 Je refuse de démarrer si cette liste est absente. L'oubli ne doit pas ouvrir la machine au premier venu.
 
+Un bot, lui, s'ouvre depuis n'importe où : son nom est mondial. Un inconnu qui le trouve n'obtient rien — sa conversation n'est pas dans la liste, et je ne lui réponds même pas pour le lui dire. Il ne voit pas non plus le menu de mes commandes : je ne le déclare que pour les conversations autorisées.
+
 ## L'activer
 
 1. Créez un bot auprès de `@BotFather` sur Telegram, qui vous donne un jeton.

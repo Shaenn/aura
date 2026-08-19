@@ -1293,31 +1293,51 @@ export function demarrePasserelle(journal: Journal): void {
 }
 
 /**
- * Pose la liste des commandes chez Telegram, une fois par langue.
+ * Pose la liste des commandes chez Telegram, une fois par langue et par
+ * conversation autorisée.
  *
  * Elle y était saisie à la main dans `@BotFather`, donc hors du dépôt : rien
  * n'empêchait d'y annoncer une commande retirée depuis. Elle vient désormais de
  * la même table que le routage et l'aide.
  *
- * Chaque langue reçoit la sienne, **la référence comprise**, et le défaut la
- * double. Cette redondance apparente est mesurée, pas décorative : n'ayant posé
+ * Chaque langue reçoit la sienne, **la référence comprise**, et la déclaration
+ * sans langue la double. Cette redondance apparente est mesurée, pas décorative : n'ayant posé
  * que le défaut pour le français, un client réglé en français demandait `fr`,
  * ne trouvait rien, et n'affichait aucune commande — là où le client web
- * retombait bien sur le défaut. Plutôt que de départager les deux, on ne laisse
+ * retombait bien sur le repli. Plutôt que de départager les deux, on ne laisse
  * plus de repli à prendre.
  *
  * Rien de bloquant : un échec ne coûte que l'autocomplétion, et la Passerelle
  * marche sans. On le journalise plutôt que d'y renoncer en silence.
+ *
+ * Elle est posée **conversation par conversation**, et jamais sur la portée par
+ * défaut : celle-là s'affiche chez quiconque ouvre le bot, et un bot est
+ * adressable de toute la Terre. Un inconnu n'obtient déjà aucune réponse ; il
+ * n'a pas non plus à lire le menu de ce que cette machine sait faire. Le défaut
+ * est donc effacé au passage — il a pu être posé par une version antérieure, et
+ * ce qui est chez Telegram y reste tant qu'on ne le retire pas.
  */
-async function declareCommandes(tg: Telegram, journal: Journal): Promise<void> {
+async function declareCommandes(tg: Telegram, chats: Set<number>, journal: Journal): Promise<void> {
   const rate = (quoi: string): void =>
     journal.warn(`Passerelle : Telegram a refusé la liste des commandes (${quoi}).`);
 
-  // Le défaut : ce que voit un client dont la langue n'est pas des nôtres.
-  if (!(await tg.declare(withLocale(DEFAULT_LOCALE, pourTelegram)))) rate('défaut');
+  for (const chatId of chats) {
+    // Le repli de la conversation : ce que voit un client dont la langue n'est
+    // pas des nôtres.
+    if (!(await tg.declare(withLocale(DEFAULT_LOCALE, pourTelegram), undefined, chatId))) {
+      rate('défaut');
+    }
 
+    for (const langue of SUPPORTED_LOCALES) {
+      if (!(await tg.declare(withLocale(langue, pourTelegram), langue, chatId))) rate(langue);
+    }
+  }
+
+  // Telegram garde une liste par langue : les effacer toutes, sans quoi la
+  // langue survivrait au défaut qu'elle double.
+  if (!(await tg.efface())) rate('effacement du défaut');
   for (const langue of SUPPORTED_LOCALES) {
-    if (!(await tg.declare(withLocale(langue, pourTelegram), langue))) rate(langue);
+    if (!(await tg.efface(langue))) rate(`effacement du défaut, ${langue}`);
   }
 }
 
@@ -1330,7 +1350,7 @@ async function boucle(tg: Telegram, chats: Set<number>, journal: Journal): Promi
     return;
   }
   journal.info(`Passerelle ouverte sur @${nom} — ${chats.size} conversation(s) autorisée(s).`);
-  await declareCommandes(tg, journal);
+  await declareCommandes(tg, chats, journal);
 
   tg.ecoute(
     // La garde passe avant tout traitement, et le silence est la réponse à un
