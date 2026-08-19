@@ -104,6 +104,12 @@ lui seul, qui la protège du balayeur d'`agent/registry.ts`.
 Tout ce qui décide vit dans `passerelle/routage.ts`, sans réseau ni registre — c'est ce qui
 rend la garde vérifiable par un test (`test/passerelle.test.ts`).
 
+Le rendu des documents a son propre piège : **l'API des messages riches accepte en silence
+les champs qu'elle ne connaît pas**, si bien qu'une faute de nom ne produit pas d'erreur mais
+un tableau sans en-tête. `passerelle/blocs-riches.md` recense les blocs, les noms exacts, et
+les endroits où le comportement observé contredit la documentation — le lire avant de
+toucher à `riche.ts`.
+
 ## Messages d'erreur
 
 Une erreur renvoyée au front sera lue telle quelle par l'utilisateur : elle suit la charte de

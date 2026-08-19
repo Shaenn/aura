@@ -352,8 +352,11 @@ export function enBlocs(markdown: string): InputRichBlock[] {
     const numerotee = /^(\s*)(\d+)[.)]\s+(.*)$/.exec(ligne);
     if (numerotee) {
       fermeParagraphe();
-      // Le numéro reste dans le texte : le client dessine ses propres puces et
-      // ignore le `label` qui aurait dû le porter.
+      // Le numéro reste dans le texte. La liste ordonnée native existe —
+      // `value` et `type` sur l'item — mais sa forme décimale décale d'un rang
+      // sur le client actuel : le premier point s'affiche « 0. ». Dans un
+      // document où l'ordre est la consigne, c'est pire que la redondance
+      // d'une puce suivie d'un numéro. Mesuré ; voir `blocs-riches.md`.
       liste.push({
         indent: (numerotee[1] ?? '').length,
         lignes: [`${numerotee[2] ?? ''}. ${numerotee[3] ?? ''}`],
