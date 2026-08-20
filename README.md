@@ -321,6 +321,11 @@ externe, mais **n'ouvre aucun port** : son échange est sortant, l'écoute reste
 Le pouvoir qu'elle accorde est celui d'un accès distant à votre poste, et sa liste blanche de
 conversations est ce qui le referme — sans elle, elle refuse de démarrer.
 
+Ce qui transite passe par les serveurs de la messagerie, sans chiffrement de bout en bout : la
+Passerelle est faite pour un usage personnel, et **n'est pas recommandée pour un usage
+professionnel**. Une forme sans tiers est cherchée — un réseau privé rendant l'Atelier joignable
+depuis un téléphone — mais elle n'existe pas aujourd'hui.
+
 [SECURITY.md](SECURITY.md) détaille les gardes du serveur, ce qu'elles ne couvrent pas, et
 comment signaler une faille.
 

@@ -28,6 +28,16 @@ Je refuse de démarrer si cette liste est absente. L'oubli ne doit pas ouvrir la
 
 Un bot, lui, s'ouvre depuis n'importe où : son nom est mondial. Un inconnu qui le trouve n'obtient rien — sa conversation n'est pas dans la liste, et je ne lui réponds même pas pour le lui dire. Il ne voit pas non plus le menu de mes commandes : je ne le déclare que pour les conversations autorisées.
 
+## Personnel, pas professionnel
+
+Tout ce qui passe par ici passe par les serveurs de Telegram : vos messages, mes réponses, et le contenu des fichiers que vous me demandez d'ouvrir. Une conversation avec un bot n'est pas chiffrée de bout en bout — le service voit ce qui transite, et rien de ce que je fais de ce côté n'y change quoi que ce soit.
+
+C'est acceptable pour ce à quoi la Passerelle est faite : vos projets personnels, vos notes, l'agent du quotidien, un dépôt déjà public. **Je ne la recommande pas pour un usage professionnel** — code d'entreprise, données de clients, tout ce qui ne doit pas quitter ce poste. La confidentialité devient alors celle de Telegram, pas la mienne, et ce qui est parti ne se rappelle pas.
+
+Rien ne vous en empêche techniquement : je ne sais pas distinguer un projet personnel d'un projet de travail. La borne est la vôtre, et elle se pose à deux endroits — les conversations que vous autorisez, et les projets que vous ouvrez de loin.
+
+Je cherche une forme qui garde l'usage à distance sans confier quoi que ce soit à un tiers. La piste explorée est celle d'un réseau privé — Tailscale ou équivalent — qui rendrait l'Atelier joignable depuis votre téléphone sans rien exposer sur Internet ; elle demanderait sans doute de refondre l'Atelier pour un écran de cette taille. Ce n'est pas une promesse, seulement la direction. Tant qu'elle n'existe pas, ce qui précède reste la règle.
+
 ## L'activer
 
 1. Créez un bot auprès de `@BotFather` sur Telegram, qui vous donne un jeton.

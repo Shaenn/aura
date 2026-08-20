@@ -55,6 +55,15 @@ What it does change, and what you should weigh:
   an unlocked device, a compromised account — gains that same power. AURA cannot tell them
   apart from you.
 
+**Personal use is what the Gateway is made for; professional use is not.** Everything that
+passes through — your messages, the agent's answers, the contents of files consulted remotely —
+travels through the messaging service's servers, with no end-to-end encryption: a conversation
+with a bot offers none. The trade-off holds for personal projects; it does not hold for company
+code or client data. A shape without a third party is being looked for — a private network
+(Tailscale or equivalent) making the Workshop reachable from a phone without exposing anything,
+which would mean adapting the interface to that screen — but it does not exist today, and
+nothing in the code tells a personal project from a work one.
+
 Permission requests are still raised, and still deny themselves when unanswered.
 `AURA_TELEGRAM_MODE=plan` opens remote sessions in plan mode, where nothing executes.
 

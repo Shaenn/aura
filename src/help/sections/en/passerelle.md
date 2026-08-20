@@ -28,6 +28,16 @@ I refuse to start if that list is missing. An oversight must not open the machin
 
 A bot, though, opens from anywhere: its name is worldwide. A stranger who finds it gets nothing — their conversation is not on the list, and I do not even answer to say so. Nor do they see the menu of my commands: I declare it for allowed conversations only.
 
+## Personal, not professional
+
+Everything that goes through here goes through Telegram's servers: your messages, my answers, and the contents of the files you ask me to open. A conversation with a bot is not end-to-end encrypted — the service sees what passes through, and nothing I do on this side changes that.
+
+That is acceptable for what the Gateway is meant for: your personal projects, your notes, the everyday agent, an already public repository. **I do not recommend it for professional use** — company code, client data, anything that must not leave this machine. Confidentiality then becomes Telegram's, not mine, and what has left cannot be called back.
+
+Nothing stops you technically: I cannot tell a personal project from a work one. The line is yours to draw, and it is drawn in two places — the conversations you allow, and the projects you open from afar.
+
+I am looking for a shape that keeps remote use without handing anything to a third party. The avenue being explored is a private network — Tailscale or equivalent — that would make the Workshop reachable from your phone without exposing anything on the internet; it would likely mean reworking the Workshop for a screen that size. This is not a promise, only the direction. Until it exists, what precedes stands as the rule.
+
 ## Turning it on
 
 1. Create a bot with `@BotFather` on Telegram, which gives you a token.

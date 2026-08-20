@@ -24,6 +24,11 @@ et aucun appel ne sort. Elle n'ouvre **aucun port** : son long-polling est sorta
 que l'écoute reste `127.0.0.1` et que `guard.ts` ne bouge pas. Ce qui la tient est sa liste
 blanche de conversations, et elle refuse de démarrer sans elle.
 
+Elle vise l'usage personnel : ce qui transite passe par les serveurs de la messagerie, sans
+chiffrement de bout en bout, donc elle **n'est pas recommandée en contexte professionnel**. Une
+forme sans tiers reste à trouver — piste d'un réseau privé (Tailscale) joignant l'Atelier depuis
+un téléphone, ce qui supposerait de l'adapter à cet écran.
+
 - `src/` — SPA Vue 3 / Quasar. Voir `src/CLAUDE.md`.
 - `server/` — BFF Fastify. Voir `server/CLAUDE.md`.
 - `shared/` — types de _wire_ (`transcript.ts`, `context.ts`, `agent.ts`, `projects.ts`,

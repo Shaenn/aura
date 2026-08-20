@@ -58,6 +58,16 @@ Ce qu'elle change, et qu'il faut peser :
   autorisée — appareil déverrouillé, compte compromis — obtient ce même pouvoir. AURA ne
   peut pas le distinguer de vous.
 
+**L'usage personnel est celui pour lequel la Passerelle est faite ; l'usage professionnel ne
+l'est pas.** Tout ce qui transite — vos messages, les réponses de l'agent, le contenu des
+fichiers consultés de loin — passe par les serveurs de la messagerie, sans chiffrement de bout
+en bout : une conversation avec un bot n'en offre pas. Le compromis se tient pour des projets
+personnels ; il ne se tient pas pour du code d'entreprise ou des données de clients. Une forme
+sans tiers est cherchée — un réseau privé (Tailscale ou équivalent) rendant l'Atelier joignable
+depuis un téléphone sans rien exposer, ce qui demanderait d'adapter l'interface à cet écran —
+mais elle n'existe pas aujourd'hui, et rien dans le code ne distingue un projet personnel d'un
+projet de travail.
+
 Les demandes de permission continuent d'être posées, et se refusent d'elles-mêmes sans
 réponse. `AURA_TELEGRAM_MODE=plan` ouvre les sessions distantes en mode plan, où rien ne
 s'exécute.

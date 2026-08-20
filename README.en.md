@@ -294,6 +294,11 @@ starts and no call goes out. Turned on, it holds a secret and calls an external 
 grants is that of remote access to your machine, and its allowlist of conversations is what
 closes it again — without one, it refuses to start.
 
+What passes through travels through the messaging service's servers, with no end-to-end
+encryption: the Gateway is made for personal use, and is **not recommended for professional
+use**. A shape without a third party is being looked for — a private network making the Workshop
+reachable from a phone — but it does not exist today.
+
 [SECURITY.en.md](SECURITY.en.md) details the server's guards, what they do not cover, and how to
 report a flaw.
 
