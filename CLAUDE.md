@@ -17,6 +17,18 @@ Navigateur (SPA Quasar)  ──/api/*──►  BFF Fastify (server/)  ──►
 AURA est un outil **local, mono-utilisateur** : aucun service externe, aucun secret, aucune
 authentification. Le front n'appelle que `/api/*` en même origine — pas de CORS.
 
+**Une seule exception, et elle est optionnelle** : la Passerelle
+(`server/passerelle/`) relie une messagerie à l'Atelier. Elle porte un secret, appelle un
+service externe, et n'existe que si l'utilisateur la configure — sans jeton, rien ne démarre
+et aucun appel ne sort. Elle n'ouvre **aucun port** : son long-polling est sortant, si bien
+que l'écoute reste `127.0.0.1` et que `guard.ts` ne bouge pas. Ce qui la tient est sa liste
+blanche de conversations, et elle refuse de démarrer sans elle.
+
+Elle vise l'usage personnel : ce qui transite passe par les serveurs de la messagerie, sans
+chiffrement de bout en bout, donc elle **n'est pas recommandée en contexte professionnel**. Une
+forme sans tiers reste à trouver — piste d'un réseau privé (Tailscale) joignant l'Atelier depuis
+un téléphone, ce qui supposerait de l'adapter à cet écran.
+
 - `src/` — SPA Vue 3 / Quasar. Voir `src/CLAUDE.md`.
 - `server/` — BFF Fastify. Voir `server/CLAUDE.md`.
 - `shared/` — types de _wire_ (`transcript.ts`, `context.ts`, `agent.ts`, `projects.ts`,

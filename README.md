@@ -253,7 +253,7 @@ Le détail — bornes, arrière-plan, reprise d'une session — est dans
 
 ## Le manuel
 
-AURA embarque son propre manuel : **18 pages** qui ne décrivent pas seulement où cliquer, mais
+AURA embarque son propre manuel : **19 pages** qui ne décrivent pas seulement où cliquer, mais
 **pourquoi chaque écran est fait ainsi** — pourquoi une permission qui expire est refusée et
 non accordée, pourquoi les seuils du diagnostic sont des percentiles, pourquoi les sous-agents
 ont leur propre piste. La touche `?` ouvre la page correspondant à l'écran courant.
@@ -261,7 +261,8 @@ ont leur propre piste. La touche `?` ouvre la page correspondant à l'écran cou
 Il se lit en ligne, sans installer quoi que ce soit :
 
 [Concepts](https://shaenn.github.io/aura/guide/concepts) · [Rejeu de session](https://shaenn.github.io/aura/guide/replay) ·
-[Atelier](https://shaenn.github.io/aura/guide/atelier) · [Sessions actives](https://shaenn.github.io/aura/guide/sessions) ·
+[Atelier](https://shaenn.github.io/aura/guide/atelier) · [Passerelle](https://shaenn.github.io/aura/guide/passerelle) ·
+[Sessions actives](https://shaenn.github.io/aura/guide/sessions) ·
 [Diagnostic](https://shaenn.github.io/aura/guide/diagnostic) · [Usage & coûts](https://shaenn.github.io/aura/guide/usage) ·
 [toutes les pages](https://shaenn.github.io/aura/guide/concepts)
 
@@ -311,6 +312,19 @@ vérifié : il ne peut pas sortir du dossier géré, quel que soit le nombre de 
 
 Le seul processus qui parle à l'extérieur est l'agent de l'Atelier, quand vous lui en donnez
 l'ordre — et il utilise l'authentification de votre installation Claude Code, pas la nôtre.
+
+Une seule chose peut changer cela, et c'est vous qui décidez de l'allumer : la
+[Passerelle](https://shaenn.github.io/aura/guide/passerelle), qui relie une messagerie à
+l'Atelier pour piloter une session à distance. Elle est **inerte par défaut** — sans jeton,
+rien ne démarre et aucun appel ne sort. Activée, elle porte un secret et appelle un service
+externe, mais **n'ouvre aucun port** : son échange est sortant, l'écoute reste `127.0.0.1`.
+Le pouvoir qu'elle accorde est celui d'un accès distant à votre poste, et sa liste blanche de
+conversations est ce qui le referme — sans elle, elle refuse de démarrer.
+
+Ce qui transite passe par les serveurs de la messagerie, sans chiffrement de bout en bout : la
+Passerelle est faite pour un usage personnel, et **n'est pas recommandée pour un usage
+professionnel**. Une forme sans tiers est cherchée — un réseau privé rendant l'Atelier joignable
+depuis un téléphone — mais elle n'existe pas aujourd'hui.
 
 [SECURITY.md](SECURITY.md) détaille les gardes du serveur, ce qu'elles ne couvrent pas, et
 comment signaler une faille.
@@ -398,13 +412,23 @@ La fenêtre de console reste ouverte : **c'est le serveur**. La fermer arrête A
 
 ## Configuration
 
-Aucune. Deux variables facultatives, à poser dans l'environnement ou dans `server/.env`
+Aucune. Quelques variables facultatives, à poser dans l'environnement ou dans `server/.env`
 (ignoré par git, lu par `--env-file`) :
 
 | Variable          | Défaut      | Rôle                                                          |
 | ----------------- | ----------- | ------------------------------------------------------------- |
 | `PORT`            | `8800`      | Port d'écoute du serveur — cible du proxy dev de Quasar.      |
 | `AURA_CLAUDE_DIR` | `~/.claude` | Dossier géré. Pratique pour travailler sur une copie sandbox. |
+
+Les trois suivantes n'existent que pour la
+[Passerelle](https://shaenn.github.io/aura/guide/passerelle), et **tout reste éteint tant que
+la première est absente** :
+
+| Variable              | Défaut    | Rôle                                                                          |
+| --------------------- | --------- | ----------------------------------------------------------------------------- |
+| `AURA_TELEGRAM_TOKEN` | —         | Le jeton du bot. Absent : la Passerelle n'existe pas.                         |
+| `AURA_TELEGRAM_CHATS` | —         | Les conversations autorisées. **Obligatoire** : sans elle, refus de démarrer. |
+| `AURA_TELEGRAM_MODE`  | `default` | Mode de permission des sessions ouvertes de loin.                             |
 
 Une nouvelle variable demande un redémarrage complet : le rechargement à chaud ne relit pas
 `--env-file`.

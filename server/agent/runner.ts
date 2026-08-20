@@ -36,7 +36,7 @@ import { Translator } from './translate.ts';
 import { longPath, projectSlug } from './slug.ts';
 import { PendingAnswer } from './pending.ts';
 import { ASK_TOOL, createAskServer, harnessSentence, NO_ANSWER } from './ask.ts';
-import { str } from '../json.ts';
+import { num, str } from '../json.ts';
 
 type Rec = Record<string, unknown>;
 
@@ -139,6 +139,29 @@ export class SessionRunner {
   /** Ce que l'agent fait *maintenant* — un présent, pas une histoire. */
   private readonly activity = new ActivityTracker();
   private lastActivityAt = 0;
+  /**
+   * Ce que la fenêtre de contexte porte, relevé sur les réponses du modèle.
+   *
+   * Le total est **exact**, et c'est tout l'intérêt : `input + cache_read +
+   * cache_creation` est la même somme que `transcript.ts` emploie pour ancrer la
+   * page Contexte (voir `settleTurn`). Deux surfaces qui lisent la même session
+   * ne peuvent donc pas annoncer deux remplissages différents — mais celle-ci
+   * n'a aucun fichier à relire.
+   *
+   * Le runner **relève et ne juge pas** : ni limite, ni pourcentage, ni seuil.
+   * Rapporter ce nombre à la fenêtre du modèle demande `contextLimitFor`, et
+   * décider s'il mérite qu'on en parle est l'affaire de qui l'affiche.
+   */
+  private readonly fenetre = { tokens: 0, max: 0 };
+  /**
+   * La compaction qui attend son résumé, s'il y en a une.
+   *
+   * Le SDK envoie la frontière, puis **séparément** le résumé — un message
+   * `user` marqué `isSynthetic`, dont le contenu est la conversation entière
+   * réécrite. Mesuré : il suit immédiatement, et rien d'autre ne s'intercale.
+   * Ce champ est ce qui relie les deux, et il ne vit qu'entre eux.
+   */
+  private compactionSansResume: string | null = null;
   /** Ce que la session a lancé en arrière-plan, et qui lui survit. */
   private readonly shells = new ShellTracker();
   private shellPoll: ReturnType<typeof setInterval> | null = null;
@@ -293,6 +316,18 @@ export class SessionRunner {
     return Date.now() - this.touchedAt > ttlMs;
   }
 
+  /**
+   * Ce que la fenêtre porte, et le plus grand contexte jamais observé.
+   *
+   * `max` n'est pas un superlatif décoratif : c'est la **preuve** qu'attend
+   * `contextLimitFor`. Un modèle à fenêtre longue s'enregistre sans son suffixe
+   * `[1m]`, si bien qu'un contexte dépassant 200 k est le seul témoin certain de
+   * la grande fenêtre. Une copie, pour que personne n'écrive dans le relevé.
+   */
+  get contextWindow(): { tokens: number; max: number } {
+    return { ...this.fenetre };
+  }
+
   private emit(upserts: AgentUpsert[]): void {
     for (const upsert of upserts) {
       for (const send of this.subscribers) {
@@ -336,6 +371,11 @@ export class SessionRunner {
    */
   private resetConversation(): void {
     this.translator.reset();
+    // La fenêtre est vide dès maintenant, et non au prochain tour : sans cela,
+    // qui demande son état juste après un `/clear` lirait le remplissage d'une
+    // conversation qui n'existe plus. `max` survit — il ne dit rien de cette
+    // conversation-ci, il prouve la taille de la fenêtre du modèle.
+    this.fenetre.tokens = 0;
     // Le SDK émet aussi ce message hors `/clear` — sortie du mode plan, ouverture
     // d'une session neuve. On ne nomme donc la commande que si c'est bien elle
     // qu'on vient d'envoyer.
@@ -806,6 +846,52 @@ export class SessionRunner {
     }
   }
 
+  /**
+   * Le contexte d'une réponse, tel que le modèle l'a facturé.
+   *
+   * Les trois termes, et pas seulement `input_tokens` : ce qui est relu du cache
+   * occupe la fenêtre exactement comme ce qui ne l'est pas — c'est le prix qui
+   * diffère, pas la place. Ne compter que `input_tokens` sur une session bien
+   * cachée annoncerait quelques milliers de tokens là où la fenêtre en porte
+   * cent mille.
+   *
+   * Un `usage` absent ou vide ne remet rien à zéro : une réponse sans relevé ne
+   * prouve pas que la fenêtre s'est vidée, elle ne dit rien.
+   */
+  private releveFenetre(usage: Rec): void {
+    const total =
+      num(usage.input_tokens) +
+      num(usage.cache_read_input_tokens) +
+      num(usage.cache_creation_input_tokens);
+    if (total <= 0) return;
+    this.fenetre.tokens = total;
+    if (total > this.fenetre.max) this.fenetre.max = total;
+  }
+
+  /**
+   * Le message qui suit une compaction porte-t-il son résumé ?
+   *
+   * Trois conditions, et les trois comptent. Une compaction doit attendre —
+   * sinon le message est un tour ordinaire. `isSynthetic` distingue le résumé du
+   * `<local-command-stdout>` qui le suit, lequel porte `isReplay` et ne dit que
+   * « Compacted ». Et le contenu doit être une **chaîne** : un tour ordinaire
+   * porte une liste de blocs, jamais du texte nu.
+   *
+   * Rendre `true` consomme le message : il n'a rien à faire dans le fil sous sa
+   * forme brute — c'est la conversation entière réécrite, et `onUser` n'en
+   * tirerait de toute façon rien, n'y cherchant que des résultats d'outils.
+   */
+  private capteResume(message: Rec): boolean {
+    const uuid = this.compactionSansResume;
+    if (!uuid || message.isSynthetic !== true) return false;
+    this.compactionSansResume = null;
+
+    const contenu = rec(message.message).content;
+    if (typeof contenu !== 'string') return false;
+    this.emit(this.translator.attachSummary(uuid, contenu));
+    return true;
+  }
+
   private consume(message: Rec): void {
     // Avant tout dispatch : la plupart des messages qui disent où en est l'agent
     // ne produisent aucun événement de timeline, et sortaient donc par le
@@ -831,7 +917,21 @@ export class SessionRunner {
         // disait rien avant le tour suivant. Les autres sous-types ne portent que
         // de la machinerie, et sortent par le bas comme avant.
         if (str(message.subtype) === 'compact_boundary') {
-          this.emit(this.translator.appendCompaction(message));
+          // Une compaction change la fenêtre sans qu'aucune réponse ne le dise :
+          // sans ces deux lignes, le relevé resterait celui d'avant jusqu'au
+          // tour suivant — c'est-à-dire faux précisément au moment où l'on
+          // regarde. `pre_tokens` est par ailleurs le plus grand contexte que
+          // cette session ait porté, et souvent le premier à dépasser 200 k :
+          // c'est ici, plus tôt que partout ailleurs, que la grande fenêtre se
+          // prouve.
+          const meta = rec(message.compact_metadata);
+          const avant = num(meta.pre_tokens);
+          if (avant > this.fenetre.max) this.fenetre.max = avant;
+          this.fenetre.tokens = num(meta.post_tokens);
+          const upserts = this.translator.appendCompaction(message);
+          const premier = upserts[0];
+          this.compactionSansResume = premier?.kind === 'append-event' ? premier.event.uuid : null;
+          this.emit(upserts);
           return;
         }
         // Le CLI pousse la liste entière dès qu'elle bouge — un Skill découvert
@@ -848,9 +948,11 @@ export class SessionRunner {
         this.emit(this.translator.onStreamEvent(message));
         return;
       case 'assistant':
+        this.releveFenetre(rec(rec(message.message).usage));
         this.emit(this.translator.onAssistant(message));
         return;
       case 'user':
+        if (this.capteResume(message)) return;
         this.emit(this.translator.onUser(message));
         return;
       case 'result':

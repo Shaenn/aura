@@ -19,6 +19,46 @@ par cas.
 Une version se pose quand il y a quelque chose à annoncer, pas à chaque fusion. Une journée
 entière de montées de dépendances n'en produit aucune.
 
+## [1.3.0] — 2026-08-20
+
+Une version d'une seule capacité, et elle est grande : la **Passerelle**, qui relie une
+messagerie à l'Atelier pour lancer, surveiller et débloquer une session quand on n'est pas
+devant le poste. Elle est éteinte par défaut et le reste tant qu'on ne la configure pas.
+
+### Ce qui change pour vous
+
+- **Piloter l'Atelier depuis Telegram.** On écrit à un bot, AURA ouvre une session sur un
+  projet connu ou transmet le message à celle qui travaille déjà, et rend sa réponse. Une
+  conversation tient une session à la fois. `/sessions`, `/etat`, `/stop`, `/fin` disent et
+  font le reste ; tout autre message part comme un tour, sans syntaxe à retenir.
+- **Consulter un projet sans ouvrir de session.** `/projets` donne un écran de navigation qui
+  descend l'arborescence dossier par dossier et ouvre un fichier — même inventaire et mêmes
+  gardes que la page Projet, aucun processus lancé, aucun jeton dépensé.
+- **Les documents arrivent en documents.** Markdown traduit en messages riches — titres,
+  listes, citations, code coloré et vrais tableaux —, découpés en pages quand ils sont longs,
+  la coupe tombant sur une fin de ligne. Ce qui n'est pas du Markdown reste en chasse fixe.
+- **Décider de loin.** Une demande de permission arrive avec ses deux boutons ; un plan arrive
+  entier, mis en forme, avant d'être approuvé. Une question de l'agent se pose comme à
+  l'écran, à choix simple ou multiple, et se répond aussi en écrivant. L'échéance du quart
+  d'heure de l'Atelier s'applique ici : sans réponse, la demande est refusée, jamais l'inverse.
+- **Voir la fenêtre de contexte, et agir dessus.** `/etat` donne le compte exact et son
+  dénominateur, `/compacter` compacte sans attendre le débordement. AURA prévient quand la
+  fenêtre a été compactée — résumé replié à l'appui — et une fois quand elle passe les 80 %.
+- **Savoir que ça travaille.** Le temps d'un tour, une bulle éphémère dit quels outils tournent
+  et depuis combien de temps, avec les mêmes libellés qu'à l'écran.
+
+### Ce qu'il faut peser avant de l'allumer
+
+- **La Passerelle est faite pour un usage personnel.** Ce qui transite passe par les serveurs
+  de la messagerie, sans chiffrement de bout en bout : elle n'est **pas recommandée en
+  contexte professionnel**. Une forme sans tiers est cherchée — un réseau privé rendant
+  l'Atelier joignable depuis un téléphone — mais elle n'existe pas aujourd'hui.
+- **Ce qu'elle n'ouvre pas.** Aucun port : l'échange est sortant, le serveur continue de
+  n'écouter que `127.0.0.1`, et les gardes de l'API ne bougent pas.
+- **Ce qu'elle accorde.** Un accès distant au poste. La liste blanche des conversations est la
+  serrure : elle est obligatoire, la Passerelle refuse de démarrer sans elle, et un message
+  venu d'ailleurs reste sans réponse. [SECURITY.md](SECURITY.md) détaille le reste.
+
 ## [1.2.0] — 2026-08-18
 
 Une version de la fiche projet : son volet de ressources retient enfin ce qu'on lui montre,
@@ -133,6 +173,7 @@ collées, reprise d'une session existante.
   externe, aucun secret dans le navigateur. Voir [SECURITY.md](SECURITY.md).
 - Windows, exclusivement — la seule plateforme sur laquelle l'application a tourné.
 
+[1.3.0]: https://github.com/Shaenn/aura/releases/tag/v1.3.0
 [1.2.0]: https://github.com/Shaenn/aura/releases/tag/v1.2.0
 [1.1.0]: https://github.com/Shaenn/aura/releases/tag/v1.1.0
 [1.0.0]: https://github.com/Shaenn/aura/releases/tag/v1.0.0

@@ -22,6 +22,9 @@ Deux garanties y sont centralisées :
 
 ### Les exceptions, et elles sont deux
 
+_(Une troisième surface sort du dossier géré sans y toucher : la Passerelle, plus bas — elle
+ne lit ni n'écrit `~/.claude`, elle parle au registre de l'Atelier.)_
+
 `processes.ts` sort de `~/.claude` : il énumère les processus Claude du système et sait en
 terminer. C'était le seul moyen de montrer ce que le disque ne déclare pas — un daemon, un
 hôte de pseudo-terminal, le pont de l'extension n'écrivent aucun fichier de session.
@@ -71,6 +74,81 @@ Les backups vivent dans `.local/backups`, restaurables depuis la page Sauvegarde
 3. Toute mutation suit propose / apply (voir `routes/claude.ts` comme référence).
 4. Les formes échangées avec le front vont dans `shared/`, pas dans `server/`.
 5. Côté front, un service `src/services/<nom>/index.ts`.
+
+## La Passerelle (`passerelle/`)
+
+Piloter l'Atelier depuis une messagerie. **Optionnelle et inerte par défaut** : sans
+`AURA_TELEGRAM_TOKEN`, rien ne démarre et aucun appel ne sort.
+
+Ce qui la rend acceptable tient en une phrase : **elle n'ouvre aucun port**. Le long-polling
+est sortant, donc l'écoute reste `127.0.0.1` et `guard.ts` est inchangé. Elle ne passe pas non
+plus par HTTP — même process que le registre, qu'elle appelle directement. Il n'y a donc pas
+de requête à authentifier, et pas une route à ouvrir.
+
+Trois gardes, et elles ne se relâchent pas sans décision :
+
+- **la liste blanche `AURA_TELEGRAM_CHATS` est obligatoire** — jeton sans liste, la Passerelle
+  refuse de démarrer. L'omission ne doit pas ouvrir la machine au premier venu ;
+- un message venu d'ailleurs est ignoré **en silence** : répondre confirmerait l'existence du
+  bot ;
+- le jeton ne traverse pas `ServerEnv`, que tout le serveur importe : il est lu dans le seul
+  module qui en a besoin, et aucune route n'est en mesure de le renvoyer.
+
+Le pouvoir accordé reste considérable — qui écrit dans une conversation autorisée peut faire
+lancer une commande et autoriser une écriture. Les demandes de permission partent en boutons ;
+sans réponse, le garde-fou d'`agent/runner.ts` les refuse après un quart d'heure.
+
+Les questions de l'agent (`ask-request`) suivent `passerelle/questions.ts`, qui porte le
+formulaire de `src/components/agent/AskPrompt.vue` : une question par message, le choix
+multiple qui se coche, et la réponse écrite quand aucune option ne convient. Deux contraintes
+mesurées le dessinent — **un message riche ne se réécrit pas** (la bibliothèque n'expose aucun
+`editMessageRichText`, seulement `editMessageReplyMarkup`), et `callback_data` tient 64 octets.
+Comme `routage.ts`, ce fichier décide sans réseau : c'est ce qui le rend testable.
+
+`/etat` rend la fenêtre de contexte, et le chiffre ne peut pas diverger de la page Contexte :
+`SessionRunner` le relève sur `message.message.usage` comme
+`input + cache_read + cache_creation`, **la somme même** dont `transcript.ts` ancre un tour
+(`settleTurn`). Le runner relève et ne juge pas ; la limite vient de `contextLimitFor`, qui
+n'est pas facultatif — un modèle à fenêtre longue s'enregistre **sans** son suffixe `[1m]`, et
+seules deux preuves la révèlent : un contexte observé au-dessus de 200 k, ou les réglages
+(`claude/model.ts`). Le seuil d'alerte de `passerelle/etat.ts` recopie le garde-fou de
+`contextFill` (`diagnostics/thresholds.ts`) ; un test tient les deux nombres égaux.
+
+`/compacter` est la **seule** commande de Claude Code que la Passerelle relaie, et elle passe
+par la file d'entrée comme un tour. Le résumé qu'une compaction produit n'arrive **pas** avec
+la frontière : le SDK l'envoie juste après, dans un message `user` marqué `isSynthetic` dont le
+contenu est une chaîne. `runner.ts` le capte et le pose sur l'événement de compaction par un
+`replace-event` — la compaction s'annonce donc tout de suite, sans quoi un résumé qui ne
+viendrait pas l'emporterait dans son silence. Elle le rend replié, par le bloc riche `details`
+(voir `blocs-riches.md`) : c'est le seul repli explicite de l'API, l'« Afficher plus »
+automatique ne s'étant pas déclenché sur sept mille caractères.
+
+`ExitPlanMode` est la seule demande de permission que la Passerelle rend en entier
+(`passerelle/plan.ts`) : partout ailleurs le nom de l'outil et son chemin suffisent à juger,
+ici l'argument **est** la décision. Le CLI passe le markdown en clair dans `input.plan` — et
+`input.planFilePath` à côté, qui ne se lit pas de loin. Le rendu emprunte `envoieRendu`, dont
+les trois barreaux valent ici comme pour un document : le plan vient du modèle, sa structure
+n'est pas garantie.
+
+Les boutons d'une permission se retirent sur `permission-settled` et non sur le clic : ce
+seul point de passage voit aussi les réponses données dans l'Atelier et les refus du garde-fou
+du quart d'heure.
+
+Les événements d'un fil se traitent **à la file** (`attache`) : deux `applique` lancés de front
+font des appels réseau qui arrivent dans l'ordre où Telegram les sert, et le résumé doublait
+l'annonce qui le précédait.
+
+Une session pilotée d'ici **doit** rester abonnée (`runner.subscribe`) : c'est l'abonnement, et
+lui seul, qui la protège du balayeur d'`agent/registry.ts`.
+
+Tout ce qui décide vit dans `passerelle/routage.ts`, sans réseau ni registre — c'est ce qui
+rend la garde vérifiable par un test (`test/passerelle.test.ts`).
+
+Le rendu des documents a son propre piège : **l'API des messages riches accepte en silence
+les champs qu'elle ne connaît pas**, si bien qu'une faute de nom ne produit pas d'erreur mais
+un tableau sans en-tête. `passerelle/blocs-riches.md` recense les blocs, les noms exacts, et
+les endroits où le comportement observé contredit la documentation — le lire avant de
+toucher à `riche.ts`.
 
 ## Messages d'erreur
 

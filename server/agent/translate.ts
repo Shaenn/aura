@@ -246,6 +246,25 @@ export class Translator {
     return [{ kind: 'append-event', event }];
   }
 
+  /**
+   * Pose sur une compaction le résumé qu'elle a produit.
+   *
+   * Il n'arrive pas avec la frontière mais **juste après**, dans le message que
+   * le CLI se renvoie à lui-même pour recharger la conversation. D'où ces deux
+   * temps : la compaction s'annonce tout de suite — sans quoi un résumé qui ne
+   * viendrait pas l'emporterait dans son silence — et se complète ensuite.
+   *
+   * Les blocs sont ceux qu'un événement porte d'ordinaire : le relecteur de
+   * transcript en produit exactement autant pour cette même compaction, si bien
+   * que le direct et la relecture ne racontent pas deux histoires.
+   */
+  attachSummary(uuid: string, text: string): AgentUpsert[] {
+    const event = this.byUuid.get(uuid);
+    if (!event || !text.trim()) return [];
+    event.blocks = [{ kind: 'text', text }];
+    return [{ kind: 'replace-event', event }];
+  }
+
   // ── Flux vivant ───────────────────────────────────────────────────────────
 
   onStreamEvent(message: Rec): AgentUpsert[] {

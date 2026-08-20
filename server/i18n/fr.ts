@@ -86,6 +86,177 @@ export default {
     noPowerShell: 'Aucun hôte PowerShell trouvé.',
   },
 
+  /**
+   * Ce qu'AURA dit dans une messagerie.
+   *
+   * Même charte qu'à l'écran, avec une contrainte de plus : l'interlocuteur ne
+   * voit pas l'Atelier. Un message doit donc porter son propre contexte — dire
+   * quelle session, quel dossier — là où l'écran le montrait déjà.
+   */
+  passerelle: {
+    /**
+     * L'aide se compose à partir de `passerelle/commandes.ts` : ces morceaux
+     * sont les seuls à écrire, et la liste des commandes n'est plus recopiée.
+     */
+    /**
+     * L'accueil, et il constate plutôt qu'il ne se présente.
+     *
+     * `docs/voix.md` range l'accueil parmi les surfaces où AURA parle d'elle :
+     * le « je » doit y porter une information que la formulation impersonnelle
+     * ne portait pas. D'où l'état du parc et de la conversation, plutôt qu'un
+     * sommaire de ce que les boutons montrent déjà.
+     */
+    accueil: 'Je pilote l’Atelier de Claude Code depuis cette conversation.',
+    accueilProjets: 'Je connais {n} projets.',
+    accueilUnProjet: 'Je connais un projet.',
+    accueilAucunProjet: 'Claude Code n’a encore travaillé sur aucun projet ici.',
+    accueilSession: 'Une session est déjà ouverte ici, sur {cwd}.',
+    accueilTravaux: '{n} sessions tournent en ce moment.',
+    accueilUnTravail: 'Une session tourne en ce moment.',
+    menuProjets: 'Projets',
+    menuSessions: 'Sessions',
+    menuAide: 'Aide',
+    aideEntete: 'Je pilote l’Atelier depuis cette conversation.',
+    aidePied: 'Tout autre message part à la session comme un tour.',
+    aideConsulter: 'Consulter, sans rien lancer :',
+    aideTravailler: 'Travailler :',
+    /** L'argument d'une commande qui en prend un, tel qu'il s'écrit dans l'aide. */
+    aideArgument: '<n>',
+    /**
+     * Ce que fait chaque commande — une ligne, à la première personne.
+     *
+     * Elles servent deux fois : dans l'aide, et dans la liste que Telegram
+     * propose sous le `/`. La seconde les affiche seules, sans le reste du
+     * message : elles doivent donc se suffire à elles-mêmes.
+     */
+    commandes: {
+      projets: 'Les projets que Claude Code connaît, numérotés.',
+      projet: 'L’arborescence d’un projet : on descend dossier par dossier.',
+      voir: 'Le contenu d’un fichier de la dernière liste.',
+      atelier: 'J’ouvre une session sur ce projet.',
+      etat: 'Où en est la session d’ici, et sa fenêtre de contexte.',
+      compacter: 'Je compacte la conversation sans attendre que la fenêtre déborde.',
+      sessions: 'Ce qui tourne en ce moment.',
+      stop: 'J’interromps le tour en cours.',
+      fin: 'Je ferme la session de cette conversation.',
+      aide: 'Je répète ce que je sais faire.',
+    },
+    sessionOuverte: 'Session ouverte sur {cwd}. Écrivez-moi ce qu’il y a à faire.',
+    projets: 'Les projets que je connais. Le numéro sert à /projet et à /atelier.',
+    aucunProjet: 'Claude Code n’a encore travaillé sur aucun projet ici.',
+    /** La garde de l'Atelier à distance : on n'ouvre que ce qui est déjà connu. */
+    projetInconnu:
+      'Je ne reconnais pas ce projet. /projets donne ceux que j’ouvre, avec leur numéro.',
+    dossier: '{ou} — {total} fichiers.',
+    ouvrirIci: '▶ Ouvrir l’Atelier ici',
+    retourProjets: '◀ Projets',
+    remonter: '◀ Dossier parent',
+    /** L'état de navigation vit en mémoire : un redémarrage l'efface. */
+    navigationPerimee: 'Cette liste date d’avant mon redémarrage. Refaites /projets.',
+    projetVide: 'Je ne trouve rien à lire dans {nom}.',
+    aucuneListe: 'Choisissez d’abord un projet avec /projet <n>.',
+    fichierInconnu: 'Ce numéro ne désigne aucun fichier de la dernière liste.',
+    /** L'en-tête d'un document trop long pour un seul message. */
+    pageDe: '{fichier} — page {page} sur {total}',
+    precedent: '◀ Précédent',
+    suivant: 'Suivant ▶',
+    /** Le cas le plus fréquent après un redémarrage du serveur : le fil est rompu. */
+    aucunFil: 'Aucune session n’est ouverte ici. Ouvrez-en une avec /atelier <dossier>.',
+    aucuneSession: 'Rien ne tourne en ce moment.',
+    /** Deux origines, et seule la première se pilote d'ici. */
+    sessionsAtelier: 'Ouvertes par AURA — je peux leur parler :',
+    sessionsAilleurs: 'Ouvertes ailleurs — je les vois, je ne les pilote pas :',
+    sessionFinie: 'La session s’est terminée.',
+    sessionEchouee: 'La session s’est arrêtée : {message}',
+    /**
+     * L'état de la session, et d'abord sa fenêtre.
+     *
+     * L'en-tête reste **nominal** : ce sont des étiquettes de données, et le
+     * modèle y figure parce que la limite en dépend — un pourcentage sans son
+     * dénominateur ne se vérifie pas.
+     *
+     * `etatSansReleve` n'est pas une excuse mais un fait : rien n'a encore été
+     * demandé au modèle, donc il n'y a pas de fenêtre à annoncer. Montrer un
+     * zéro se lirait comme une mesure, alors que c'est l'absence de mesure.
+     */
+    etatEntete: '{cwd} — {modele}, mode {mode}',
+    /** Avant `init`, le SDK n'a pas encore dit quel modèle il emploie. */
+    etatModeleInconnu: 'modèle inconnu',
+    etatFenetre: 'Fenêtre : {tokens} / {limite} tokens — {pourcent} %',
+    etatSansReleve: 'Aucun tour n’a encore répondu : je n’ai pas de relevé de la fenêtre.',
+    /**
+     * Une compaction, dite avec ses chiffres.
+     *
+     * C'est le seul moment où la fenêtre change sans que vous ayez rien fait :
+     * le « je » y porte une information que rien d'autre ne donne. Les chiffres
+     * ne sont pas du zèle — sans eux, « j'ai compacté » ne dit pas si l'on est
+     * reparti de dix mille tokens ou de cent mille.
+     */
+    compaction: 'J’ai compacté la conversation : {avant} tokens ramenés à {apres}.',
+    /**
+     * Le titre du résumé, et la raison d'un second message.
+     *
+     * Le résumé est un document — la conversation entière réécrite —, pas une
+     * phrase. Il part donc comme les autres documents, et Telegram le replie de
+     * lui-même derrière un « Afficher plus ». C'est ce qui reste dans la fenêtre
+     * après la compaction : le lire, c'est savoir ce que l'agent a gardé.
+     */
+    compactionResume: 'Ce que j’ai gardé de la conversation',
+    /**
+     * Le franchissement du seuil, dit une fois et pas davantage.
+     *
+     * `docs/voix.md` range la recommandation parmi les surfaces où AURA parle
+     * d'elle : elle conseille, elle ne se contente pas de mesurer.
+     */
+    fenetrePleine:
+      'Je vous signale que la fenêtre est occupée à {pourcent} % — une compaction approche.',
+    permission: 'Je voudrais utiliser {outil}.',
+    autoriser: 'Autoriser',
+    /**
+     * L'en-tête d'un plan soumis. Il dit ce que les boutons engagent : sans
+     * cela, « Approuver » sous un long document ne dit pas ce qui suit.
+     */
+    plan: 'Je vous propose ce plan. Je n’écris rien avant votre accord.',
+    approuver: 'Approuver',
+    refuser: 'Refuser',
+    /** Le motif transmis au modèle, et non à l'utilisateur : il reste bref. */
+    refuseDeLoin: 'Refusé depuis la messagerie.',
+    /**
+     * Le formulaire de l'Atelier, posé une question par écran.
+     *
+     * `questionLibre` porte la seule chose qu'aucun bouton ne dit : qu'on peut
+     * répondre autre chose que ce qui est offert. Sans elle, la possibilité
+     * existe sans que personne ne la découvre.
+     */
+    questionEtape: '{header} — question {n} sur {total}',
+    questionMultiple: 'Plusieurs réponses possibles.',
+    questionLibre: 'Pressez une option, ou écrivez votre réponse.',
+    questionValider: 'Valider',
+    questionExpiree:
+      'Personne n’a répondu à cette question dans le quart d’heure ; je l’ai laissée passer.',
+    commandeInconnue: 'Je ne connais pas {commande}. /aide donne ce que je sais faire.',
+    /**
+     * La bulle éphémère montrée pendant qu'un tour travaille.
+     *
+     * Les mêmes libellés qu'à l'écran (`src/i18n/fr/agent.ts`) : une session
+     * lue de deux endroits ne doit pas raconter deux histoires. Ils sont
+     * recopiés plutôt que partagés — le serveur ne connaît pas `src/`, et une
+     * dépendance dans ce sens serait pire que ce doublon.
+     */
+    activite: {
+      ligne: '{quoi} — {duree}',
+      requesting: 'Requête en cours',
+      thinking: 'Réflexion',
+      writing: 'Rédaction',
+      compacting: 'Compactage du contexte',
+      retrying: 'Nouvelle tentative {attempt}/{max}',
+      /** La phase `tool` n'a pas de libellé : elle se nomme de ses outils. */
+      toolUnnamed: 'Outil en cours',
+      secondes: '{n} s',
+      minutes: '{min} min {s} s',
+    },
+  },
+
   hooks: {
     failed: 'Le hook a échoué (code {code}).',
     blocked: 'Le hook a empêché la poursuite du tour.',
