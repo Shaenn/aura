@@ -36,5 +36,9 @@ minimumReleaseAge: 1440
 #
 # La portée compte : `vitepress>vite` et non `vite`. AURA elle-même est en
 # vite 8.2.1 ; un remplacement global la ferait *descendre* de deux majeures.
+#
+# Ce qui permettrait de le retirer : une vitepress stable qui accepte vite 6 ou
+# au-delà — la 2, aujourd'hui en alpha. Le jour où `pnpm why vite` ne montre
+# plus vitepress tirer une ligne 5, cette ligne n'a plus d'objet.
 overrides:
   vitepress>vite: '^6.4.3'
