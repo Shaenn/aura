@@ -10,6 +10,24 @@ import { Lang } from 'quasar';
 import { i18n, type AppLocale } from './index';
 
 /**
+ * Ce que `Lang.set()` accepte, tel qu'il le déclare lui-même.
+ *
+ * Quasar type ses packs de langue à deux endroits qui ont cessé de se
+ * rejoindre en 2.25 : `lang.d.ts` décrit un pack — ce que renvoie
+ * `import('quasar/lang/fr')` — et `index.d.ts` décrit le paramètre de
+ * `Lang.set()`. Les libellés d'accessibilité ajoutés à `q-date` y sont
+ * déclarés dans deux formes incompatibles : `prevRangeYears?: (range: number)`
+ * d'un côté, `prevRangeYears: (range?: number)` de l'autre. Sous
+ * `exactOptionalPropertyTypes`, l'un n'est plus assignable à l'autre.
+ *
+ * L'objet importé est bien celui que la fonction attend à l'exécution : c'est
+ * le typage amont qui est incohérent, pas cet appel. Dériver le type du
+ * paramètre plutôt que l'écrire à la main fait qu'un vrai changement de forme,
+ * lui, sera toujours vu.
+ */
+type QuasarLangPack = Parameters<typeof Lang.set>[0];
+
+/**
  * Applique une langue à toute l'application.
  *
  * Trois surfaces à tenir ensemble : nos propres messages, l'attribut `lang` du
@@ -36,7 +54,7 @@ export async function applyLocale(locale: AppLocale): Promise<void> {
   try {
     const pack =
       locale === 'en' ? await import('quasar/lang/en-US') : await import('quasar/lang/fr');
-    Lang.set(pack.default);
+    Lang.set(pack.default as QuasarLangPack);
   } catch (e) {
     console.error(`Pack de langue Quasar « ${locale} » non chargé`, e);
   }
