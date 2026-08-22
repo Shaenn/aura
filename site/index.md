@@ -103,7 +103,7 @@ qu'AURA s'autorise à écrire, à lire, et à refuser.
 
 ## Installation
 
-Il faut **Node.js 24**, **pnpm ≥ 10**, et un dossier `~/.claude` existant — donc Claude Code
+Il faut **Node.js 24**, **pnpm ≥ 11**, et un dossier `~/.claude` existant — donc Claude Code
 installé et lancé au moins une fois. Développé et testé sous **Windows**, exclusivement.
 
 ```bash

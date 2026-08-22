@@ -335,7 +335,9 @@ comment signaler une faille.
 
 - **Node.js 24** — une seule version majeure, celle sur laquelle l'application est développée,
   testée et livrée. C'est aussi celle que la CI fait tourner. Node 24 est en support long terme.
-- **pnpm** ≥ 10 — `npm i -g pnpm`.
+- **pnpm** ≥ 11 — `npm i -g pnpm`. La version exacte est épinglée par `packageManager` dans
+  `package.json` : les gardes de `pnpm-workspace.yaml` sont des fonctions de pnpm 11, et une
+  majeure antérieure les ignorerait en silence.
 - **Claude Code** installé et lancé au moins une fois, donc un dossier `~/.claude` existant —
   `C:\Users\<vous>\.claude`.
 

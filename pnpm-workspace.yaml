@@ -1,5 +1,21 @@
 # https://pnpm.io/settings
-shamefullyHoist: true
+
+# Ce qui remonte à la racine de `node_modules`, et rien d'autre. Un hoisting
+# global (`shamefullyHoist`) revient à `publicHoistPattern: '*'` : le projet
+# accède alors à des paquets qu'il n'a jamais déclarés, et une dépendance
+# retirée du manifeste continue de fonctionner jusqu'au jour où elle disparaît
+# de l'arbre. Nommer les motifs rend cette dette visible au lieu de la couvrir.
+publicHoistPattern:
+  - '@fontsource/*'
+  - 'vite'
+
+# Aucun préfixe sur les versions écrites par `pnpm add` et `pnpm up` :
+# le manifeste porte des versions exactes, pas des plages.
+savePrefix: ''
+
+# Fait échouer l'installation quand le Node ou le pnpm courant ne satisfait
+# pas le champ `engines` du manifeste, au lieu d'un simple avertissement.
+engineStrict: true
 
 # Seuls ces deux paquets ont le droit d'exécuter un script au moment de
 # l'installation. Tout le reste est inerte sur le disque tant que rien ne
@@ -28,13 +44,36 @@ strictDepBuilds: true
 # d'exclusion ajoutées sans un mot.
 minimumReleaseAge: 1440
 
-# La vitrine tire une chaîne d'outils à elle. `vitepress` 1.6.4 — la dernière
-# publiée, la 2 n'existe qu'en alpha — épingle `vite@^5.4.14`, et la ligne 5 de
-# Vite n'a **jamais** reçu les correctifs : le plus bas est 6.4.3. Sans cette
-# ligne, quatre avis restent ouverts en permanence, dont un de gravité haute qui
-# vise Windows, la seule plateforme du projet.
+# Ce qu'on refuse d'installer, quoi qu'en dise un manifeste.
 #
-# La portée compte : `vitepress>vite` et non `vite`. AURA elle-même est en
-# vite 8.2.1 ; un remplacement global la ferait *descendre* de deux majeures.
+# Un manifeste ÉPINGLE, un override CONTRAINT : l'épingle se réécrit au premier
+# `pnpm up --latest` ou par une transitive, l'override tient. Chaque entrée porte
+# la raison qui la retient et la condition de son retrait.
 overrides:
+  # La vitrine tire une chaîne d'outils à elle. `vitepress` 1.6.4 — la dernière
+  # publiée, la 2 n'existe qu'en alpha — épingle `vite@^5.4.14`, et la ligne 5 de
+  # Vite n'a **jamais** reçu les correctifs : le plus bas est 6.4.3. Sans cette
+  # ligne, quatre avis restent ouverts en permanence, dont un de gravité haute qui
+  # vise Windows, la seule plateforme du projet.
+  #
+  # La portée compte : `vitepress>vite` et non `vite`. AURA elle-même est en
+  # vite 8.2.1 ; un remplacement global la ferait *descendre* de deux majeures.
+  #
+  # Ce qui permettrait de le retirer : une vitepress stable qui accepte vite 6 ou
+  # au-delà — la 2, aujourd'hui en alpha. Le jour où `pnpm why vite` ne montre
+  # plus vitepress tirer une ligne 5, cette ligne n'a plus d'objet.
   vitepress>vite: '^6.4.3'
+
+  # TypeScript 7 a retiré l'API programmatique du compilateur (`ts.createProgram`,
+  # `ts.factory`), sur laquelle repose la vérification des composants monofichiers.
+  # vue-tsc échoue au chargement : la montée ne casse pas un type ici ou là, elle
+  # casse `pnpm typecheck` en entier. https://github.com/vuejs/language-tools/issues/5381
+  #
+  # À retirer quand vue-tsc publiera une version compatible — et pas avant de l'avoir
+  # vérifié : un override que personne ne teste survit à sa raison d'être.
+  typescript: '<7'
+
+  # Les types suivent la majeure de Node qu'on exécute (`engines.node: ^24`).
+  # Au-delà de la 24, ils décrivent des API absentes du runtime : le code
+  # compile et échoue à l'exécution. À retirer quand `engines.node` changera de ligne.
+  '@types/node': '<25'
