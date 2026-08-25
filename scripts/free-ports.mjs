@@ -4,9 +4,9 @@
 //   node scripts/free-ports.mjs            # les ports de ports.json
 //   node scripts/free-ports.mjs 8800 9100  # ceux qu'on lui donne
 //
-// Sans argument est la forme normale, et celle qu'emploient `stop`, `stop.ps1`
-// et `dev:all`. L'ancienne obligeait à recopier les deux ports dans chacun
-// d'eux : trois listes à tenir d'accord avec `ports.json`, et un `stop` qui
+// Sans argument est la forme normale, et celle qu'emploient `stop` et
+// `dev:all`. L'ancienne obligeait à recopier les deux ports dans chacun d'eux :
+// autant de listes à tenir d'accord avec `ports.json`, et un `stop` qui
 // libérait un port que personne n'occupait le jour où l'une d'elles décrochait.
 //
 // Deux gestes, dans cet ordre — et l'ordre est tout le sujet :

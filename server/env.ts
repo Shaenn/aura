@@ -18,9 +18,9 @@ import { join, normalize, sep } from 'node:path'
 /**
  * Les ports d'AURA, lus dans `ports.json` à la racine du dépôt.
  *
- * Une seule déclaration pour une valeur que le proxy de Quasar, le script
- * `stop` et les deux scripts PowerShell doivent tous connaître — voir l'en-tête
- * de `quasar.config.ts` pour les neuf endroits où elle vivait.
+ * Une seule déclaration pour une valeur que le proxy de Quasar et le script
+ * `stop` doivent tous deux connaître — voir l'en-tête de `quasar.config.ts`
+ * pour les neuf endroits où elle vivait.
  */
 const PORTS = JSON.parse(readFileSync(new URL('../ports.json', import.meta.url), 'utf8')) as { web: number; api: number }
 
