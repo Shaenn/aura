@@ -207,9 +207,7 @@ describe.skipIf(!HAS_CORPUS)('relevés par session', () => {
 
   it('ne déduit jamais un coût d’un modèle sans tarif', () => {
     for (const s of signals) {
-      for (const m of s.models) {
-        if (!m.priced) expect(m.cost).toBe(0)
-      }
+      expect(s.models.filter((m) => !m.priced && m.cost !== 0)).toEqual([])
       // Un modèle sans tarif est nommé, jamais tu.
       expect(s.unpricedModels).toEqual(s.models.filter((m) => !m.priced).map((m) => m.model))
     }

@@ -301,9 +301,9 @@ describe('règles', () => {
       const a = findings[i - 1] as Finding
       const b = findings[i] as Finding
       expect(ranks[a.severity]).toBeGreaterThanOrEqual(ranks[b.severity])
-      if (a.severity === b.severity && b.impact.usd !== undefined) {
-        expect(a.impact.usd).toBeDefined()
-      }
+      // À sévérité égale, un constat chiffré ne passe jamais derrière un constat
+      // qui ne l’est pas.
+      expect(a.severity === b.severity && b.impact.usd !== undefined && a.impact.usd === undefined).toBe(false)
     }
   })
 })
@@ -340,13 +340,11 @@ describe.skipIf(!HAS_CORPUS)('règles sur le vrai parc', () => {
         // manquer : « cette tâche a été donnée en morceaux » ne se chiffre pas,
         // et lui coller le coût de la session lui attribuerait une facture
         // qu'elle n'a pas causée.
-        if (f.impact.usd !== undefined) expect(f.impact.usd).toBeGreaterThan(0)
-        if (f.impact.tokens !== undefined) expect(f.impact.tokens).toBeGreaterThan(0)
+        // Absent, il n’y a rien à vérifier — d’où l’Infinity, qui laisse passer.
+        expect(f.impact.usd ?? Infinity).toBeGreaterThan(0)
+        expect(f.impact.tokens ?? Infinity).toBeGreaterThan(0)
         // Une session désignée doit être atteignable : projet + identifiant.
-        if (f.scope === 'session') {
-          expect(f.project).not.toBe('')
-          expect(f.target).not.toBe('')
-        }
+        expect(f.scope === 'session' ? [f.project, f.target] : []).not.toContain('')
       }
     },
     TIMEOUT,

@@ -89,6 +89,17 @@ export default [
   ...vitestConfig(),
 
   {
+    // Vitest accepte `expect(valeur, libellé)` : le second argument nomme le cas qui
+    // échoue, ce dont vivent les boucles sur le corpus réel. Le greffon garde le défaut
+    // de Jest — `maxArgs: 1` — et refuse donc une API qui existe. On l'accorde à
+    // l'outil plutôt que de retirer les libellés. À porter au socle.
+    name: 'aura/vitest-deux-arguments',
+    rules: {
+      'vitest/valid-expect': ['error', { maxArgs: 2 }],
+    },
+  },
+
+  {
     name: 'rules/projet',
     plugins: {
       local: { rules: { 'import-order': importOrder } },

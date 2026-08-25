@@ -222,7 +222,8 @@ describe.skipIf(!HAS_CORPUS)('calibration sur le vrai parc', () => {
         expect(c.value).toBeGreaterThan(0)
         expect(c.hits).toBeLessThanOrEqual(c.sampleSize)
         // Un signal calibré désigne au plus le décile ; jamais la moitié du parc.
-        if (c.calibrated) expect(c.hits).toBeLessThanOrEqual(Math.ceil(c.sampleSize / 2))
+        // Non calibré, le compte ne veut rien dire — d’où le 0, qui laisse passer.
+        expect(c.calibrated ? c.hits : 0).toBeLessThanOrEqual(Math.ceil(c.sampleSize / 2))
       }
     },
     TIMEOUT,

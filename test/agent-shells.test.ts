@@ -342,7 +342,7 @@ describe('readSince', () => {
       const page = await readSince(path, curseur)
       expect(page.next).toBeGreaterThan(curseur)
       // Une page rendue au milieu du fichier finit sur une ligne entière.
-      if (page.next < size) expect(page.text.endsWith('\n')).toBe(true)
+      expect(page.next >= size || page.text.endsWith('\n')).toBe(true)
       tout += page.text
       curseur = page.next
       pages += 1

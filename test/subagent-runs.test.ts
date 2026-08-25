@@ -79,8 +79,7 @@ describe('statut d’un run — ce que le transcript atteste, et rien de plus', 
     const { subagents } = await load()
     for (const run of subagents) {
       const terminal = run.status === 'completed' || run.status === 'failed'
-      if (terminal) expect(run.endedAt).toBe(run.lastActivityAt)
-      else expect(run.endedAt).toBeUndefined()
+      expect(run.endedAt).toBe(terminal ? run.lastActivityAt : undefined)
     }
   })
 })
