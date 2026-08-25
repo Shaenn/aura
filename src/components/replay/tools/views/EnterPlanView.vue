@@ -13,45 +13,39 @@
 
     <!-- Jamais vu au parc — zéro erreur sur 15 appels — mais un refus de passage
          en mode plan n'aurait aucune autre trace. -->
-    <OutputPane
-      v-if="failed"
-      :content="block.result?.content ?? ''"
-      :is-error="true"
-      :tool-use-id="block.id ?? ''"
-    />
+    <OutputPane v-if="failed" :content="block.result?.content ?? ''" :is-error="true" :tool-use-id="block.id ?? ''" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { Block } from '@/services/projects';
-import OutputPane from '../OutputPane.vue';
+  import type { Block } from '@/services/projects'
+  import { computed } from 'vue'
+  import { useI18n } from 'vue-i18n'
+  import OutputPane from '../OutputPane.vue'
 
-import { useI18n } from 'vue-i18n';
+  const { t } = useI18n()
 
-const { t } = useI18n();
+  const props = defineProps<{ block: Block }>()
 
-const props = defineProps<{ block: Block }>();
-
-const failed = computed(() => props.block.result?.isError === true);
+  const failed = computed(() => props.block.result?.isError === true)
 </script>
 
 <style scoped lang="scss">
-.tv {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-.ep {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin: 0;
-  font-size: var(--fs-sm);
-  color: var(--muted);
-}
-.ep > .q-icon {
-  flex-shrink: 0;
-  color: var(--faint);
-}
+  .tv {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+  .ep {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--muted);
+  }
+  .ep > .q-icon {
+    flex-shrink: 0;
+    color: var(--faint);
+  }
 </style>

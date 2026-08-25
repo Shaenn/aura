@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../fr';
+import type { MessageSchema } from '../fr'
 
 const diff: MessageSchema['diff'] = {
   title: 'Confirm the write',
@@ -8,6 +8,6 @@ const diff: MessageSchema['diff'] = {
   applied: 'Change applied.',
   conflict: 'The file changed on disk since I showed it to you. Reload before applying again.',
   failed: "I couldn't write the file.",
-};
+}
 
-export default diff;
+export default diff

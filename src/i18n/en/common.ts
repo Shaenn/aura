@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../fr';
+import type { MessageSchema } from '../fr'
 
 const common: MessageSchema['common'] = {
   copy: 'Copy',
@@ -19,6 +19,6 @@ const common: MessageSchema['common'] = {
   proposeError: "I couldn't prepare the change",
   readOnly: 'read only',
   noDetail: "I couldn't see it through.",
-};
+}
 
-export default common;
+export default common

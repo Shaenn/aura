@@ -18,22 +18,22 @@
 
 /** Une ligne du menu : un dossier, ou un fichier. Les deux se choisissent. */
 export interface TreeRow {
-  kind: 'dir' | 'file';
+  kind: 'dir' | 'file'
   /** Le segment seul — `components`, `SessionComposer.vue` — jamais le chemin. */
-  label: string;
+  label: string
   /** Profondeur d'emboîtement, d'où vient le décrochage visuel. */
-  depth: number;
+  depth: number
   /** Le chemin complet : celui qui s'insère, et l'identité d'un dossier replié. */
-  path: string;
+  path: string
   /** Dossier seulement : est-il fermé, et combien de fichiers cache-t-il ? */
-  collapsed?: boolean;
-  count?: number;
+  collapsed?: boolean
+  count?: number
 }
 
 export interface TreeResults {
-  rows: TreeRow[];
+  rows: TreeRow[]
   /** Combien de fichiers correspondent, repliés ou non. */
-  total: number;
+  total: number
   /**
    * Le chemin le mieux classé, sur lequel la sélection se pose d'entrée.
    *
@@ -43,16 +43,16 @@ export interface TreeResults {
    * premier fichier de la première branche, et Entrée insérerait autre chose que
    * ce qu'on cherchait.
    */
-  best: string;
+  best: string
 }
 
 interface Node {
   /** Sous-dossiers, dans l'ordre où le meilleur chemin les a fait naître. */
-  dirs: Map<string, Node>;
-  files: string[];
+  dirs: Map<string, Node>
+  files: string[]
 }
 
-const node = (): Node => ({ dirs: new Map(), files: [] });
+const node = (): Node => ({ dirs: new Map(), files: [] })
 
 /**
  * Les chemins qui correspondent, montés en arbre.
@@ -75,55 +75,50 @@ const node = (): Node => ({ dirs: new Map(), files: [] });
  * `collapsed` porte les chemins des dossiers fermés ; leurs descendants ne sont
  * pas émis, et la ligne du dossier annonce combien de fichiers elle retient.
  */
-export function treeRows(
-  files: string[],
-  query: string,
-  collapsed: ReadonlySet<string> = new Set(),
-): TreeResults {
-  const q = query.toLowerCase().replace(/^\./, '');
-  const scored: { path: string; rank: number }[] = [];
+export function treeRows(files: string[], query: string, collapsed: ReadonlySet<string> = new Set()): TreeResults {
+  const q = query.toLowerCase().replace(/^\./, '')
+  const scored: { path: string; rank: number }[] = []
 
   for (const path of files) {
-    const rank = q ? rankOf(path.toLowerCase(), q) : 0;
-    if (rank >= 0) scored.push({ path, rank });
+    const rank = q ? rankOf(path.toLowerCase(), q) : 0
+    if (rank >= 0) scored.push({ path, rank })
   }
 
-  scored.sort((a, b) => a.rank - b.rank || a.path.length - b.path.length);
+  scored.sort((a, b) => a.rank - b.rank || a.path.length - b.path.length)
 
   // Une fois qu'on sait ce que la saisie trouve de mieux, ce qui est deux crans
   // en dessous n'est plus une réponse, c'est du remplissage : `composer`
   // ramenait 54 chemins, dont 53 pour la seule raison que ces lettres se
   // suivent quelque part dans leur dossier. On garde le meilleur rang et le
   // suivant — de quoi couvrir « le fichier » et « son voisinage », pas le dépôt.
-  const best = scored[0]?.rank ?? 0;
-  const kept = scored.filter((s) => s.rank <= best + 1);
+  const best = scored[0]?.rank ?? 0
+  const kept = scored.filter((s) => s.rank <= best + 1)
 
-  const root = node();
+  const root = node()
   for (const { path } of kept) {
-    const segments = path.split('/');
-    const name = segments.pop() as string;
-    let at = root;
+    const segments = path.split('/')
+    const name = segments.pop() as string
+    let at = root
     for (const segment of segments) {
-      let next = at.dirs.get(segment);
+      let next = at.dirs.get(segment)
       if (!next) {
-        next = node();
-        at.dirs.set(segment, next);
+        next = node()
+        at.dirs.set(segment, next)
       }
-      at = next;
+      at = next
     }
-    at.files.push(name);
+    at.files.push(name)
   }
 
   return {
     rows: flatten(root, '', 0, collapsed),
     total: kept.length,
     best: kept[0]?.path ?? '',
-  };
+  }
 }
 
 /** L'ordre d'un explorateur : insensible à la casse, chiffres en ordre naturel. */
-const byName = (a: string, b: string): number =>
-  a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true });
+const byName = (a: string, b: string): number => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })
 
 /**
  * L'arbre en lignes : les dossiers d'abord, les fichiers ensuite, chacun par
@@ -134,46 +129,41 @@ const byName = (a: string, b: string): number =>
  * explorateurs de code, et pour la même raison : l'emboîtement doit montrer une
  * ramification, pas un couloir.
  */
-function flatten(
-  at: Node,
-  prefix: string,
-  depth: number,
-  collapsed: ReadonlySet<string>,
-): TreeRow[] {
-  const rows: TreeRow[] = [];
+function flatten(at: Node, prefix: string, depth: number, collapsed: ReadonlySet<string>): TreeRow[] {
+  const rows: TreeRow[] = []
 
   for (const [name, child] of [...at.dirs].sort((a, b) => byName(a[0], b[0]))) {
     // Fusion des dossiers à enfant unique, tant qu'il n'y a rien d'autre à voir.
-    let label = name;
-    let folded = child;
+    let label = name
+    let folded = child
     while (folded.files.length === 0 && folded.dirs.size === 1) {
-      const [only, deeper] = [...folded.dirs][0] as [string, Node];
-      label += `/${only}`;
-      folded = deeper;
+      const [only, deeper] = [...folded.dirs][0] as [string, Node]
+      label += `/${only}`
+      folded = deeper
     }
-    const path = `${prefix}${label}`;
-    const shut = collapsed.has(path);
+    const path = `${prefix}${label}`
+    const shut = collapsed.has(path)
     rows.push({
       kind: 'dir',
       label,
       depth,
       path,
       ...(shut ? { collapsed: true, count: countFiles(folded) } : {}),
-    });
-    if (!shut) rows.push(...flatten(folded, `${path}/`, depth + 1, collapsed));
+    })
+    if (!shut) rows.push(...flatten(folded, `${path}/`, depth + 1, collapsed))
   }
 
   for (const name of [...at.files].sort(byName)) {
-    rows.push({ kind: 'file', label: name, depth, path: `${prefix}${name}` });
+    rows.push({ kind: 'file', label: name, depth, path: `${prefix}${name}` })
   }
-  return rows;
+  return rows
 }
 
 /** Tous les fichiers d'un sous-arbre : ce qu'un dossier fermé retient. */
 function countFiles(at: Node): number {
-  let total = at.files.length;
-  for (const child of at.dirs.values()) total += countFiles(child);
-  return total;
+  let total = at.files.length
+  for (const child of at.dirs.values()) total += countFiles(child)
+  return total
 }
 
 /**
@@ -188,26 +178,26 @@ function countFiles(at: Node): number {
  * Un chemin explicite échappe à la règle quelle que soit sa longueur : taper
  * `ui/` désigne sans ambiguïté un dossier, pas un nom de fichier.
  */
-const NARROW_MAX = 3;
+const NARROW_MAX = 3
 
 function rankOf(path: string, q: string): number {
-  const name = path.slice(path.lastIndexOf('/') + 1);
-  const dot = name.lastIndexOf('.');
-  if (dot > 0 && name.slice(dot + 1) === q) return 0;
-  if (name.startsWith(q)) return 0;
-  if (name.includes(q)) return 1;
+  const name = path.slice(path.lastIndexOf('/') + 1)
+  const dot = name.lastIndexOf('.')
+  if (dot > 0 && name.slice(dot + 1) === q) return 0
+  if (name.startsWith(q)) return 0
+  if (name.includes(q)) return 1
 
-  if (q.length <= NARROW_MAX && !q.includes('/')) return -1;
-  if (path.includes(q)) return 2;
-  return subsequence(path, q) ? 3 : -1;
+  if (q.length <= NARROW_MAX && !q.includes('/')) return -1
+  if (path.includes(q)) return 2
+  return subsequence(path, q) ? 3 : -1
 }
 
 /** Les lettres de `q` apparaissent-elles dans l'ordre, pas forcément côte à côte ? */
 function subsequence(path: string, q: string): boolean {
-  let at = 0;
+  let at = 0
   for (const char of q) {
-    at = path.indexOf(char, at) + 1;
-    if (at === 0) return false;
+    at = path.indexOf(char, at) + 1
+    if (at === 0) return false
   }
-  return true;
+  return true
 }

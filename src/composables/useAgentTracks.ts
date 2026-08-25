@@ -8,12 +8,12 @@
 // agent ? » — sans rien déplacer dans le modèle : on ne fait que choisir, à
 // l'affichage, quelle part du flux on regarde.
 
-import type { TranscriptEvent } from 'shared/transcript';
+import type { TranscriptEvent } from 'shared/transcript'
 
 /** La piste affichée : `''` pour le fil principal, sinon l'`agentId` d'un run. */
-export type TrackId = string;
+export type TrackId = string
 
-export const MAIN_TRACK: TrackId = '';
+export const MAIN_TRACK: TrackId = ''
 
 /**
  * Les événements d'une piste.
@@ -26,11 +26,8 @@ export const MAIN_TRACK: TrackId = '';
  * trier sur l'identité donne une partition exacte — chaque événement dans une
  * piste et une seule, rien qui disparaisse.
  */
-export function eventsOfTrack(
-  events: readonly TranscriptEvent[],
-  track: TrackId,
-): TranscriptEvent[] {
-  return track ? events.filter((e) => e.agentId === track) : events.filter((e) => !e.agentId);
+export function eventsOfTrack(events: readonly TranscriptEvent[], track: TrackId): TranscriptEvent[] {
+  return track ? events.filter((e) => e.agentId === track) : events.filter((e) => !e.agentId)
 }
 
 /**
@@ -41,9 +38,9 @@ export function eventsOfTrack(
  * l'écran. Savoir où elle est permet d'y aller plutôt que d'échouer en silence.
  */
 export function trackOfEvent(events: readonly TranscriptEvent[]): Map<string, TrackId> {
-  const out = new Map<string, TrackId>();
-  for (const e of events) out.set(e.uuid, e.agentId ?? MAIN_TRACK);
-  return out;
+  const out = new Map<string, TrackId>()
+  for (const e of events) out.set(e.uuid, e.agentId ?? MAIN_TRACK)
+  return out
 }
 
 /**
@@ -55,5 +52,5 @@ export function trackOfEvent(events: readonly TranscriptEvent[]): Map<string, Tr
  * relation se romprait sans que rien ne le montre à l'écran.
  */
 export function trackTabId(track: TrackId): string {
-  return `agent-track-${track || 'main'}`;
+  return `agent-track-${track || 'main'}`
 }

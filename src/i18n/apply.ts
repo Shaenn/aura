@@ -6,8 +6,8 @@
 // traduisent désormais, et sont importés par des tests qui tournent sous Node.
 // Tout ce qui suppose un document doit donc rester hors de leur chemin.
 
-import { Lang } from 'quasar';
-import { i18n, type AppLocale } from './index';
+import { Lang } from 'quasar'
+import { i18n, type AppLocale } from './index'
 
 /**
  * Ce que `Lang.set()` accepte, tel qu'il le déclare lui-même.
@@ -25,7 +25,7 @@ import { i18n, type AppLocale } from './index';
  * paramètre plutôt que l'écrire à la main fait qu'un vrai changement de forme,
  * lui, sera toujours vu.
  */
-type QuasarLangPack = Parameters<typeof Lang.set>[0];
+type QuasarLangPack = Parameters<typeof Lang.set>[0]
 
 /**
  * Applique une langue à toute l'application.
@@ -49,13 +49,12 @@ type QuasarLangPack = Parameters<typeof Lang.set>[0];
  * découper un import dynamique que s'il peut en lire le chemin.
  */
 export async function applyLocale(locale: AppLocale): Promise<void> {
-  i18n.global.locale.value = locale;
-  document.documentElement.lang = locale;
+  i18n.global.locale.value = locale
+  document.documentElement.lang = locale
   try {
-    const pack =
-      locale === 'en' ? await import('quasar/lang/en-US') : await import('quasar/lang/fr');
-    Lang.set(pack.default as QuasarLangPack);
+    const pack = locale === 'en' ? await import('quasar/lang/en-US') : await import('quasar/lang/fr')
+    Lang.set(pack.default as QuasarLangPack)
   } catch (e) {
-    console.error(`Pack de langue Quasar « ${locale} » non chargé`, e);
+    console.error(`Pack de langue Quasar « ${locale} » non chargé`, e)
   }
 }

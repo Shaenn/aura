@@ -17,10 +17,8 @@ export default {
 
   hintHeavy:
     'Les {pct} de relecture sont le prix de la longueur : à chaque tour, toute la conversation repasse. C’est le seul poste qu’on réduit en coupant plus tôt.',
-  hintGrowing:
-    'La relecture commence à peser. Elle grandit avec le nombre de tours, pas avec le travail fait.',
-  hintLight:
-    'La relecture reste marginale : cette session paie surtout ce qu’elle a lu et produit une première fois.',
+  hintGrowing: 'La relecture commence à peser. Elle grandit avec le nombre de tours, pas avec le travail fait.',
+  hintLight: 'La relecture reste marginale : cette session paie surtout ce qu’elle a lu et produit une première fois.',
 
   unpriced: '{models} n’a pas de tarif connu : ses tokens sont comptés, son coût non.',
 
@@ -45,4 +43,4 @@ export default {
   findingPrefix: 'Session {id}… : ',
   more: 'Voir le diagnostic du parc',
   calm: 'Rien à signaler : aucune règle ne désigne cette session.',
-};
+}

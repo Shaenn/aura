@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../fr';
+import type { MessageSchema } from '../fr'
 
 const tools: MessageSchema['tools'] = {
   info: {
@@ -30,6 +30,6 @@ const tools: MessageSchema['tools'] = {
   agentRestricted: 'Delegation restricted to the “{arg}” subagent.',
   restricted: '{base}, restricted to: {arg}.',
   unknown: 'A tool outside the built-in set.',
-};
+}
 
-export default tools;
+export default tools

@@ -1,7 +1,7 @@
 // Configuration for your app
 // https://quasar.dev/quasar-cli-vite/quasar-config-file
 
-import { defineConfig } from '#q-app';
+import { defineConfig } from '#q-app'
 
 export default defineConfig((ctx) => {
   return {
@@ -151,5 +151,5 @@ export default defineConfig((ctx) => {
     //
     // `sourceFiles` part pour la même raison : il ne faisait que réécrire les
     // défauts, dont les chemins des modes absents.
-  };
-});
+  }
+})

@@ -20,8 +20,8 @@
 //    rien, et c'est pourquoi l'action de saisie l'accompagne : elle, marche
 //    partout.
 
-import type { AgentActivity } from '../../shared/agent.ts';
-import { t } from '../i18n/index.ts';
+import type { AgentActivity } from '../../shared/agent.ts'
+import { t } from '../i18n/index.ts'
 
 /**
  * Le battement, plus court que l'expiration.
@@ -29,7 +29,7 @@ import { t } from '../i18n/index.ts';
  * Trente secondes est la borne ; vingt laisse de quoi encaisser une requête
  * lente sans que la bulle clignote.
  */
-export const BATTEMENT_MS = 20_000;
+export const BATTEMENT_MS = 20_000
 
 /**
  * Le pas minimal entre deux émissions.
@@ -39,7 +39,7 @@ export const BATTEMENT_MS = 20_000;
  * dessous de deux secondes, un libellé qui se remplace se lit comme un
  * scintillement, pas comme une information.
  */
-export const PAS_MINIMAL_MS = 2_000;
+export const PAS_MINIMAL_MS = 2_000
 
 /**
  * Sous ce seuil, on n'affiche pas de durée.
@@ -47,17 +47,17 @@ export const PAS_MINIMAL_MS = 2_000;
  * Un chrono qui démarre à « 1 s » n'apprend rien et attire l'œil sur le seul
  * moment où il n'y a rien à s'expliquer. C'est le même seuil qu'à l'écran.
  */
-const DUREE_MUETTE_S = 5;
+const DUREE_MUETTE_S = 5
 
 /** Combien d'outils se nomment avant qu'on se mette à les compter. */
-const OUTILS_NOMMES = 2;
+const OUTILS_NOMMES = 2
 
 /** Une durée telle qu'on la lit d'un coup d'œil, jamais au dixième. */
 function duree(secondes: number): string {
-  if (secondes < 60) return t('passerelle.activite.secondes', { n: Math.floor(secondes) });
-  const minutes = Math.floor(secondes / 60);
-  const reste = String(Math.floor(secondes % 60)).padStart(2, '0');
-  return t('passerelle.activite.minutes', { min: minutes, s: reste });
+  if (secondes < 60) return t('passerelle.activite.secondes', { n: Math.floor(secondes) })
+  const minutes = Math.floor(secondes / 60)
+  const reste = String(Math.floor(secondes % 60)).padStart(2, '0')
+  return t('passerelle.activite.minutes', { min: minutes, s: reste })
 }
 
 /**
@@ -70,34 +70,34 @@ function duree(secondes: number): string {
  * se demande vraiment.
  */
 export function ligne(activite: AgentActivity, maintenant: number): string | null {
-  const { phase, tools, retry, turnStartedAt } = activite;
-  if (!phase) return null;
+  const { phase, tools, retry, turnStartedAt } = activite
+  if (!phase) return null
 
-  let quoi: string;
+  let quoi: string
   if (phase === 'retrying' && retry) {
-    quoi = t('passerelle.activite.retrying', { attempt: retry.attempt, max: retry.maxRetries });
+    quoi = t('passerelle.activite.retrying', { attempt: retry.attempt, max: retry.maxRetries })
   } else if (phase !== 'tool') {
-    quoi = t(`passerelle.activite.${phase}`);
+    quoi = t(`passerelle.activite.${phase}`)
   } else if (!tools.length) {
-    quoi = t('passerelle.activite.toolUnnamed');
+    quoi = t('passerelle.activite.toolUnnamed')
   } else {
     // Deux noms plutôt que les trois de l'écran : la bulle d'une messagerie est
     // plus étroite qu'une ligne d'Atelier, et un libellé qui déborde y pousse
     // le chrono hors de vue.
-    const vus = tools.slice(0, OUTILS_NOMMES).map((o) => o.name);
-    const reste = tools.length - vus.length;
-    quoi = reste > 0 ? `${vus.join(', ')} +${reste}` : vus.join(', ');
+    const vus = tools.slice(0, OUTILS_NOMMES).map((o) => o.name)
+    const reste = tools.length - vus.length
+    quoi = reste > 0 ? `${vus.join(', ')} +${reste}` : vus.join(', ')
   }
 
-  const secondes = turnStartedAt ? (maintenant - turnStartedAt) / 1000 : 0;
-  if (secondes < DUREE_MUETTE_S) return quoi;
-  return t('passerelle.activite.ligne', { quoi, duree: duree(secondes) });
+  const secondes = turnStartedAt ? (maintenant - turnStartedAt) / 1000 : 0
+  if (secondes < DUREE_MUETTE_S) return quoi
+  return t('passerelle.activite.ligne', { quoi, duree: duree(secondes) })
 }
 
 /** Ce qu'il faut savoir émettre pour qu'un battement existe. */
 export interface Emetteur {
-  brouillon: (chatId: number, draftId: number, texte: string) => Promise<void>;
-  saisie: (chatId: number) => Promise<void>;
+  brouillon: (chatId: number, draftId: number, texte: string) => Promise<void>
+  saisie: (chatId: number) => Promise<void>
 }
 
 /**
@@ -109,10 +109,10 @@ export interface Emetteur {
  * permission, session close —, jamais une échéance.
  */
 export class Battement {
-  private minuteur: ReturnType<typeof setTimeout> | null = null;
-  private derniere = '';
-  private emisA = 0;
-  private enAttente = false;
+  private minuteur: ReturnType<typeof setTimeout> | null = null
+  private derniere = ''
+  private emisA = 0
+  private enAttente = false
 
   constructor(
     private readonly emetteur: Emetteur,
@@ -127,51 +127,48 @@ export class Battement {
    * qui distingue « tenir la bulle en vie » de « la redessiner ».
    */
   montre(activite: AgentActivity, maintenant: number = Date.now()): void {
-    const texte = ligne(activite, maintenant);
+    const texte = ligne(activite, maintenant)
     if (texte === null) {
-      this.arrete();
-      return;
+      this.arrete()
+      return
     }
-    const change = texte !== this.derniere;
-    const assezVieux = maintenant - this.emisA >= PAS_MINIMAL_MS;
-    this.derniere = texte;
+    const change = texte !== this.derniere
+    const assezVieux = maintenant - this.emisA >= PAS_MINIMAL_MS
+    this.derniere = texte
     if (change && !assezVieux) {
       // Trop tôt pour celui-ci, mais le minuteur en cours reprendra le dernier
       // texte connu : rien ne se perd, seul le rythme est borné.
-      this.programme(PAS_MINIMAL_MS - (maintenant - this.emisA));
-      return;
+      this.programme(PAS_MINIMAL_MS - (maintenant - this.emisA))
+      return
     }
-    this.emet(maintenant);
+    this.emet(maintenant)
   }
 
   /** Coupe le battement. La bulle s'efface d'elle-même en trente secondes. */
   arrete(): void {
-    if (this.minuteur) clearTimeout(this.minuteur);
-    this.minuteur = null;
-    this.derniere = '';
+    if (this.minuteur) clearTimeout(this.minuteur)
+    this.minuteur = null
+    this.derniere = ''
   }
 
   private emet(maintenant: number): void {
-    this.emisA = maintenant;
-    const texte = this.derniere;
+    this.emisA = maintenant
+    const texte = this.derniere
     if (!this.enAttente) {
-      this.enAttente = true;
-      void Promise.all([
-        this.emetteur.brouillon(this.chatId, this.draftId, texte),
-        this.emetteur.saisie(this.chatId),
-      ]).finally(() => {
-        this.enAttente = false;
-      });
+      this.enAttente = true
+      void Promise.all([this.emetteur.brouillon(this.chatId, this.draftId, texte), this.emetteur.saisie(this.chatId)]).finally(() => {
+        this.enAttente = false
+      })
     }
-    this.programme(BATTEMENT_MS);
+    this.programme(BATTEMENT_MS)
   }
 
   private programme(delai: number): void {
-    if (this.minuteur) clearTimeout(this.minuteur);
+    if (this.minuteur) clearTimeout(this.minuteur)
     // `unref` : un battement ne doit pas retenir le process à l'extinction.
     this.minuteur = setTimeout(() => {
-      if (this.derniere) this.emet(Date.now());
-    }, delai);
-    this.minuteur.unref?.();
+      if (this.derniere) this.emet(Date.now())
+    }, delai)
+    this.minuteur.unref?.()
   }
 }

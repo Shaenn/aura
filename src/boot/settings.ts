@@ -1,5 +1,5 @@
-import { defineBoot } from '#q-app';
-import { useSettingsStore } from '@/stores/settings';
+import { useSettingsStore } from '@/stores/settings'
+import { defineBoot } from '#q-app'
 
 // Load UI preferences from the BFF before the first paint: nothing is kept in the
 // browser, dark mode is applied with no flash, and any legacy localStorage is
@@ -7,5 +7,5 @@ import { useSettingsStore } from '@/stores/settings';
 export default defineBoot(async () => {
   // The Pinia instance is installed before boot files run (SPA), so the store
   // resolves without passing it explicitly.
-  await useSettingsStore().load();
-});
+  await useSettingsStore().load()
+})

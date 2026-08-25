@@ -17,20 +17,20 @@
 // ici : ce module sert les vues qui n'avaient rien.
 
 /** La poignée qu'un résultat porte pour qu'un autre puisse y renvoyer. */
-import { t } from '@/i18n';
+import { t } from '@/i18n'
 
-export const RESULT_ID = /^\[result-id: [^\]]+\]$/;
+export const RESULT_ID = /^\[result-id: [^\]]+\]$/
 
 /** Le renvoi qui remplace un résultat identique à un précédent. */
-const IDENTICAL = /^<identical to result \[[^\]]+\] from your (\w+) call earlier/;
+const IDENTICAL = /^<identical to result \[[^\]]+\] from your (\w+) call earlier/
 
 /** Le texte sans ses poignées — les lignes de contenu, elles, sont intactes. */
 export function stripResultIds(text: string): string {
-  if (!text.includes('[result-id:')) return text;
+  if (!text.includes('[result-id:')) return text
   return text
     .split('\n')
     .filter((l) => !RESULT_ID.test(l.trim()))
-    .join('\n');
+    .join('\n')
 }
 
 // Le refus de l'utilisateur, tel que le CLI le rapporte — au modèle.
@@ -41,17 +41,16 @@ export function stripResultIds(text: string): string {
 // fait quelques dizaines. Les refus visent surtout `ExitPlanMode`, `Edit`, `Bash`,
 // `AskUserQuestion` et `Agent` ; une bonne part d'entre eux ne portent aucun
 // message — l'utilisateur a refusé sans rien dire.
-const REFUSED = "The user doesn't want to proceed with this tool use.";
-const SAID =
-  /To tell you how to proceed, the user said:([\s\S]*?)(?:\n+Note: The user's next message|$)/;
+const REFUSED = "The user doesn't want to proceed with this tool use."
+const SAID = /To tell you how to proceed, the user said:([\s\S]*?)(?:\n+Note: The user's next message|$)/
 
 /**
  * Ce que l'utilisateur a dit en refusant, `null` si le résultat n'est pas un
  * refus. `said` est vide quand il n'a rien dit — le refus, lui, reste un fait.
  */
 export function userRefusal(text: string): { said: string } | null {
-  if (!text.startsWith(REFUSED)) return null;
-  return { said: (SAID.exec(text)?.[1] ?? '').trim() };
+  if (!text.startsWith(REFUSED)) return null
+  return { said: (SAID.exec(text)?.[1] ?? '').trim() }
 }
 
 /**
@@ -62,9 +61,9 @@ export function userRefusal(text: string): { said: string } | null {
  * sortie de l'outil.
  */
 export function identicalTo(text: string): string {
-  const m = IDENTICAL.exec(text.trim());
-  if (!m) return '';
-  return t('replay.tools.service.identicalTo', { tool: m[1] ?? '' });
+  const m = IDENTICAL.exec(text.trim())
+  if (!m) return ''
+  return t('replay.tools.service.identicalTo', { tool: m[1] ?? '' })
 }
 
 // Le refus de permission — celui du CLI, pas celui de l'utilisateur.
@@ -79,15 +78,12 @@ export function identicalTo(text: string): string {
 // Ces refus sont rares et suivent tous le même motif, essentiellement sur
 // `WebSearch`. La vue `glob` ne s'en sert pas encore — elle a son propre
 // traitement des lignes de service, et le cas est trop rare pour y toucher.
-const DENIED = /^Permission to use (\S+) has been denied because (.*?)\. IMPORTANT/;
+const DENIED = /^Permission to use (\S+) has been denied because (.*?)\. IMPORTANT/
 
 /** Ce qui a été refusé et pourquoi, `null` si le résultat n'est pas un refus. */
 export function permissionDenied(text: string): { tool: string; why: string } | null {
-  const m = DENIED.exec(text);
-  if (!m) return null;
-  const why =
-    m[2] === "Claude Code is running in don't ask mode"
-      ? t('replay.tools.service.dontAsk')
-      : (m[2] ?? '');
-  return { tool: m[1] ?? '', why };
+  const m = DENIED.exec(text)
+  if (!m) return null
+  const why = m[2] === "Claude Code is running in don't ask mode" ? t('replay.tools.service.dontAsk') : (m[2] ?? '')
+  return { tool: m[1] ?? '', why }
 }

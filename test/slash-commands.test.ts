@@ -6,8 +6,8 @@
 // sans que rien ne s'en plaigne, et une entrée sans nom insérerait une barre
 // oblique seule dans le composeur.
 
-import { describe, expect, it } from 'vitest';
-import { toCommands } from '../server/agent/runner.ts';
+import { describe, expect, it } from 'vitest'
+import { toCommands } from '../server/agent/runner.ts'
 
 describe('toCommands', () => {
   it('garde ce que le SDK décrit, alias compris', () => {
@@ -19,21 +19,19 @@ describe('toCommands', () => {
     ).toEqual([
       { name: 'usage', description: 'Voir la consommation', aliases: ['cost'] },
       { name: 'compact', description: 'Compacter', argumentHint: '<instructions>' },
-    ]);
-  });
+    ])
+  })
 
   it('écarte ce qui n’a pas de nom : une commande sans nom ne s’insère pas', () => {
-    expect(toCommands([{ description: 'orpheline' }, { name: '' }, null, 'compact'])).toEqual([]);
-  });
+    expect(toCommands([{ description: 'orpheline' }, { name: '' }, null, 'compact'])).toEqual([])
+  })
 
   it('ne transporte ni indice vide ni liste d’alias vide', () => {
-    expect(toCommands([{ name: 'context', argumentHint: '', aliases: [] }])).toEqual([
-      { name: 'context', description: '' },
-    ]);
-  });
+    expect(toCommands([{ name: 'context', argumentHint: '', aliases: [] }])).toEqual([{ name: 'context', description: '' }])
+  })
 
   it('rend une liste vide sur autre chose qu’un tableau', () => {
-    expect(toCommands(undefined)).toEqual([]);
-    expect(toCommands({ commands: [] })).toEqual([]);
-  });
-});
+    expect(toCommands(undefined)).toEqual([])
+    expect(toCommands({ commands: [] })).toEqual([])
+  })
+})

@@ -11,19 +11,14 @@
 // fiable (les entrées d'outils n'y sont plus tronquées). On affiche le premier et
 // on se corrige sur le second — d'où le `replace-event` systématique.
 
-import { randomUUID } from 'node:crypto';
-import type { AgentUpsert } from '../../shared/agent.ts';
-import type { Compaction } from '../../shared/context.ts';
-import type {
-  Block,
-  TranscriptEvent,
-  TranscriptImage,
-  ToolResult,
-} from '../../shared/transcript.ts';
-import { num, str } from '../json.ts';
-import { repairJson } from './partial.ts';
+import { randomUUID } from 'node:crypto'
+import type { AgentUpsert } from '../../shared/agent.ts'
+import type { Compaction } from '../../shared/context.ts'
+import type { Block, TranscriptEvent, TranscriptImage, ToolResult } from '../../shared/transcript.ts'
+import { num, str } from '../json.ts'
+import { repairJson } from './partial.ts'
 
-type Rec = Record<string, unknown>;
+type Rec = Record<string, unknown>
 
 /**
  * Le pas de diffusion d'une entrée d'outil en train de se composer.
@@ -33,7 +28,7 @@ type Rec = Record<string, unknown>;
  * un `Write` un peu long. Un dixième de seconde suffit à voir une commande
  * s'écrire, et borne le travail.
  */
-const INPUT_STEP_MS = 120;
+const INPUT_STEP_MS = 120
 
 /**
  * Au-delà, on cesse de réparer.
@@ -47,10 +42,10 @@ const INPUT_STEP_MS = 120;
  * se complétait d'un coup à la fin du message. Réparer coûte un parcours de
  * caractères : à 64 000, toutes les 120 ms, c'est une milliseconde.
  */
-const INPUT_MAX = 64_000;
+const INPUT_MAX = 64_000
 
-const rec = (v: unknown): Rec => (v && typeof v === 'object' ? (v as Rec) : {});
-const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+const rec = (v: unknown): Rec => (v && typeof v === 'object' ? (v as Rec) : {})
+const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : [])
 
 /**
  * À quel sous-agent appartient ce message — `undefined` pour le fil principal.
@@ -68,7 +63,7 @@ const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
  * du disque, qui portent la véritable identité du run.
  */
 function agentOf(message: Rec): string | undefined {
-  return str(message.parent_tool_use_id) || undefined;
+  return str(message.parent_tool_use_id) || undefined
 }
 
 /**
@@ -77,14 +72,14 @@ function agentOf(message: Rec): string | undefined {
  * transporte pas d'octets, et le rejeu les retrouvera sur le disque.
  */
 export function resultText(content: unknown): string {
-  if (typeof content === 'string') return content;
+  if (typeof content === 'string') return content
   return arr(content)
     .map((b) => {
-      const block = rec(b);
-      return block.type === 'text' ? str(block.text) : '';
+      const block = rec(b)
+      return block.type === 'text' ? str(block.text) : ''
     })
     .filter(Boolean)
-    .join('\n');
+    .join('\n')
 }
 
 /**
@@ -94,7 +89,7 @@ export function resultText(content: unknown): string {
  * plutôt que de tester « aucun texte » est volontaire : un tour réellement muet
  * arrive sans bloc du tout, et se rend déjà correctement.
  */
-const SILENT_TURN = '(no content)';
+const SILENT_TURN = '(no content)'
 
 /**
  * Une commande `/` tapée au composeur : son nom, puis ses arguments.
@@ -103,34 +98,34 @@ const SILENT_TURN = '(no content)';
  * noms composés. Une barre suivie d'autre chose — un chemin absolu collé, par
  * exemple — n'est pas une commande et reste un tour ordinaire.
  */
-const SLASH_COMMAND = /^\/([a-zA-Z0-9][\w:.-]*)(?:\s+([\s\S]*))?$/;
+const SLASH_COMMAND = /^\/([a-zA-Z0-9][\w:.-]*)(?:\s+([\s\S]*))?$/
 
 function isSilent(payload: Rec): boolean {
-  const blocks = arr(payload.content);
-  if (blocks.length !== 1) return false;
-  const block = rec(blocks[0]);
-  return str(block.type) === 'text' && str(block.text).trim() === SILENT_TURN;
+  const blocks = arr(payload.content)
+  if (blocks.length !== 1) return false
+  const block = rec(blocks[0])
+  return str(block.type) === 'text' && str(block.text).trim() === SILENT_TURN
 }
 
 export class Translator {
   /** L'état courant de la timeline, dans l'ordre d'arrivée. */
-  readonly events: TranscriptEvent[] = [];
+  readonly events: TranscriptEvent[] = []
 
-  private readonly byUuid = new Map<string, TranscriptEvent>();
+  private readonly byUuid = new Map<string, TranscriptEvent>()
   /** Où retrouver le bloc `tool_use` d'un identifiant d'outil, pour y coller son résultat. */
-  private readonly toolIndex = new Map<string, { uuid: string; index: number }>();
-  private lastUuid: string | null = null;
+  private readonly toolIndex = new Map<string, { uuid: string; index: number }>()
+  private lastUuid: string | null = null
   /** L'événement assistant en cours de streaming, s'il y en a un. */
-  private streamingUuid: string | null = null;
+  private streamingUuid: string | null = null
   /** Le JSON d'entrée d'un `tool_use` en cours de frappe, par bloc. */
-  private readonly toolJson = new Map<string, { text: string; at: number; capped?: boolean }>();
+  private readonly toolJson = new Map<string, { text: string; at: number; capped?: boolean }>()
   /** Combien de blocs les messages complets ont déjà scellés, par `message.id`. */
-  private readonly sealed = new Map<string, number>();
+  private readonly sealed = new Map<string, number>()
 
   private register(event: TranscriptEvent): void {
-    this.events.push(event);
-    this.byUuid.set(event.uuid, event);
-    this.lastUuid = event.uuid;
+    this.events.push(event)
+    this.byUuid.set(event.uuid, event)
+    this.lastUuid = event.uuid
   }
 
   /**
@@ -145,13 +140,13 @@ export class Translator {
    * jamais son résultat, et son `uuid` ne doit pas capturer celui d'après.
    */
   reset(): void {
-    this.events.length = 0;
-    this.byUuid.clear();
-    this.toolIndex.clear();
-    this.toolJson.clear();
-    this.sealed.clear();
-    this.lastUuid = null;
-    this.streamingUuid = null;
+    this.events.length = 0
+    this.byUuid.clear()
+    this.toolIndex.clear()
+    this.toolJson.clear()
+    this.sealed.clear()
+    this.lastUuid = null
+    this.streamingUuid = null
   }
 
   /**
@@ -171,7 +166,7 @@ export class Translator {
    * une phase de plus que la session n'en avait vécu.
    */
   appendUserPrompt(text: string, images: TranscriptImage[] = []): AgentUpsert[] {
-    const slash = images.length ? null : SLASH_COMMAND.exec(text.trim());
+    const slash = images.length ? null : SLASH_COMMAND.exec(text.trim())
     const event: TranscriptEvent = {
       uuid: randomUUID(),
       parentUuid: this.lastUuid,
@@ -183,13 +178,10 @@ export class Translator {
       origin: slash ? 'slash-command' : 'human',
       blocks: slash
         ? [{ kind: 'slash_command' as const, name: `/${slash[1]}`, text: slash[2] ?? '' }]
-        : [
-            ...(images.length ? [{ kind: 'image' as const, images }] : []),
-            { kind: 'text' as const, text },
-          ],
-    };
-    this.register(event);
-    return [{ kind: 'append-event', event }];
+        : [...(images.length ? [{ kind: 'image' as const, images }] : []), { kind: 'text' as const, text }],
+    }
+    this.register(event)
+    return [{ kind: 'append-event', event }]
   }
 
   /** Une ligne de service (erreur du runner, interruption) montrée dans le fil. */
@@ -204,9 +196,9 @@ export class Translator {
       subtype: 'atelier',
       level,
       blocks: [{ kind: 'text', text }],
-    };
-    this.register(event);
-    return [{ kind: 'append-event', event }];
+    }
+    this.register(event)
+    return [{ kind: 'append-event', event }]
   }
 
   /**
@@ -221,9 +213,9 @@ export class Translator {
    * tour, remplacera l'événement par sa version chiffrée.
    */
   appendCompaction(message: Rec): AgentUpsert[] {
-    const meta = rec(message.compact_metadata);
-    const timestamp = Date.now();
-    const uuid = str(message.uuid) || randomUUID();
+    const meta = rec(message.compact_metadata)
+    const timestamp = Date.now()
+    const uuid = str(message.uuid) || randomUUID()
     const compaction: Compaction = {
       uuid,
       timestamp,
@@ -231,7 +223,7 @@ export class Translator {
       preTokens: num(meta.pre_tokens),
       postTokens: num(meta.post_tokens),
       durationMs: num(meta.duration_ms),
-    };
+    }
     const event: TranscriptEvent = {
       uuid,
       parentUuid: this.lastUuid,
@@ -241,9 +233,9 @@ export class Translator {
       isMeta: true,
       compaction,
       blocks: [],
-    };
-    this.register(event);
-    return [{ kind: 'append-event', event }];
+    }
+    this.register(event)
+    return [{ kind: 'append-event', event }]
   }
 
   /**
@@ -259,25 +251,25 @@ export class Translator {
    * que le direct et la relecture ne racontent pas deux histoires.
    */
   attachSummary(uuid: string, text: string): AgentUpsert[] {
-    const event = this.byUuid.get(uuid);
-    if (!event || !text.trim()) return [];
-    event.blocks = [{ kind: 'text', text }];
-    return [{ kind: 'replace-event', event }];
+    const event = this.byUuid.get(uuid)
+    if (!event || !text.trim()) return []
+    event.blocks = [{ kind: 'text', text }]
+    return [{ kind: 'replace-event', event }]
   }
 
   // ── Flux vivant ───────────────────────────────────────────────────────────
 
   onStreamEvent(message: Rec): AgentUpsert[] {
-    const ev = rec(message.event);
+    const ev = rec(message.event)
     switch (ev.type) {
       case 'message_start':
-        return this.startAssistant(rec(rec(ev.message).id ? ev.message : {}), agentOf(message));
+        return this.startAssistant(rec(rec(ev.message).id ? ev.message : {}), agentOf(message))
       case 'content_block_start':
-        return this.startBlock(num(ev.index, 0), rec(ev.content_block));
+        return this.startBlock(num(ev.index, 0), rec(ev.content_block))
       case 'content_block_delta':
-        return this.appendDelta(num(ev.index, 0), rec(ev.delta));
+        return this.appendDelta(num(ev.index, 0), rec(ev.delta))
       default:
-        return [];
+        return []
     }
   }
 
@@ -285,10 +277,10 @@ export class Translator {
     // L'identifiant de la réponse API fait un `uuid` stable : le message
     // `assistant` final portera le même, et se posera donc sur cet événement-ci
     // au lieu d'en créer un second.
-    const uuid = str(message.id) || randomUUID();
+    const uuid = str(message.id) || randomUUID()
     if (this.byUuid.has(uuid)) {
-      this.streamingUuid = uuid;
-      return [];
+      this.streamingUuid = uuid
+      return []
     }
     const event: TranscriptEvent = {
       uuid,
@@ -301,21 +293,21 @@ export class Translator {
       model: str(message.model) || undefined,
       blocks: [],
       ...(agentId ? { agentId } : {}),
-    };
-    this.register(event);
-    this.streamingUuid = uuid;
-    return [{ kind: 'append-event', event }];
+    }
+    this.register(event)
+    this.streamingUuid = uuid
+    return [{ kind: 'append-event', event }]
   }
 
   private startBlock(index: number, contentBlock: Rec): AgentUpsert[] {
-    const event = this.streaming();
-    if (!event) return [];
+    const event = this.streaming()
+    if (!event) return []
     // Les blocs arrivent dans l'ordre, mais un trou resterait un trou : on
     // comble plutôt que de laisser un tableau creux, que rien en aval ne sait lire.
-    while (event.blocks.length < index) event.blocks.push({ kind: 'text', text: '' });
+    while (event.blocks.length < index) event.blocks.push({ kind: 'text', text: '' })
 
-    const type = str(contentBlock.type);
-    let block: Block;
+    const type = str(contentBlock.type)
+    let block: Block
     if (type === 'tool_use') {
       block = {
         kind: 'tool_use',
@@ -323,36 +315,31 @@ export class Translator {
         name: str(contentBlock.name),
         input: {},
         result: null,
-      };
-      if (block.id) this.toolIndex.set(block.id, { uuid: event.uuid, index });
-      this.toolJson.delete(`${event.uuid}:${index}`);
+      }
+      if (block.id) this.toolIndex.set(block.id, { uuid: event.uuid, index })
+      this.toolJson.delete(`${event.uuid}:${index}`)
     } else if (type === 'thinking' || type === 'redacted_thinking') {
-      block = { kind: 'thinking', text: '', redacted: type === 'redacted_thinking' };
+      block = { kind: 'thinking', text: '', redacted: type === 'redacted_thinking' }
     } else {
-      block = { kind: 'text', text: '' };
+      block = { kind: 'text', text: '' }
     }
-    event.blocks[index] = block;
-    return [{ kind: 'replace-event', event }];
+    event.blocks[index] = block
+    return [{ kind: 'replace-event', event }]
   }
 
   private appendDelta(index: number, delta: Rec): AgentUpsert[] {
-    const event = this.streaming();
-    const block = event?.blocks[index];
-    if (!event || !block) return [];
+    const event = this.streaming()
+    const block = event?.blocks[index]
+    if (!event || !block) return []
 
-    const type = str(delta.type);
-    if (type === 'input_json_delta') return this.appendInput(event, index, str(delta.partial_json));
+    const type = str(delta.type)
+    if (type === 'input_json_delta') return this.appendInput(event, index, str(delta.partial_json))
 
-    const text =
-      type === 'text_delta'
-        ? str(delta.text)
-        : type === 'thinking_delta'
-          ? str(delta.thinking)
-          : '';
-    if (!text) return [];
+    const text = type === 'text_delta' ? str(delta.text) : type === 'thinking_delta' ? str(delta.thinking) : ''
+    if (!text) return []
 
-    block.text = (block.text ?? '') + text;
-    return [{ kind: 'text-delta', uuid: event.uuid, blockIndex: index, text }];
+    block.text = (block.text ?? '') + text
+    return [{ kind: 'text-delta', uuid: event.uuid, blockIndex: index, text }]
   }
 
   /**
@@ -365,35 +352,35 @@ export class Translator {
    * commande en train d'être tapée, au lieu d'un nom seul pendant une seconde.
    */
   private appendInput(event: TranscriptEvent, index: number, fragment: string): AgentUpsert[] {
-    if (!fragment) return [];
-    const key = `${event.uuid}:${index}`;
-    const buffer = this.toolJson.get(key) ?? { text: '', at: 0 };
-    buffer.text += fragment;
-    this.toolJson.set(key, buffer);
+    if (!fragment) return []
+    const key = `${event.uuid}:${index}`
+    const buffer = this.toolJson.get(key) ?? { text: '', at: 0 }
+    buffer.text += fragment
+    this.toolJson.set(key, buffer)
 
-    const now = Date.now();
+    const now = Date.now()
     // Passé la borne on ne relit plus — mais on relit **une dernière fois**. Un
     // premier fragment déjà plus gros qu'elle laissait sinon la carte sur un
     // `{}` jusqu'à la fin du message : figer sur ce qu'on a vu est le propos,
     // figer sur rien n'en est pas.
     if (buffer.text.length > INPUT_MAX) {
-      if (buffer.capped) return [];
-      buffer.capped = true;
+      if (buffer.capped) return []
+      buffer.capped = true
     } else if (now - buffer.at < INPUT_STEP_MS) {
-      return [];
+      return []
     }
-    buffer.at = now;
+    buffer.at = now
 
-    const input = repairJson(buffer.text);
-    if (!input) return [];
-    const block = event.blocks[index];
-    if (!block) return [];
-    block.input = input;
-    return [{ kind: 'tool-input', uuid: event.uuid, blockIndex: index, input }];
+    const input = repairJson(buffer.text)
+    if (!input) return []
+    const block = event.blocks[index]
+    if (!block) return []
+    block.input = input
+    return [{ kind: 'tool-input', uuid: event.uuid, blockIndex: index, input }]
   }
 
   private streaming(): TranscriptEvent | null {
-    return this.streamingUuid ? (this.byUuid.get(this.streamingUuid) ?? null) : null;
+    return this.streamingUuid ? (this.byUuid.get(this.streamingUuid) ?? null) : null
   }
 
   // ── Messages complets ─────────────────────────────────────────────────────
@@ -416,15 +403,15 @@ export class Translator {
    * direct du bloc qu'il décrit, et seulement celle-là.
    */
   onAssistant(message: Rec): AgentUpsert[] {
-    const payload = rec(message.message);
-    const uuid = str(payload.id) || randomUUID();
-    const agentId = agentOf(message);
+    const payload = rec(message.message)
+    const uuid = str(payload.id) || randomUUID()
+    const agentId = agentOf(message)
     // Un tour qui n'a rien à dire — la réponse à `/clear` en est une — arrive
     // avec ce texte en dur. Le rendre donnerait une bulle « (no content) » juste
     // sous un fil qu'on vient d'effacer. On n'écarte que ce qui n'existe pas
     // déjà : un message en cours de streaming garde son événement.
-    if (!this.byUuid.has(uuid) && isSilent(payload)) return [];
-    let event = this.byUuid.get(uuid);
+    if (!this.byUuid.has(uuid) && isSilent(payload)) return []
+    let event = this.byUuid.get(uuid)
     if (!event) {
       event = {
         uuid,
@@ -436,64 +423,64 @@ export class Translator {
         isMeta: false,
         blocks: [],
         ...(agentId ? { agentId } : {}),
-      };
-      this.register(event);
+      }
+      this.register(event)
     }
 
-    event.model = str(payload.model) || event.model;
-    const usage = rec(payload.usage);
+    event.model = str(payload.model) || event.model
+    const usage = rec(payload.usage)
     if (Object.keys(usage).length) {
       event.usage = {
         input: num(usage.input_tokens),
         output: num(usage.output_tokens),
         cacheRead: num(usage.cache_read_input_tokens),
         cacheCreate: num(usage.cache_creation_input_tokens),
-      };
+      }
     }
 
     // Les résultats déjà collés survivent au remplacement : un outil rapide peut
     // avoir répondu avant que la réponse complète n'arrive.
-    const previous = new Map<string, ToolResult | null | undefined>();
-    for (const b of event.blocks) if (b.id) previous.set(b.id, b.result);
+    const previous = new Map<string, ToolResult | null | undefined>()
+    for (const b of event.blocks) if (b.id) previous.set(b.id, b.result)
 
-    const target = event;
-    const base = this.sealed.get(uuid) ?? 0;
-    const content = arr(payload.content);
+    const target = event
+    const base = this.sealed.get(uuid) ?? 0
+    const content = arr(payload.content)
     // Un trou resterait un trou, comme au streaming : rien en aval ne sait lire
     // un tableau creux.
-    while (target.blocks.length < base) target.blocks.push({ kind: 'text', text: '' });
+    while (target.blocks.length < base) target.blocks.push({ kind: 'text', text: '' })
 
     content.forEach((raw, offset) => {
-      const index = base + offset;
-      const b = rec(raw);
-      const type = str(b.type);
+      const index = base + offset
+      const b = rec(raw)
+      const type = str(b.type)
       if (type === 'tool_use') {
-        const id = str(b.id);
-        if (id) this.toolIndex.set(id, { uuid, index });
+        const id = str(b.id)
+        if (id) this.toolIndex.set(id, { uuid, index })
         target.blocks[index] = {
           kind: 'tool_use',
           id,
           name: str(b.name),
           input: b.input ?? {},
           result: previous.get(id) ?? null,
-        } satisfies Block;
+        } satisfies Block
       } else if (type === 'thinking' || type === 'redacted_thinking') {
         target.blocks[index] = {
           kind: 'thinking',
           text: str(b.thinking),
           redacted: type === 'redacted_thinking',
-        } satisfies Block;
+        } satisfies Block
       } else {
-        target.blocks[index] = { kind: 'text', text: str(b.text) } satisfies Block;
+        target.blocks[index] = { kind: 'text', text: str(b.text) } satisfies Block
       }
       // L'entrée fait foi désormais : le fragment qui la préfigurait n'a plus de
       // raison d'occuper la mémoire d'une session qui dure des heures. Seuls les
       // blocs scellés ici sont oubliés — un appel suivant peut encore se frapper.
-      this.toolJson.delete(`${uuid}:${index}`);
-    });
-    this.sealed.set(uuid, base + content.length);
+      this.toolJson.delete(`${uuid}:${index}`)
+    })
+    this.sealed.set(uuid, base + content.length)
 
-    return [{ kind: 'replace-event', event }];
+    return [{ kind: 'replace-event', event }]
   }
 
   /**
@@ -504,35 +491,35 @@ export class Translator {
    * attend — un appel replié montre son résultat, pas une ligne de plus.
    */
   onUser(message: Rec): AgentUpsert[] {
-    const payload = rec(message.message);
-    const upserts: AgentUpsert[] = [];
-    const touched = new Set<string>();
-    const orphans: Block[] = [];
+    const payload = rec(message.message)
+    const upserts: AgentUpsert[] = []
+    const touched = new Set<string>()
+    const orphans: Block[] = []
 
     for (const raw of arr(payload.content)) {
-      const b = rec(raw);
-      if (str(b.type) !== 'tool_result') continue;
-      const toolUseId = str(b.tool_use_id);
+      const b = rec(raw)
+      if (str(b.type) !== 'tool_result') continue
+      const toolUseId = str(b.tool_use_id)
       const result: ToolResult = {
         content: resultText(b.content),
         isError: b.is_error === true,
-      };
+      }
       // Deux noms pour un même champ : le flux vivant le dit en `tool_use_result`,
       // les lignes de `.jsonl` en `toolUseResult`. On ne lisait que le second —
       // donc jamais rien en direct, alors que c'est lui qui porte le détail
       // structuré d'un `Read` ou d'un `Edit`.
-      const meta = message.tool_use_result ?? message.toolUseResult;
+      const meta = message.tool_use_result ?? message.toolUseResult
       if (meta && typeof meta === 'object' && !Array.isArray(meta)) {
-        result.meta = meta as Rec;
+        result.meta = meta as Rec
       }
 
-      const at = this.toolIndex.get(toolUseId);
-      const event = at ? this.byUuid.get(at.uuid) : undefined;
-      const block = event?.blocks[at?.index ?? -1];
+      const at = this.toolIndex.get(toolUseId)
+      const event = at ? this.byUuid.get(at.uuid) : undefined
+      const block = event?.blocks[at?.index ?? -1]
       if (event && block) {
-        block.result = result;
-        touched.add(event.uuid);
-        continue;
+        block.result = result
+        touched.add(event.uuid)
+        continue
       }
       // Sans appel apparié, on montre le résultat seul plutôt que de le perdre.
       orphans.push({
@@ -540,18 +527,18 @@ export class Translator {
         toolUseId,
         content: result.content,
         isError: result.isError,
-      });
+      })
     }
 
     for (const uuid of touched) {
-      const event = this.byUuid.get(uuid);
-      if (event) upserts.push({ kind: 'replace-event', event });
+      const event = this.byUuid.get(uuid)
+      if (event) upserts.push({ kind: 'replace-event', event })
     }
 
     if (orphans.length) {
       // Un résultat sans appel apparié appartient quand même à qui l'a demandé :
       // celui d'un sous-agent doit sortir du fil principal comme son appel.
-      const agentId = agentOf(message);
+      const agentId = agentOf(message)
       const event: TranscriptEvent = {
         uuid: randomUUID(),
         parentUuid: this.lastUuid,
@@ -563,11 +550,11 @@ export class Translator {
         origin: 'tool-result',
         blocks: orphans,
         ...(agentId ? { agentId } : {}),
-      };
-      this.register(event);
-      upserts.push({ kind: 'append-event', event });
+      }
+      this.register(event)
+      upserts.push({ kind: 'append-event', event })
     }
 
-    return upserts;
+    return upserts
   }
 }

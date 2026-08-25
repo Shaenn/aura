@@ -14,19 +14,19 @@
 // rien ne le signale, et le diagnostic accuserait des sessions que la page Usage
 // dit innocentes. Un seul pliage, partagé, rend l'écart impossible.
 
-import type { TokenCounts } from './pricing.ts';
+import type { TokenCounts } from './pricing.ts'
 
-export const ZERO: TokenCounts = { input: 0, output: 0, cacheRead: 0, cacheCreate: 0 };
+export const ZERO: TokenCounts = { input: 0, output: 0, cacheRead: 0, cacheCreate: 0 }
 
 export function zeroTokens(): TokenCounts {
-  return { ...ZERO };
+  return { ...ZERO }
 }
 
 export function addTokens(a: TokenCounts, b: TokenCounts): void {
-  a.input += b.input;
-  a.output += b.output;
-  a.cacheRead += b.cacheRead;
-  a.cacheCreate += b.cacheCreate;
+  a.input += b.input
+  a.output += b.output
+  a.cacheRead += b.cacheRead
+  a.cacheCreate += b.cacheCreate
 }
 
 /**
@@ -36,20 +36,20 @@ export function addTokens(a: TokenCounts, b: TokenCounts): void {
  * doit jamais soustraire.
  */
 export function growth(counted: TokenCounts, next: TokenCounts): TokenCounts {
-  const delta = { ...ZERO };
+  const delta = { ...ZERO }
   for (const k of ['input', 'output', 'cacheRead', 'cacheCreate'] as const) {
     if (next[k] > counted[k]) {
-      delta[k] = next[k] - counted[k];
-      counted[k] = next[k];
+      delta[k] = next[k] - counted[k]
+      counted[k] = next[k]
     }
   }
-  return delta;
+  return delta
 }
 
 /** `AAAA-MM-JJ` dans le fuseau du serveur — le calendrier de l'utilisateur. */
 export function localDay(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }

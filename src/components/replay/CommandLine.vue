@@ -21,85 +21,85 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
-import type { TranscriptEvent } from '@/services/projects';
-import { fmtTime } from '@/utils/format';
+  import type { TranscriptEvent } from '@/services/projects'
+  import { fmtTime } from '@/utils/format'
+  import { computed } from 'vue'
+  import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n();
+  const { t } = useI18n()
 
-const props = defineProps<{ event: TranscriptEvent }>();
+  const props = defineProps<{ event: TranscriptEvent }>()
 
-const command = computed(() => props.event.blocks.find((b) => b.kind === 'slash_command') ?? null);
+  const command = computed(() => props.event.blocks.find((b) => b.kind === 'slash_command') ?? null)
 
-/** `!git status` typed at the prompt, as opposed to a `/slash` command. */
-const isBash = computed(() => command.value?.name === '!');
+  /** `!git status` typed at the prompt, as opposed to a `/slash` command. */
+  const isBash = computed(() => command.value?.name === '!')
 
-const output = computed(() =>
-  props.event.blocks
-    .filter((b) => b.kind === 'text')
-    .map((b) => b.text ?? '')
-    .join('\n'),
-);
+  const output = computed(() =>
+    props.event.blocks
+      .filter((b) => b.kind === 'text')
+      .map((b) => b.text ?? '')
+      .join('\n'),
+  )
 
-const time = computed(() => fmtTime(props.event.timestamp ?? 0));
+  const time = computed(() => fmtTime(props.event.timestamp ?? 0))
 </script>
 
 <style scoped lang="scss">
-.cl {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-.cl-cmd {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  color: var(--dim);
-}
-.cl-name {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--brand);
-  background: var(--brand-soft);
-  border: 1px solid var(--brand-line);
-  border-radius: var(--radius-xs);
-  padding: 1px 8px;
-}
-.cl-args {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: var(--fs-xs);
-  color: var(--muted);
-}
-.cl-time {
-  margin-left: auto;
-  font-size: var(--fs-2xs);
-  color: var(--faint);
-}
-.cl-out-head {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  font-size: var(--fs-2xs);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--faint);
-}
-.cl-out {
-  margin: 0;
-  padding: var(--space-sm) var(--space-md);
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: var(--fs-xs);
-  color: var(--muted);
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 200px;
-  overflow: auto;
-}
+  .cl {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+  .cl-cmd {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--dim);
+  }
+  .cl-name {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--brand);
+    background: var(--brand-soft);
+    border: 1px solid var(--brand-line);
+    border-radius: var(--radius-xs);
+    padding: 1px 8px;
+  }
+  .cl-args {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: var(--fs-xs);
+    color: var(--muted);
+  }
+  .cl-time {
+    margin-left: auto;
+    font-size: var(--fs-2xs);
+    color: var(--faint);
+  }
+  .cl-out-head {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--fs-2xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--faint);
+  }
+  .cl-out {
+    margin: 0;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: var(--fs-xs);
+    color: var(--muted);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 200px;
+    overflow: auto;
+  }
 </style>

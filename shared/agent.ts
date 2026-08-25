@@ -6,7 +6,7 @@
 // liste de `TranscriptEvent` — exactement le modèle que la timeline de rejeu
 // sait déjà rendre.
 
-import type { TranscriptEvent } from './transcript.ts';
+import type { TranscriptEvent } from './transcript.ts'
 
 /** Où en est un runner, tel que l'UI doit le montrer. */
 export type AgentStatus =
@@ -19,7 +19,7 @@ export type AgentStatus =
   /** Le runner est arrêté ; plus rien n'arrivera. */
   | 'ended'
   /** Le runner s'est arrêté sur une erreur ; `error` la porte. */
-  | 'failed';
+  | 'failed'
 
 /**
  * Une demande de permission en attente d'un humain.
@@ -31,17 +31,17 @@ export type AgentStatus =
  */
 export interface PermissionRequest {
   /** Identifiant de la demande côté AURA ; c'est lui qu'on renvoie pour répondre. */
-  id: string;
-  toolName: string;
-  input: Record<string, unknown>;
-  toolUseId: string;
-  title?: string;
-  displayName?: string;
-  description?: string;
-  blockedPath?: string;
-  decisionReason?: string;
+  id: string
+  toolName: string
+  input: Record<string, unknown>
+  toolUseId: string
+  title?: string
+  displayName?: string
+  description?: string
+  blockedPath?: string
+  decisionReason?: string
   /** Horodatage d'émission, pour afficher l'attente. */
-  askedAt: number;
+  askedAt: number
 }
 
 /** Ce qu'un humain peut répondre à une demande de permission. */
@@ -49,7 +49,7 @@ export type PermissionAnswer =
   | 'allow'
   /** Autoriser, et ne plus demander pour ce motif de la session. */
   | 'allow-always'
-  | 'deny';
+  | 'deny'
 
 /**
  * Une question posée par l'agent, en attente d'un formulaire.
@@ -59,17 +59,17 @@ export type PermissionAnswer =
  * lui-même plutôt qu'un outil qu'il laisse passer.
  */
 export interface AskRequest {
-  id: string;
-  questions: AskQuestion[];
-  askedAt: number;
+  id: string
+  questions: AskQuestion[]
+  askedAt: number
 }
 
 export interface AskQuestion {
-  question: string;
-  header: string;
-  multiSelect?: boolean;
+  question: string
+  header: string
+  multiSelect?: boolean
   /** `preview` : la maquette à comparer — souvent de l'ASCII sur plusieurs lignes. */
-  options: { label: string; description: string; preview?: string }[];
+  options: { label: string; description: string; preview?: string }[]
 }
 
 /**
@@ -82,12 +82,12 @@ export interface AskQuestion {
  */
 export interface SlashCommandInfo {
   /** Sans la barre oblique : `compact`, `context`, `code-review`… */
-  name: string;
-  description: string;
+  name: string
+  description: string
   /** Ce que la commande attend après son nom. Souvent vide. */
-  argumentHint?: string;
+  argumentHint?: string
   /** Les autres noms qui mènent ici — `/cost` résout vers `/usage`. */
-  aliases?: string[];
+  aliases?: string[]
 }
 
 /**
@@ -112,23 +112,23 @@ export type AgentPhase =
   /** Le contexte se compacte. */
   | 'compacting'
   /** L'API a refusé et le SDK repasse après un délai. */
-  | 'retrying';
+  | 'retrying'
 
 /** Un outil parti et pas encore revenu. */
 export interface ActiveTool {
   /** Le `tool_use_id`, qui relie la ligne d'activité à sa carte dans le fil. */
-  id: string;
-  name: string;
-  startedAt: number;
+  id: string
+  name: string
+  startedAt: number
   /** La durée que le SDK mesure lui-même, quand il la signale. */
-  elapsedSeconds?: number;
+  elapsedSeconds?: number
 }
 
 export interface AgentActivity {
   /** `null` quand rien n'est en cours — entre deux tours, ou session finie. */
-  phase: AgentPhase | null;
+  phase: AgentPhase | null
   /** Le début de la phase, pour un chrono que le client fait avancer seul. */
-  since: number;
+  since: number
   /**
    * Le début du tour, et non de la phase. `0` au repos.
    *
@@ -137,12 +137,12 @@ export interface AgentActivity {
    * chrono qui repart sans cesse ne répond pas à « depuis combien de temps ça
    * mouline ? » — il ne fait que prouver que ça bouge encore.
    */
-  turnStartedAt: number;
+  turnStartedAt: number
   /**
    * L'estimation de tokens de raisonnement du SDK. Approximative et assumée
    * comme telle : elle sert à montrer que ça avance, pas à facturer.
    */
-  thinkingTokens?: number;
+  thinkingTokens?: number
   /**
    * Les tokens de sortie accumulés sur le tour — le `↓` du CLI.
    *
@@ -150,15 +150,15 @@ export interface AgentActivity {
    * chaque réponse close, là où `thinkingTokens` court pendant un raisonnement.
    * Les deux se complètent plus qu'ils ne se doublent.
    */
-  outputTokens?: number;
+  outputTokens?: number
   /** Les outils en vol, du plus ancien au plus récent. */
-  tools: ActiveTool[];
+  tools: ActiveTool[]
   /** La tentative en cours, quand `phase` vaut `retrying`. */
-  retry?: { attempt: number; maxRetries: number; delayMs: number };
+  retry?: { attempt: number; maxRetries: number; delayMs: number }
 }
 
 /** Rien en cours : l'état de repos, et la valeur initiale du front. */
-export const IDLE_ACTIVITY: AgentActivity = { phase: null, since: 0, turnStartedAt: 0, tools: [] };
+export const IDLE_ACTIVITY: AgentActivity = { phase: null, since: 0, turnStartedAt: 0, tools: [] }
 
 /**
  * Une commande que la session a lancée en arrière-plan, et qui lui survit.
@@ -171,12 +171,12 @@ export const IDLE_ACTIVITY: AgentActivity = { phase: null, since: 0, turnStarted
  */
 export interface BackgroundShell {
   /** L'identifiant que le CLI attribue — `btt4xdjh2`. Le même des deux bouts. */
-  id: string;
+  id: string
   /** Le `tool_use_id`, qui relie la ligne à sa carte dans le fil. */
-  toolUseId: string;
-  command: string;
-  description?: string;
-  startedAt: number;
+  toolUseId: string
+  command: string
+  description?: string
+  startedAt: number
   /**
    * `done` vient de la notification du harnais, `killed` de l'appel d'arrêt —
    * jamais d'une déduction.
@@ -189,10 +189,10 @@ export interface BackgroundShell {
    * celui-là, personne ne nous en préviendra, et il reste `running`. C'est
    * assumé : `lastWriteAt` montre le silence, et un silence qui dure se lit.
    */
-  state: 'running' | 'killed' | 'done';
+  state: 'running' | 'killed' | 'done'
   /** Le code de sortie, tel que la notification le donne. */
-  exitCode?: number;
-  endedAt?: number;
+  exitCode?: number
+  endedAt?: number
   /**
    * La dernière fois que le fichier de sortie a grossi.
    *
@@ -200,25 +200,25 @@ export interface BackgroundShell {
    * sentinelle dont la condition n'arrivera jamais — `until netstat … :5001`
    * boucle en silence, sans rien écrire, et rien d'autre ne le trahit.
    */
-  lastWriteAt?: number;
+  lastWriteAt?: number
   /** Taille du fichier de sortie, qui sert de curseur à la lecture. */
-  size?: number;
+  size?: number
 }
 
 /** Un morceau de la sortie d'un shell, rendu à partir d'un curseur. */
 export interface ShellOutput {
-  text: string;
+  text: string
   /** L'octet où ce morceau commence — le curseur à repasser pour la suite. */
-  from: number;
+  from: number
   /** La taille du fichier à cet instant, qui sert de curseur au prochain appel. */
-  size: number;
+  size: number
   /**
    * Les octets sautés entre le curseur demandé et celui servi.
    *
    * Le panneau le dit plutôt que de faire croire à une sortie continue : un
    * serveur bavard laissé de côté dix minutes en écrit plus que la borne.
    */
-  skipped?: number;
+  skipped?: number
 }
 
 /**
@@ -232,11 +232,11 @@ export interface ShellOutput {
 export type AgentUpsert =
   /** Premier message d'un flux : tout l'état, pour qu'un onglet ouvert tard rattrape. */
   | {
-      kind: 'snapshot';
-      session: AgentSession;
-      events: TranscriptEvent[];
-      activity: AgentActivity;
-      shells: BackgroundShell[];
+      kind: 'snapshot'
+      session: AgentSession
+      events: TranscriptEvent[]
+      activity: AgentActivity
+      shells: BackgroundShell[]
     }
   | { kind: 'session'; session: AgentSession }
   | { kind: 'append-event'; event: TranscriptEvent }
@@ -263,7 +263,7 @@ export type AgentUpsert =
    * un Skill découvert dans un sous-dossier, par exemple. Elle remplace la
    * précédente en entier ; il n'y a pas de delta à appliquer.
    */
-  | { kind: 'commands'; commands: SlashCommandInfo[] };
+  | { kind: 'commands'; commands: SlashCommandInfo[] }
 
 /** L'identité d'une session pilotée, telle que le front l'affiche et la route. */
 export interface AgentSession {
@@ -275,13 +275,13 @@ export interface AgentSession {
    * prompt. Router sur le `sessionId` obligerait le front à attendre ; il route
    * donc sur celui-ci, toujours disponible.
    */
-  runId: string;
+  runId: string
   /** L'identifiant du SDK, vide tant que `init` n'est pas passé. */
-  sessionId: string;
+  sessionId: string
   /** Dossier de travail, résolu en chemin long. */
-  cwd: string;
+  cwd: string
   /** Slug du projet où le transcript s'écrit ; permet le lien vers le rejeu. */
-  slug: string;
+  slug: string
   /**
    * Le modèle **choisi** : `''` veut dire « celui des réglages ».
    *
@@ -290,25 +290,25 @@ export interface AgentSession {
    * l'utilisateur avait demandé « celui des réglages » — une valeur qui ne
    * figure dans aucune option, et qui donne à croire qu'il a choisi ce modèle-là.
    */
-  model: string;
+  model: string
   /** Ce que le SDK emploie réellement, connu après `init`. Pour l'afficher. */
-  resolvedModel?: string;
-  permissionMode: string;
-  status: AgentStatus;
-  error?: string;
-  startedAt: number;
+  resolvedModel?: string
+  permissionMode: string
+  status: AgentStatus
+  error?: string
+  startedAt: number
   /** La session prolonge un transcript existant plutôt que d'en ouvrir un. */
-  resumed?: boolean;
+  resumed?: boolean
 }
 
 export interface CreateSessionBody {
-  cwd: string;
-  model?: string;
-  permissionMode?: string;
+  cwd: string
+  model?: string
+  permissionMode?: string
   /** Premier tour, envoyé sans attendre `init`. Facultatif. */
-  prompt?: string;
+  prompt?: string
   /** Les images du premier tour. Sans `prompt`, elles ne partent pas. */
-  attachments?: PromptAttachment[];
+  attachments?: PromptAttachment[]
   /**
    * Identifiant SDK d'une session à reprendre.
    *
@@ -316,11 +316,11 @@ export interface CreateSessionBody {
    * rechargé et les nouveaux tours s'ajoutent au même `.jsonl`. C'est ce qui
    * rend un lien d'Atelier durable — le registre, lui, meurt avec le serveur.
    */
-  resume?: string;
+  resume?: string
 }
 
 export interface SetPermissionModeBody {
-  permissionMode: string;
+  permissionMode: string
 }
 
 /**
@@ -337,13 +337,13 @@ export interface SetPermissionModeBody {
  * demander — l'écran d'à côté ne le proposait pas, ce qui ne l'empêchait pas
  * d'exister. La liste vit ici pour que les deux ne puissent plus diverger.
  */
-export const PERMISSION_MODES = ['default', 'auto', 'acceptEdits', 'plan'] as const;
+export const PERMISSION_MODES = ['default', 'auto', 'acceptEdits', 'plan'] as const
 
-export type PermissionMode = (typeof PERMISSION_MODES)[number];
+export type PermissionMode = (typeof PERMISSION_MODES)[number]
 
 /** Ce mode est-il l'un de ceux qu'AURA ouvre ? */
 export function isPermissionMode(value: string): value is PermissionMode {
-  return (PERMISSION_MODES as readonly string[]).includes(value);
+  return (PERMISSION_MODES as readonly string[]).includes(value)
 }
 
 /**
@@ -356,21 +356,21 @@ export function isPermissionMode(value: string): value is PermissionMode {
  */
 export interface PromptAttachment {
   /** `image/png`, `image/jpeg`, `image/gif` — ce que le presse-papier déclare. */
-  mediaType: string;
+  mediaType: string
   /** Le base64 nu : sans le préfixe `data:…;base64,`. */
-  data: string;
+  data: string
 }
 
 export interface SendBody {
-  prompt: string;
+  prompt: string
   /** Les images collées, dans l'ordre où elles ont été ajoutées. */
-  attachments?: PromptAttachment[];
+  attachments?: PromptAttachment[]
 }
 
 export interface RespondPermissionBody {
-  answer: PermissionAnswer;
+  answer: PermissionAnswer
   /** Motif du refus, montré au modèle. Ignoré pour une autorisation. */
-  reason?: string;
+  reason?: string
 }
 
 export interface RespondAskBody {
@@ -379,7 +379,7 @@ export interface RespondAskBody {
    * libellés joints par `, ` — c'est la forme que le harness produit, et donc
    * celle que le visualiseur sait relire.
    */
-  answers: Record<string, string>;
+  answers: Record<string, string>
   /** Texte libre ajouté par l'utilisateur, quand il en a écrit un. */
-  notes?: string;
+  notes?: string
 }

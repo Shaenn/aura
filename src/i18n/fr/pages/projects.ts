@@ -15,4 +15,4 @@ export default {
     size: 'Taille',
     lastActivity: 'Dernière activité',
   },
-};
+}

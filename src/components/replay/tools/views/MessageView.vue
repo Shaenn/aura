@@ -17,45 +17,44 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { Block } from '@/services/projects';
-import { asRecord, chips, str } from '../values';
-import ToolChips from '../ToolChips.vue';
-import KeyValueList from '../KeyValueList.vue';
-import OutputPane from '../OutputPane.vue';
-import MarkdownView from '@/components/replay/MarkdownView.vue';
+  import MarkdownView from '@/components/replay/MarkdownView.vue'
+  import type { Block } from '@/services/projects'
+  import { computed } from 'vue'
+  import { useI18n } from 'vue-i18n'
+  import KeyValueList from '../KeyValueList.vue'
+  import OutputPane from '../OutputPane.vue'
+  import ToolChips from '../ToolChips.vue'
+  import { asRecord, chips, str } from '../values'
 
-import { useI18n } from 'vue-i18n';
+  const { t } = useI18n()
 
-const { t } = useI18n();
+  const props = defineProps<{ block: Block }>()
 
-const props = defineProps<{ block: Block }>();
+  const input = computed(() => asRecord(props.block.input))
+  const message = computed(() => str(input.value.message))
 
-const input = computed(() => asRecord(props.block.input));
-const message = computed(() => str(input.value.message));
-
-const params = computed(() =>
-  chips([
-    [t('replay.tools.chips.to'), str(input.value.to)],
-    ['objet', str(input.value.summary)],
-    [t('replay.tools.chips.team'), str(input.value.team_name)],
-    ['type', str(input.value.type)],
-  ]),
-);
+  const params = computed(() =>
+    chips([
+      [t('replay.tools.chips.to'), str(input.value.to)],
+      ['objet', str(input.value.summary)],
+      [t('replay.tools.chips.team'), str(input.value.team_name)],
+      ['type', str(input.value.type)],
+    ]),
+  )
 </script>
 
 <style scoped lang="scss">
-.tv {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-.mv-body {
-  padding: var(--space-md);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  max-height: 420px;
-  overflow: auto;
-}
+  .tv {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  .mv-body {
+    padding: var(--space-md);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    max-height: 420px;
+    overflow: auto;
+  }
 </style>

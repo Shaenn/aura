@@ -19,7 +19,7 @@
         renvois vers ces tours. En la posant ici, le renvoi tombe exactement sur
         la tâche née à ce tour — et non plus sur la ligne grise qui la précédait.
       -->
-      <li v-for="(it, i) in items" :key="it.uuid" :id="`rp-task-${it.uuid}`" class="tp-item">
+      <li v-for="(it, i) in items" :id="`rp-task-${it.uuid}`" :key="it.uuid" class="tp-item">
         <span class="tp-num font-mono">{{ it.id || i + 1 }}</span>
         <span class="tp-subject">{{ it.subject }}</span>
       </li>
@@ -28,24 +28,24 @@
 </template>
 
 <script setup lang="ts">
-// La série de `TaskCreate` qui pose le plan, rendue d'un bloc.
-//
-// Cinq créations d'affilée sont un seul geste — « voilà comment je vais m'y
-// prendre ». Une ligne par appel en faisait cinq actions de même poids, séparées
-// par cinq jalons de tour, et la régularité se lisait comme du bruit. Les états
-// ne sont pas montrés ici : à cet instant du flux, tout est à faire, et afficher
-// l'état final trahirait le moment. C'est la colonne de droite qui le porte.
+  // La série de `TaskCreate` qui pose le plan, rendue d'un bloc.
+  //
+  // Cinq créations d'affilée sont un seul geste — « voilà comment je vais m'y
+  // prendre ». Une ligne par appel en faisait cinq actions de même poids, séparées
+  // par cinq jalons de tour, et la régularité se lisait comme du bruit. Les états
+  // ne sont pas montrés ici : à cet instant du flux, tout est à faire, et afficher
+  // l'état final trahirait le moment. C'est la colonne de droite qui le porte.
 
-import { useI18n } from 'vue-i18n';
-import type { PlanItem } from './taskList';
+  import { useI18n } from 'vue-i18n'
+  import type { PlanItem } from './taskList'
 
-defineProps<{ items: PlanItem[] }>();
+  defineProps<{ items: PlanItem[] }>()
 
-const { t } = useI18n();
+  const { t } = useI18n()
 </script>
 
 <style scoped lang="scss">
-/*
+  /*
   Les mesures d'une carte d'outil : même bordure, même fond, même rembourrage,
   même taille de titre. Le plan est un acte du même ordre qu'un `Read` ou un
   `Bash` — plus structurant, même — et doit peser autant dans la colonne.
@@ -54,73 +54,73 @@ const { t } = useI18n();
   replie : la liste *est* le contenu, et la cacher derrière un chevron
   reviendrait à masquer la seule chose que le bloc a à dire.
 */
-.tp {
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  overflow: hidden;
-}
-.tp-head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  margin: 0;
-  padding: var(--space-sm) var(--space-md);
-}
-.tp-head-icon {
-  color: var(--brand);
-  flex: none;
-}
-.tp-head-name {
-  flex: none;
-  font-size: var(--fs-sm);
-  font-weight: 600;
-}
-.tp-head-count {
-  flex: none;
-  font-size: var(--fs-xs);
-  color: var(--dim);
-}
-.tp-head-label {
-  min-width: 0;
-  font-size: var(--fs-xs);
-  color: var(--faint);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.tp-list {
-  list-style: none;
-  margin: 0;
-  padding: var(--space-sm) var(--space-md);
-  border-top: 1px solid var(--line);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-.tp-item {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-sm);
-  min-width: 0;
-  // Le lien du panneau de contexte vise cette ligne : sans marge, elle arriverait
-  // collée au bord haut de la zone défilante.
-  scroll-margin-block: var(--space-xl);
-}
-.tp-num {
-  flex: none;
-  width: 1.25em;
-  text-align: right;
-  font-size: var(--fs-2xs);
-  color: var(--faint);
-  font-variant-numeric: tabular-nums;
-}
-.tp-subject {
-  min-width: 0;
-  font-size: var(--fs-sm);
-  color: var(--muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+  .tp {
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+  .tp-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin: 0;
+    padding: var(--space-sm) var(--space-md);
+  }
+  .tp-head-icon {
+    color: var(--brand);
+    flex: none;
+  }
+  .tp-head-name {
+    flex: none;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+  .tp-head-count {
+    flex: none;
+    font-size: var(--fs-xs);
+    color: var(--dim);
+  }
+  .tp-head-label {
+    min-width: 0;
+    font-size: var(--fs-xs);
+    color: var(--faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tp-list {
+    list-style: none;
+    margin: 0;
+    padding: var(--space-sm) var(--space-md);
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+  .tp-item {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-sm);
+    min-width: 0;
+    // Le lien du panneau de contexte vise cette ligne : sans marge, elle arriverait
+    // collée au bord haut de la zone défilante.
+    scroll-margin-block: var(--space-xl);
+  }
+  .tp-num {
+    flex: none;
+    width: 1.25em;
+    text-align: right;
+    font-size: var(--fs-2xs);
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .tp-subject {
+    min-width: 0;
+    font-size: var(--fs-sm);
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 </style>

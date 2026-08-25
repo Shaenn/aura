@@ -17,14 +17,11 @@
  * en entier, car la boucle locale ne se limite pas à `127.0.0.1`.
  */
 export function isLoopback(address: string | undefined): boolean {
-  if (!address) return false;
+  if (!address) return false
   // `::ffff:127.0.0.1` — l'IPv4 déguisée en IPv6. On la déshabille avant de juger.
-  const addr = address.startsWith('::ffff:') ? address.slice(7) : address;
-  if (addr === '::1') return true;
-  const octets = addr.split('.');
-  if (octets.length !== 4) return false;
-  return (
-    octets[0] === '127' &&
-    octets.every((o) => o.length > 0 && o.length <= 3 && /^\d+$/.test(o) && Number(o) <= 255)
-  );
+  const addr = address.startsWith('::ffff:') ? address.slice(7) : address
+  if (addr === '::1') return true
+  const octets = addr.split('.')
+  if (octets.length !== 4) return false
+  return octets[0] === '127' && octets.every((o) => o.length > 0 && o.length <= 3 && /^\d+$/.test(o) && Number(o) <= 255)
 }

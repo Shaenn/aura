@@ -70,12 +70,7 @@ document. Le conserver.
 ## Les états ARIA suivent l'état réel
 
 ```vue
-<q-btn
-  :aria-expanded="helpOpen"
-  aria-controls="help-drawer"
-  :aria-label="helpLabel"
-  @click="toggleHelp()"
-/>
+<q-btn :aria-expanded="helpOpen" aria-controls="help-drawer" :aria-label="helpLabel" @click="toggleHelp()" />
 ```
 
 | Attribut        | Quand                                                          |

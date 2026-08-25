@@ -10,15 +10,15 @@
 // et que l'ordre de coupe place toujours un hôte avant son job : l'inverse a été
 // mesuré, le job renaît dans la seconde sous un nouveau PID.
 
-import { describe, expect, it } from 'vitest';
-import { buildProcessList, killOrder, spawnedByPid, type RawProcess } from '../server/processes.ts';
+import { describe, expect, it } from 'vitest'
+import { buildProcessList, killOrder, spawnedByPid, type RawProcess } from '../server/processes.ts'
 
 /** Le PID du BFF dans ce relevé. Son parent est un `node --watch`, hors table. */
-const AURA = 17648;
+const AURA = 17648
 
 /** Les PID encore vivants au moment du relevé. `24680` est mort, son daemon non. */
-const VIVANTS = new Set([17648, 26132, 14864, 18220, 31724, 24332, 17216, 3432, 11232, 16556]);
-const estVivant = (pid: number): boolean => VIVANTS.has(pid);
+const VIVANTS = new Set([17648, 26132, 14864, 18220, 31724, 24332, 17216, 3432, 11232, 16556])
+const estVivant = (pid: number): boolean => VIVANTS.has(pid)
 
 const PARC: RawProcess[] = [
   // Le BFF, lancé par `node --watch` (16556), qui ne parle pas de Claude.
@@ -32,8 +32,7 @@ const PARC: RawProcess[] = [
   {
     pid: 26132,
     ppid: 8164,
-    command:
-      'claude.exe daemon run --origin transient --spawned-by "{\\"label\\":\\"claude\\",\\"cwd\\":\\"C:\\\\devl\\\\aura\\",\\"pid\\":24680}"',
+    command: 'claude.exe daemon run --origin transient --spawned-by "{\\"label\\":\\"claude\\",\\"cwd\\":\\"C:\\\\devl\\\\aura\\",\\"pid\\":24680}"',
     startedAt: 1_786_477_449_000,
   },
   {
@@ -81,55 +80,54 @@ const PARC: RawProcess[] = [
     command: 'C:\\devl\\aura\\node_modules\\@anthropic-ai\\claude-agent-sdk-win32-x64\\claude.exe',
     startedAt: 1_786_478_200_000,
   },
-];
+]
 
-const liste = (): ReturnType<typeof buildProcessList> =>
-  buildProcessList(PARC, AURA, [], estVivant);
+const liste = (): ReturnType<typeof buildProcessList> => buildProcessList(PARC, AURA, [], estVivant)
 
-const kindOf = (pid: number): string | undefined => liste().find((p) => p.pid === pid)?.kind;
+const kindOf = (pid: number): string | undefined => liste().find((p) => p.pid === pid)?.kind
 
 describe('reconnaître les processus', () => {
   it('donne son rôle à chacun', () => {
-    expect(kindOf(AURA)).toBe('aura');
-    expect(kindOf(26132)).toBe('daemon');
-    expect(kindOf(14864)).toBe('pty-host');
-    expect(kindOf(18220)).toBe('bg-job');
-    expect(kindOf(24332)).toBe('bg-job');
-    expect(kindOf(17216)).toBe('interactive');
-    expect(kindOf(20452)).toBe('native-host');
-    expect(kindOf(21000)).toBe('atelier');
-  });
+    expect(kindOf(AURA)).toBe('aura')
+    expect(kindOf(26132)).toBe('daemon')
+    expect(kindOf(14864)).toBe('pty-host')
+    expect(kindOf(18220)).toBe('bg-job')
+    expect(kindOf(24332)).toBe('bg-job')
+    expect(kindOf(17216)).toBe('interactive')
+    expect(kindOf(20452)).toBe('native-host')
+    expect(kindOf(21000)).toBe('atelier')
+  })
 
   it('garde le BFF, qui ne parle pourtant pas de Claude', () => {
     // Sans lui, les sessions de l'Atelier n'auraient plus de parent dans l'arbre.
-    expect(liste().map((p) => p.pid)).toContain(AURA);
-  });
+    expect(liste().map((p) => p.pid)).toContain(AURA)
+  })
 
   it('ne marque orphelin que le daemon dont le lanceur est mort', () => {
     const orphelins = liste()
       .filter((p) => p.orphan)
-      .map((p) => p.pid);
-    expect(orphelins).toEqual([26132]);
-  });
+      .map((p) => p.pid)
+    expect(orphelins).toEqual([26132])
+  })
 
   it('ne prend pas une session de terminal pour une abandonnée', () => {
     // Son parent est un shell : absent de la table, bien vivant sur la machine.
     // Juger sur la table plutôt que sur le système les déclarerait toutes perdues.
-    expect(liste().find((p) => p.pid === 17216)?.orphan).toBe(false);
-  });
+    expect(liste().find((p) => p.pid === 17216)?.orphan).toBe(false)
+  })
 
   it('lit le lanceur que le daemon inscrit dans sa propre ligne', () => {
-    expect(spawnedByPid(PARC[1]?.command ?? '')).toBe(24680);
-    expect(spawnedByPid('claude.exe --bg-pty-host truc')).toBe(0);
-  });
+    expect(spawnedByPid(PARC[1]?.command ?? '')).toBe(24680)
+    expect(spawnedByPid('claude.exe --bg-pty-host truc')).toBe(0)
+  })
 
   it('protège AURA d’elle-même', () => {
     expect(
       liste()
         .filter((p) => p.self)
         .map((p) => p.pid),
-    ).toEqual([AURA]);
-  });
+    ).toEqual([AURA])
+  })
 
   it('rapproche le fichier de session, quand il y en a un', () => {
     const avecNom = buildProcessList(
@@ -146,43 +144,38 @@ describe('reconnaître les processus', () => {
         },
       ],
       estVivant,
-    );
-    const job = avecNom.find((p) => p.pid === 18220);
-    expect(job?.name).toBe('Étude de faisabilité');
-    expect(job?.status).toBe('busy');
-  });
-});
+    )
+    const job = avecNom.find((p) => p.pid === 18220)
+    expect(job?.name).toBe('Étude de faisabilité')
+    expect(job?.status).toBe('busy')
+  })
+})
 
 describe('ordre de coupe', () => {
   it('place le daemon avant ses hôtes, et chaque hôte avant son job', () => {
-    const ordre = killOrder(26132, true, liste());
+    const ordre = killOrder(26132, true, liste())
 
-    expect(ordre[0]).toBe(26132);
-    expect(ordre).toHaveLength(5);
+    expect(ordre[0]).toBe(26132)
+    expect(ordre).toHaveLength(5)
     for (const [hôte, job] of [
       [14864, 18220],
       [31724, 24332],
     ]) {
-      expect(ordre.indexOf(hôte as number)).toBeLessThan(ordre.indexOf(job as number));
+      expect(ordre.indexOf(hôte as number)).toBeLessThan(ordre.indexOf(job as number))
     }
-  });
+  })
 
   it('ne coupe que la cible quand on ne demande pas la descendance', () => {
-    expect(killOrder(26132, false, liste())).toEqual([26132]);
-  });
+    expect(killOrder(26132, false, liste())).toEqual([26132])
+  })
 
   it('descend d’un hôte à son seul job', () => {
-    expect(killOrder(14864, true, liste())).toEqual([14864, 18220]);
-  });
+    expect(killOrder(14864, true, liste())).toEqual([14864, 18220])
+  })
 
   it('ne boucle pas si un processus se déclare son propre parent', () => {
     // Un PID recyclé peut former ce cycle ; le balayage ne doit pas y rester.
-    const bouclé = buildProcessList(
-      [{ pid: 500, ppid: 500, command: 'claude.exe' }],
-      AURA,
-      [],
-      estVivant,
-    );
-    expect(killOrder(500, true, bouclé)).toEqual([500]);
-  });
-});
+    const bouclé = buildProcessList([{ pid: 500, ppid: 500, command: 'claude.exe' }], AURA, [], estVivant)
+    expect(killOrder(500, true, bouclé)).toEqual([500])
+  })
+})

@@ -42,8 +42,7 @@ const frDiagnostics = {
     subagentCost: {
       label: 'Coût des sous-agents',
       help: 'Ce que les délégations ont coûté, sur les seules sessions qui délèguent. En dollars et non en part du coût : une session dont le fil principal ne fait que lancer des agents leur doit 100 % de sa dépense, et un ratio qui sature ne désigne plus personne.',
-      guardBasis:
-        "Trois dollars de délégation : le prix en dessous duquel relancer autrement coûterait plus cher que ce qu'on économiserait.",
+      guardBasis: "Trois dollars de délégation : le prix en dessous duquel relancer autrement coûterait plus cher que ce qu'on économiserait.",
     },
     injectedContext: {
       label: 'Contexte injecté par le harness',
@@ -72,8 +71,7 @@ const frDiagnostics = {
     interruptions: {
       label: 'Interruptions',
       help: "Les fois où vous avez coupé la parole (Échap). Leur coût direct est négligeable ; ce qu'elles signalent ne l'est pas : à chaque fois, le travail partait ailleurs qu'attendu. Sur les sessions qui en portent au moins une.",
-      guardBasis:
-        'Le seuil est franchi au-delà de deux, soit à la troisième interruption : une arrive, deux se discutent, trois dessinent un motif.',
+      guardBasis: 'Le seuil est franchi au-delà de deux, soit à la troisième interruption : une arrive, deux se discutent, trois dessinent un motif.',
     },
     rereadTokens: {
       label: 'Relectures de fichiers',
@@ -114,8 +112,7 @@ const frDiagnostics = {
       title: "Relecture d'historique",
       message:
         "Session {id} : {cost} passés à relire l'historique, soit {share} de ses {total}, sur {turns} tours et une fenêtre montée à {peak} tokens.",
-      basis:
-        'Tokens de cache relus × tarif du modèle, jour par jour. Coût constaté, pas économie promise.',
+      basis: 'Tokens de cache relus × tarif du modèle, jour par jour. Coût constaté, pas économie promise.',
     },
     'cache-faible': {
       title: 'Cache mal exploité',
@@ -128,19 +125,16 @@ const frDiagnostics = {
     },
     'sous-agents-couteux': {
       title: 'Sous-agents coûteux',
-      message:
-        'Session {id} : {count} sous-agent(s) ({types}) pour {cost}, soit {share} du coût de la session, en {turns} tours délégués.',
+      message: 'Session {id} : {count} sous-agent(s) ({types}) pour {cost}, soit {share} du coût de la session, en {turns} tours délégués.',
       unknownType: 'type inconnu',
       basis:
         'Coût relevé des fichiers de sous-agents de la session, au tarif de leur modèle. Dépense constatée, pas gaspillage : déléguer a souvent été le bon choix.',
     },
     'outils-gourmands': {
       title: 'Outils gourmands en contexte',
-      message:
-        "Session {id} : ~{tokens} tokens d'outils, {share} de ce qu'on sait nommer de sa fenêtre. ",
+      message: "Session {id} : ~{tokens} tokens d'outils, {share} de ce qu'on sait nommer de sa fenêtre. ",
       top: '{name} en concentre ~{tokens} sur {calls} appels ({inputShare} en entrée).',
-      basis:
-        'Texte des appels et des résultats, estimé à 4 caractères par token ; images chiffrées en pavés de 28 px.',
+      basis: 'Texte des appels et des résultats, estimé à 4 caractères par token ; images chiffrées en pavés de 28 px.',
     },
     'outils-en-echec': {
       title: "Appels d'outil en échec",
@@ -148,13 +142,11 @@ const frDiagnostics = {
       worst: ', surtout {name} ({errors}).',
       noWorst: '.',
       wasted: ' ~{tokens} tokens dépensés sans résultat.',
-      basis:
-        'Poids de chaque outil au prorata de ses échecs — le transcript ne chiffre pas un appel raté à part.',
+      basis: 'Poids de chaque outil au prorata de ses échecs — le transcript ne chiffre pas un appel raté à part.',
     },
     'compaction-lourde': {
       title: 'Compactions lourdes',
-      message:
-        'Session {id} : {count} compaction(s) ({kind}) ont jeté {tokens} tokens de contexte, sur une fenêtre montée à {peak}.',
+      message: 'Session {id} : {count} compaction(s) ({kind}) ont jeté {tokens} tokens de contexte, sur une fenêtre montée à {peak}.',
       auto: '{count} subie(s)',
       manual: 'toutes déclenchées à la main',
       basis: '`preTokens − postTokens` de chaque compaction, deux chiffres écrits par le harness.',
@@ -190,8 +182,7 @@ const frDiagnostics = {
     },
     relectures: {
       title: 'Fichiers relus',
-      message:
-        'Session {id} : {calls} lectures portaient sur un fichier déjà lu, ~{tokens} tokens réinjectés',
+      message: 'Session {id} : {calls} lectures portaient sur un fichier déjà lu, ~{tokens} tokens réinjectés',
       share: ' — {share} de ce que Read a rapporté.',
       noShare: '.',
       basis:
@@ -199,8 +190,7 @@ const frDiagnostics = {
     },
     'fenetre-proche-limite': {
       title: 'Fenêtre proche de la limite',
-      message:
-        'Session {id} : la fenêtre a atteint {peak} tokens, soit {fill} de la limite de {limit}',
+      message: 'Session {id} : la fenêtre a atteint {peak} tokens, soit {fill} de la limite de {limit}',
       auto: ', et {count} compaction(s) ont été subies.',
       noAuto: '.',
       basis:
@@ -329,25 +319,22 @@ const frDiagnostics = {
         "À noter : {n} de ces sessions ont aussi une fenêtre remplie par les sorties d'outils — c'est ce volume qu'elles relisent. Borner les lectures agit sur les deux fronts.",
       compactRelu:
         'À noter : {n} de ces sessions figurent aussi parmi les plus coûteuses en relecture — la compaction est arrivée après que la facture a été payée.',
-      agentsRelu:
-        "À noter : {n} de ces sessions relisent aussi beaucoup leur propre historique ; la délégation n'a pas allégé le fil principal.",
+      agentsRelu: "À noter : {n} de ces sessions relisent aussi beaucoup leur propre historique ; la délégation n'a pas allégé le fil principal.",
     },
     caveats: {
       throughput:
         'Le rendement qui sépare les deux quarts est un nombre d’éditions par heure : je mesure une activité, pas une valeur. Une session qui traque deux heures un bug subtil et le corrige en une ligne figure tout en bas de mon classement, et elle a pourtant bien travaillé.',
       listPrices:
         'Je compte aux tarifs API publics. Un abonnement Pro ou Max est facturé au forfait : mes montants disent ce que cet usage aurait coûté à l’API, pas ce que vous avez payé.',
-      unpriced:
-        "Je ne connais pas le tarif de {count} modèle(s) ({models}) : j'ai compté leurs tokens, mais leur coût manque à mes montants.",
-      uncalibrated:
-        "Je n'ai pas assez de cas pour calibrer le seuil de {rules} : ces constats reposent sur une valeur de repli, pas sur votre parc.",
+      unpriced: "Je ne connais pas le tarif de {count} modèle(s) ({models}) : j'ai compté leurs tokens, mais leur coût manque à mes montants.",
+      uncalibrated: "Je n'ai pas assez de cas pour calibrer le seuil de {rules} : ces constats reposent sur une valeur de repli, pas sur votre parc.",
       estimates:
         'Les chiffres en tokens marqués « ~ », je les estime à 4 caractères par token : ce sont des indications, jamais un décompte. Les montants en dollars, eux, viennent de compteurs écrits par le harness.',
     },
   },
-};
+}
 
 /** La forme du catalogue de diagnostic — l'anglais s'y conforme. */
-export type DiagnosticsCatalog = typeof frDiagnostics;
+export type DiagnosticsCatalog = typeof frDiagnostics
 
-export default frDiagnostics;
+export default frDiagnostics

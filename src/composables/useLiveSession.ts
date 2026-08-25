@@ -7,7 +7,6 @@
 // Une seule `EventSource` par session, refermée à la sortie de l'écran. La
 // session, elle, survit : c'est le registre du BFF qui la possède, pas l'onglet.
 
-import { ref, shallowRef, triggerRef, onUnmounted } from 'vue';
 import type {
   AgentActivity,
   AgentSession,
@@ -17,9 +16,10 @@ import type {
   BackgroundShell,
   PermissionRequest,
   SlashCommandInfo,
-} from '@/services/agent';
-import { getSessionCommands, getSessionFiles, IDLE_ACTIVITY, streamUrl } from '@/services/agent';
-import type { TranscriptEvent } from '@/services/projects';
+} from '@/services/agent'
+import { getSessionCommands, getSessionFiles, IDLE_ACTIVITY, streamUrl } from '@/services/agent'
+import type { TranscriptEvent } from '@/services/projects'
+import { ref, shallowRef, triggerRef, onUnmounted } from 'vue'
 
 export function useLiveSession() {
   /**
@@ -28,27 +28,27 @@ export function useLiveSession() {
    * qui reçoit plusieurs deltas par seconde ferait payer un parcours complet de
    * l'arbre à chaque token.
    */
-  const events = shallowRef<TranscriptEvent[]>([]);
-  const session = ref<AgentSession | null>(null);
-  const status = ref<AgentStatus>('idle');
-  const error = ref('');
+  const events = shallowRef<TranscriptEvent[]>([])
+  const session = ref<AgentSession | null>(null)
+  const status = ref<AgentStatus>('idle')
+  const error = ref('')
   /** Les demandes en attente, dans l'ordre d'arrivée. */
-  const permissions = ref<PermissionRequest[]>([]);
-  const asks = ref<AskRequest[]>([]);
-  const connected = ref(false);
+  const permissions = ref<PermissionRequest[]>([])
+  const asks = ref<AskRequest[]>([])
+  const connected = ref(false)
   /**
    * Ce que l'agent fait à l'instant. Un état à part de la timeline : il ne
    * s'ajoute à rien, il se remplace — et il n'a pas de passé.
    */
-  const activity = ref<AgentActivity>(IDLE_ACTIVITY);
+  const activity = ref<AgentActivity>(IDLE_ACTIVITY)
   /**
    * Les commandes `/`, chargées à la demande puis rafraîchies par le flux.
    *
    * Elles ne font pas partie du `snapshot` : les demander démarre le processus
    * du CLI, et une session qu'on regarde sans lui parler ne doit rien coûter.
    */
-  const commands = ref<SlashCommandInfo[]>([]);
-  const commandsLoading = ref(false);
+  const commands = ref<SlashCommandInfo[]>([])
+  const commandsLoading = ref(false)
   /**
    * Les fichiers du dossier de travail, pour le `@`.
    *
@@ -56,125 +56,125 @@ export function useLiveSession() {
    * revoit pas une requête par frappe. `filesTruncated` dit qu'un dépôt trop
    * grand a été coupé.
    */
-  const files = ref<string[]>([]);
-  const filesTruncated = ref(false);
-  const filesLoading = ref(false);
+  const files = ref<string[]>([])
+  const filesTruncated = ref(false)
+  const filesLoading = ref(false)
   /**
    * Ce que la session a lancé en arrière-plan.
    *
    * Une liste, là où `activity` est un présent : un `pnpm dev:all` quitte les
    * outils en vol au bout de deux secondes et tient son port une heure.
    */
-  const shells = ref<BackgroundShell[]>([]);
+  const shells = ref<BackgroundShell[]>([])
 
-  let source: EventSource | null = null;
-  let attached = '';
-  let commandsAsked = false;
-  let filesAsked = false;
-  const index = new Map<string, number>();
+  let source: EventSource | null = null
+  let attached = ''
+  let commandsAsked = false
+  let filesAsked = false
+  const index = new Map<string, number>()
 
   function reindex(): void {
-    index.clear();
-    events.value.forEach((e, i) => index.set(e.uuid, i));
+    index.clear()
+    events.value.forEach((e, i) => index.set(e.uuid, i))
   }
 
   function apply(upsert: AgentUpsert): void {
     switch (upsert.kind) {
       case 'snapshot':
-        session.value = upsert.session;
-        status.value = upsert.session.status;
-        events.value = upsert.events;
-        activity.value = upsert.activity;
-        shells.value = upsert.shells;
-        reindex();
-        return;
+        session.value = upsert.session
+        status.value = upsert.session.status
+        events.value = upsert.events
+        activity.value = upsert.activity
+        shells.value = upsert.shells
+        reindex()
+        return
 
       case 'session':
-        session.value = upsert.session;
-        return;
+        session.value = upsert.session
+        return
 
       case 'append-event':
-        events.value = [...events.value, upsert.event];
-        index.set(upsert.event.uuid, events.value.length - 1);
-        return;
+        events.value = [...events.value, upsert.event]
+        index.set(upsert.event.uuid, events.value.length - 1)
+        return
 
       case 'replace-event': {
-        const at = index.get(upsert.event.uuid);
+        const at = index.get(upsert.event.uuid)
         if (at === undefined) {
-          events.value = [...events.value, upsert.event];
-          index.set(upsert.event.uuid, events.value.length - 1);
-          return;
+          events.value = [...events.value, upsert.event]
+          index.set(upsert.event.uuid, events.value.length - 1)
+          return
         }
-        const next = events.value.slice();
-        next[at] = upsert.event;
-        events.value = next;
-        return;
+        const next = events.value.slice()
+        next[at] = upsert.event
+        events.value = next
+        return
       }
 
       case 'text-delta': {
-        const at = index.get(upsert.uuid);
-        const event = at === undefined ? undefined : events.value[at];
-        const block = event?.blocks[upsert.blockIndex];
-        if (!block) return;
+        const at = index.get(upsert.uuid)
+        const event = at === undefined ? undefined : events.value[at]
+        const block = event?.blocks[upsert.blockIndex]
+        if (!block) return
         // Le seul endroit où l'on mute au lieu de remplacer : un token par
         // frappe, et recopier l'événement à chacun ferait des milliers de
         // tableaux pour une réponse un peu longue. `triggerRef` prévient le
         // rendu sans changer l'identité de la liste.
-        block.text = (block.text ?? '') + upsert.text;
-        triggerRef(events);
-        return;
+        block.text = (block.text ?? '') + upsert.text
+        triggerRef(events)
+        return
       }
 
       case 'tool-input': {
         // Même raison que `text-delta` de muter plutôt que remplacer : l'entrée
         // se réécrit entière à chaque pas, et recopier la liste d'événements à
         // chaque fois ferait redessiner toute la timeline pour une ligne.
-        const at = index.get(upsert.uuid);
-        const event = at === undefined ? undefined : events.value[at];
-        const block = event?.blocks[upsert.blockIndex];
-        if (!block) return;
-        block.input = upsert.input;
-        triggerRef(events);
-        return;
+        const at = index.get(upsert.uuid)
+        const event = at === undefined ? undefined : events.value[at]
+        const block = event?.blocks[upsert.blockIndex]
+        if (!block) return
+        block.input = upsert.input
+        triggerRef(events)
+        return
       }
 
       case 'activity':
-        activity.value = upsert.activity;
-        return;
+        activity.value = upsert.activity
+        return
 
       case 'shells':
         // Le serveur pousse la liste entière : elle se remplace, comme celle des
         // commandes. Il n'y a pas de delta à appliquer sur quatre entrées.
-        shells.value = upsert.shells;
-        return;
+        shells.value = upsert.shells
+        return
 
       case 'status':
-        status.value = upsert.status;
-        if (upsert.error) error.value = upsert.error;
-        if (session.value) session.value.status = upsert.status;
-        return;
+        status.value = upsert.status
+        if (upsert.error) error.value = upsert.error
+        if (session.value) session.value.status = upsert.status
+        return
 
       case 'permission-request':
-        permissions.value = [...permissions.value, upsert.request];
-        return;
+        permissions.value = [...permissions.value, upsert.request]
+        return
 
       case 'permission-settled':
-        permissions.value = permissions.value.filter((p) => p.id !== upsert.id);
-        return;
+        permissions.value = permissions.value.filter((p) => p.id !== upsert.id)
+        return
 
       case 'ask-request':
-        asks.value = [...asks.value, upsert.request];
-        return;
+        asks.value = [...asks.value, upsert.request]
+        return
 
       case 'ask-settled':
-        asks.value = asks.value.filter((a) => a.id !== upsert.id);
-        return;
+        asks.value = asks.value.filter((a) => a.id !== upsert.id)
+        return
 
       case 'commands':
         // Le serveur pousse la liste entière : elle se remplace, elle ne se
         // fusionne pas. Un Skill retiré doit disparaître du menu.
-        commands.value = upsert.commands;
-        return;
+        commands.value = upsert.commands
+        return
     }
   }
 
@@ -188,15 +188,15 @@ export function useLiveSession() {
    * à la main reste possible, et rien n'est perdu.
    */
   async function loadCommands(): Promise<void> {
-    if (commandsAsked || !attached) return;
-    commandsAsked = true;
-    commandsLoading.value = true;
+    if (commandsAsked || !attached) return
+    commandsAsked = true
+    commandsLoading.value = true
     try {
-      commands.value = (await getSessionCommands(attached)).commands;
+      commands.value = (await getSessionCommands(attached)).commands
     } catch {
-      commands.value = [];
+      commands.value = []
     } finally {
-      commandsLoading.value = false;
+      commandsLoading.value = false
     }
   }
 
@@ -207,45 +207,45 @@ export function useLiveSession() {
    * tape alors à la main, ce qui reste possible de toute façon.
    */
   async function loadFiles(): Promise<void> {
-    if (filesAsked || !attached) return;
-    filesAsked = true;
-    filesLoading.value = true;
+    if (filesAsked || !attached) return
+    filesAsked = true
+    filesLoading.value = true
     try {
-      const read = await getSessionFiles(attached);
-      files.value = read.files;
-      filesTruncated.value = read.truncated;
+      const read = await getSessionFiles(attached)
+      files.value = read.files
+      filesTruncated.value = read.truncated
     } catch {
-      files.value = [];
+      files.value = []
     } finally {
-      filesLoading.value = false;
+      filesLoading.value = false
     }
   }
 
   /** S'attacher à une session. Le premier message reçu est tout son état. */
   function attach(runId: string): void {
-    detach();
-    events.value = [];
-    permissions.value = [];
-    asks.value = [];
-    error.value = '';
-    activity.value = IDLE_ACTIVITY;
-    commands.value = [];
-    commandsAsked = false;
-    files.value = [];
-    filesTruncated.value = false;
-    filesAsked = false;
-    attached = runId;
-    index.clear();
+    detach()
+    events.value = []
+    permissions.value = []
+    asks.value = []
+    error.value = ''
+    activity.value = IDLE_ACTIVITY
+    commands.value = []
+    commandsAsked = false
+    files.value = []
+    filesTruncated.value = false
+    filesAsked = false
+    attached = runId
+    index.clear()
 
-    source = new EventSource(streamUrl(runId));
+    source = new EventSource(streamUrl(runId))
     source.onopen = () => {
-      connected.value = true;
-    };
+      connected.value = true
+    }
     source.onerror = () => {
       // `EventSource` se reconnecte seul ; le `snapshot` qui suivra remettra
       // l'état d'aplomb. On ne signale donc qu'une coupure visible, pas une panne.
-      connected.value = false;
-    };
+      connected.value = false
+    }
     // Le serveur nomme chaque trame de son `kind` : on écoute par nom plutôt que
     // `onmessage`, qui ne reçoit que les trames sans nom.
     const kinds: AgentUpsert['kind'][] = [
@@ -263,25 +263,25 @@ export function useLiveSession() {
       'ask-request',
       'ask-settled',
       'commands',
-    ];
+    ]
     for (const kind of kinds) {
       source.addEventListener(kind, (e) => {
-        apply(JSON.parse((e as MessageEvent<string>).data) as AgentUpsert);
-      });
+        apply(JSON.parse((e as MessageEvent<string>).data) as AgentUpsert)
+      })
     }
   }
 
   function detach(): void {
-    source?.close();
-    source = null;
-    attached = '';
-    connected.value = false;
+    source?.close()
+    source = null
+    attached = ''
+    connected.value = false
     // Débranché, on ne sait plus ce qui se passe : laisser la dernière phase
     // affichée ferait croire à une session qu'on regarde encore.
-    activity.value = IDLE_ACTIVITY;
+    activity.value = IDLE_ACTIVITY
   }
 
-  onUnmounted(detach);
+  onUnmounted(detach)
 
   return {
     events,
@@ -302,5 +302,5 @@ export function useLiveSession() {
     shells,
     attach,
     detach,
-  };
+  }
 }

@@ -24,8 +24,7 @@ export default {
   timeline: {
     phase: 'Phase {n}',
     compacted: '{before} → {after} tokens',
-    silent:
-      '{n} exécution de hook sans effet · {total} au total | {n} exécutions de hook sans effet · {total} au total',
+    silent: '{n} exécution de hook sans effet · {total} au total | {n} exécutions de hook sans effet · {total} au total',
     silentNote: "Ces hooks se sont exécutés sans rien renvoyer à Claude ni signaler d'erreur.",
   },
 
@@ -72,8 +71,7 @@ export default {
     copyMine: 'Copier votre message',
     copyBrief: 'Copier la consigne',
     queued: 'en cours de tour',
-    queuedHint:
-      'Écrit pendant que l’agent travaillait : le CLI l’a mis en file, puis le lui a transmis au milieu de sa réponse.',
+    queuedHint: 'Écrit pendant que l’agent travaillait : le CLI l’a mis en file, puis le lui a transmis au milieu de sa réponse.',
     imageLabel: 'Image jointe au message',
     imageMissing: '🖼 [image jointe]',
   },
@@ -85,8 +83,7 @@ export default {
   },
 
   images: {
-    unloadable:
-      '{n} image — non chargeable depuis cette vue | {n} images — non chargeables depuis cette vue',
+    unloadable: '{n} image — non chargeable depuis cette vue | {n} images — non chargeables depuis cette vue',
     byTool: 'Image rendue par {tool}',
     alt: 'Image du transcript',
     open: 'Ouvrir',
@@ -210,4 +207,4 @@ export default {
       teammate_terminated: "S'est arrêté.",
     },
   },
-};
+}

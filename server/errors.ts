@@ -18,12 +18,12 @@
 // Le nom du compte, l'arborescence du poste. Elles restent donc au serveur, dans
 // le journal, et le client reçoit un constat.
 
-import { ConflictError } from './claude/fs.ts';
-import { PathError } from './claude/paths.ts';
-import { McpConflictError } from './mcp.ts';
-import { ProjectError } from './projects.ts';
-import { PickerUnavailable } from './agent/folder.ts';
-import { t } from './i18n/index.ts';
+import { PickerUnavailable } from './agent/folder.ts'
+import { ConflictError } from './claude/fs.ts'
+import { PathError } from './claude/paths.ts'
+import { t } from './i18n/index.ts'
+import { McpConflictError } from './mcp.ts'
+import { ProjectError } from './projects.ts'
 
 /**
  * Les erreurs dont le message est rédigé pour l'utilisateur.
@@ -33,16 +33,10 @@ import { t } from './i18n/index.ts';
  * traduit par un message plus vague, jamais par une fuite — c'est le sens dans
  * lequel on veut se tromper.
  */
-const SPEAKABLE = [
-  PathError,
-  ConflictError,
-  McpConflictError,
-  ProjectError,
-  PickerUnavailable,
-] as const;
+const SPEAKABLE = [PathError, ConflictError, McpConflictError, ProjectError, PickerUnavailable] as const
 
 /** Le message à servir : celui d'AURA, ou un constat qui ne dit rien du disque. */
 export function publicMessage(e: unknown): string {
-  if (SPEAKABLE.some((cls) => e instanceof cls)) return (e as Error).message;
-  return t('errors.unexpected');
+  if (SPEAKABLE.some((cls) => e instanceof cls)) return (e as Error).message
+  return t('errors.unexpected')
 }

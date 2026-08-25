@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const tools: MessageSchema['replay']['tools'] = {
   call: {
@@ -55,8 +55,7 @@ const tools: MessageSchema['replay']['tools'] = {
   },
 
   service: {
-    identicalTo:
-      'Result identical to an earlier `{tool}` call — the CLI did not send it back a second time.',
+    identicalTo: 'Result identical to an earlier `{tool}` call — the CLI did not send it back a second time.',
     dontAsk: 'the session was running without asking for confirmation',
   },
 
@@ -109,8 +108,7 @@ const tools: MessageSchema['replay']['tools'] = {
       open: 'Open the agent’s track',
       prompt: 'Brief sent to the agent',
       report: 'Agent report',
-      async:
-        'Agent launched in the background. Its reply does not arrive here: it comes back later, in a turn of its own.',
+      async: 'Agent launched in the background. Its reply does not arrive here: it comes back later, in a turn of its own.',
     },
 
     enterPlan: {
@@ -121,8 +119,7 @@ const tools: MessageSchema['replay']['tools'] = {
       sameAsBefore: 'Same result as an earlier {tool} call.',
       empty: 'No file matches.',
       order: 'oldest to most recent',
-      cutSome:
-        '{rest} more are not listed, out of {total} in total: the list keeps the oldest, the recent changes are missing.',
+      cutSome: '{rest} more are not listed, out of {total} in total: the list keeps the oldest, the recent changes are missing.',
       cutAll: 'The list is truncated: it keeps the oldest, the recent changes are missing.',
     },
 
@@ -142,8 +139,7 @@ const tools: MessageSchema['replay']['tools'] = {
       failed: 'The language server did not answer.',
       refused: 'Call refused by the user.',
       noResult: 'No result.',
-      indexing:
-        'A language server that has not finished indexing the project answers the same way.',
+      indexing: 'A language server that has not finished indexing the project answers the same way.',
       line: 'l.',
       callAt: 'call at {at}',
       countIn: '{n} {what} in {files} files',
@@ -206,8 +202,7 @@ const tools: MessageSchema['replay']['tools'] = {
       found: 'Tools found',
       loaded: 'Tools loaded',
       noMatch: 'No deferred tool matches this search.',
-      noSuchName:
-        'No deferred tool goes by this name — nothing was loaded. | No deferred tool goes by these names — nothing was loaded.',
+      noSuchName: 'No deferred tool goes by this name — nothing was loaded. | No deferred tool goes by these names — nothing was loaded.',
       asked: 'Load requested',
       notKept: "The transcript didn't keep the result of this search.",
       reserve: '{n} tool still in reserve. | {n} tools still in reserve.',
@@ -227,8 +222,7 @@ const tools: MessageSchema['replay']['tools'] = {
       queued: 'Queued: {who} will get it on its next tool round.',
       noTask: 'had no active task',
       wasStopped: 'was stopped ({why})',
-      resumed:
-        'The agent {state}: resumed in the background from its transcript, with this message.',
+      resumed: 'The agent {state}: resumed in the background from its transcript, with this message.',
       stopSent: 'Shutdown request sent to {who}.',
       stopDone: 'Shutdown approved: {who} has been told, and agent {agent} is exiting.',
     },
@@ -236,10 +230,8 @@ const tools: MessageSchema['replay']['tools'] = {
     shell: {
       unsandboxed: 'outside the sandbox',
       silent: 'The command wrote nothing.',
-      launched:
-        'Launched in the background, id {id}. Its output goes to a file, outside the transcript.',
-      touched:
-        '{n} file already read that the command modified: | {n} files already read that the command modified:',
+      launched: 'Launched in the background, id {id}. Its output goes to a file, outside the transcript.',
+      touched: '{n} file already read that the command modified: | {n} files already read that the command modified:',
       exit: 'exit code {code}',
       exitMeaning: 'exit code {code} · {meaning}',
       meaning: {
@@ -274,6 +266,6 @@ const tools: MessageSchema['replay']['tools'] = {
       results: '{n} result | {n} results',
     },
   },
-};
+}
 
-export default tools;
+export default tools

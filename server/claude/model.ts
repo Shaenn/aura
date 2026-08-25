@@ -12,13 +12,13 @@
 // second, up-front signal. Precedence follows Claude Code's own — the project's
 // local settings, then the project's, then the user's.
 
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { CLAUDE_DIR } from './paths';
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { CLAUDE_DIR } from './paths'
 
 /** A model id asks for the large window by carrying the `[1m]` suffix. */
 function isLong(model: string): boolean {
-  return model.includes('[1m]');
+  return model.includes('[1m]')
 }
 
 /**
@@ -29,11 +29,11 @@ function isLong(model: string): boolean {
  */
 async function modelOf(abs: string): Promise<string | null> {
   try {
-    const parsed: unknown = JSON.parse(await readFile(abs, 'utf8'));
-    const model = (parsed as { model?: unknown } | null)?.model;
-    return typeof model === 'string' && model ? model : null;
+    const parsed: unknown = JSON.parse(await readFile(abs, 'utf8'))
+    const model = (parsed as { model?: unknown } | null)?.model
+    return typeof model === 'string' && model ? model : null
   } catch {
-    return null;
+    return null
   }
 }
 
@@ -44,13 +44,13 @@ async function modelOf(abs: string): Promise<string | null> {
  * common case for the window, since the model is usually chosen once globally.
  */
 function settingsChain(cwd: string): string[] {
-  const chain: string[] = [];
+  const chain: string[] = []
   if (cwd) {
-    chain.push(join(cwd, '.claude', 'settings.local.json'));
-    chain.push(join(cwd, '.claude', 'settings.json'));
+    chain.push(join(cwd, '.claude', 'settings.local.json'))
+    chain.push(join(cwd, '.claude', 'settings.json'))
   }
-  chain.push(join(CLAUDE_DIR, 'settings.json'));
-  return chain;
+  chain.push(join(CLAUDE_DIR, 'settings.json'))
+  return chain
 }
 
 /**
@@ -58,26 +58,26 @@ function settingsChain(cwd: string): string[] {
  * changes only when the user picks another model. A short TTL keeps a burst of
  * polls off the disk while still noticing that change within seconds.
  */
-const TTL_MS = 5_000;
-const cache = new Map<string, { at: number; long: boolean }>();
+const TTL_MS = 5_000
+const cache = new Map<string, { at: number; long: boolean }>()
 
 /** True when the configured model asks for the 1M window. */
 export async function configuredLongWindow(cwd: string): Promise<boolean> {
-  const key = cwd || '';
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.long;
+  const key = cwd || ''
+  const hit = cache.get(key)
+  if (hit && Date.now() - hit.at < TTL_MS) return hit.long
 
-  let long = false;
+  let long = false
   for (const file of settingsChain(key)) {
-    const model = await modelOf(file);
+    const model = await modelOf(file)
     // The first file that names a model decides: an override that selects a
     // small-window model must *win*, not be overruled by a broader setting.
     if (model) {
-      long = isLong(model);
-      break;
+      long = isLong(model)
+      break
     }
   }
 
-  cache.set(key, { at: Date.now(), long });
-  return long;
+  cache.set(key, { at: Date.now(), long })
+  return long
 }

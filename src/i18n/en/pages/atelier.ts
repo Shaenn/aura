@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const atelier: MessageSchema['pages']['atelier'] = {
   title: 'Workshop',
@@ -73,8 +73,7 @@ const atelier: MessageSchema['pages']['atelier'] = {
   fullReplay: 'Full replay',
   stop: 'Stop',
 
-  empty:
-    'Session open on {cwd}. Nothing has been asked yet — the agent only starts on the first message.',
+  empty: 'Session open on {cwd}. Nothing has been asked yet — the agent only starts on the first message.',
 
   askMany: '{n} questions are waiting',
   askOne: 'The agent is waiting for an answer',
@@ -88,8 +87,7 @@ const atelier: MessageSchema['pages']['atelier'] = {
   panelAria: 'Project context and resources',
   tabContext: 'Context window',
   tabResources: 'Resources',
-  contextPending:
-    'The context window is read from the transcript: it will show up at the end of the first turn.',
-};
+  contextPending: 'The context window is read from the transcript: it will show up at the end of the first turn.',
+}
 
-export default atelier;
+export default atelier

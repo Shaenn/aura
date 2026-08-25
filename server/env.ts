@@ -11,21 +11,21 @@
 // que tout le serveur importe — il reste dans le seul module qui en a besoin, et
 // aucune route n'est en mesure de le renvoyer par mégarde.
 
-import { homedir } from 'node:os';
-import { join, normalize, sep } from 'node:path';
+import { homedir } from 'node:os'
+import { join, normalize, sep } from 'node:path'
 
 export interface ServerEnv {
   /** Port the Fastify server listens on (Quasar's dev proxy targets it). */
-  port: number;
+  port: number
   /** Absolute path of the .claude directory AURA manages. */
-  claudeDir: string;
+  claudeDir: string
 }
 
 /** Read the server environment; everything has a sensible local default. */
 export function loadEnv(): ServerEnv {
-  const port = Number(process.env.PORT ?? 8800);
-  const raw = process.env.AURA_CLAUDE_DIR?.trim() || join(homedir(), '.claude');
-  return { port, claudeDir: normalizeRoot(raw) };
+  const port = Number(process.env.PORT ?? 8800)
+  const raw = process.env.AURA_CLAUDE_DIR?.trim() || join(homedir(), '.claude')
+  return { port, claudeDir: normalizeRoot(raw) }
 }
 
 /**
@@ -43,6 +43,6 @@ export function loadEnv(): ServerEnv {
  * déjà `sep`, et une racine qui le porte déjà ne correspondrait plus.
  */
 function normalizeRoot(dir: string): string {
-  const n = normalize(dir);
-  return n.length > 1 && n.endsWith(sep) ? n.slice(0, -1) : n;
+  const n = normalize(dir)
+  return n.length > 1 && n.endsWith(sep) ? n.slice(0, -1) : n
 }

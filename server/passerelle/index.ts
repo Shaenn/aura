@@ -13,56 +13,28 @@
 // (`agent/registry.ts`), la file d'entrée et les demandes en attente
 // (`agent/runner.ts`), la forme des messages (`shared/agent.ts`).
 
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES, t, withLocale } from '../i18n/index.ts';
-import { publicMessage } from '../errors.ts';
-import type { AgentUpsert, PermissionAnswer } from '../../shared/agent.ts';
-import { isPermissionMode } from '../../shared/agent.ts';
-import {
-  atCapacity,
-  createRunner,
-  getRunner,
-  listSessions,
-  MAX_SESSIONS,
-  removeRunner,
-} from '../agent/registry.ts';
-import type { SessionRunner } from '../agent/runner.ts';
-import {
-  getProjectResources,
-  listProjects,
-  readProjectIncludedFile,
-  readProjectMemory,
-  readProjectResource,
-} from '../projects.ts';
-import { listSessions as sessionsActives } from '../maintenance.ts';
-import type { ProjectSummary } from '../../shared/projects.ts';
-import { autorise, lireChats, parseIntention } from './routage.ts';
-import {
-  aplatir,
-  arborescence,
-  compte,
-  descendre,
-  resoudreProjet,
-  type Entree,
-  type Noeud,
-} from './projets.ts';
-import { paginer } from './markdown.ts';
-import { enBlocs, MAX_RICHE, type InputRichBlock } from './riche.ts';
-import { boutons, elargi, grille, Telegram } from './telegram.ts';
-import {
-  ecran as ecranQuestion,
-  formulaire,
-  presse,
-  repondLibre,
-  reponses,
-  type Formulaire,
-} from './questions.ts';
-import { alerte, lignes as lignesEtat, nombre, part, type Fenetre } from './etat.ts';
-import { planPropose } from './plan.ts';
-import { contextLimitFor } from '../context.ts';
-import { configuredLongWindow } from '../claude/model.ts';
-import { Battement } from './activite.ts';
-import { aide, pourTelegram } from './commandes.ts';
-import type { InlineKeyboardMarkup } from 'node-telegram-bot-api';
+import type { InlineKeyboardMarkup } from 'node-telegram-bot-api'
+import type { AgentUpsert, PermissionAnswer } from '../../shared/agent.ts'
+import { isPermissionMode } from '../../shared/agent.ts'
+import type { ProjectSummary } from '../../shared/projects.ts'
+import { atCapacity, createRunner, getRunner, listSessions, MAX_SESSIONS, removeRunner } from '../agent/registry.ts'
+import type { SessionRunner } from '../agent/runner.ts'
+import { configuredLongWindow } from '../claude/model.ts'
+import { contextLimitFor } from '../context.ts'
+import { publicMessage } from '../errors.ts'
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, t, withLocale } from '../i18n/index.ts'
+import { listSessions as sessionsActives } from '../maintenance.ts'
+import { getProjectResources, listProjects, readProjectIncludedFile, readProjectMemory, readProjectResource } from '../projects.ts'
+import { Battement } from './activite.ts'
+import { aide, pourTelegram } from './commandes.ts'
+import { alerte, lignes as lignesEtat, nombre, part, type Fenetre } from './etat.ts'
+import { paginer } from './markdown.ts'
+import { planPropose } from './plan.ts'
+import { aplatir, arborescence, compte, descendre, resoudreProjet, type Entree, type Noeud } from './projets.ts'
+import { ecran as ecranQuestion, formulaire, presse, repondLibre, reponses, type Formulaire } from './questions.ts'
+import { enBlocs, MAX_RICHE, type InputRichBlock } from './riche.ts'
+import { autorise, lireChats, parseIntention } from './routage.ts'
+import { boutons, elargi, grille, Telegram } from './telegram.ts'
 
 /**
  * Ce qu'une page prend au document source.
@@ -71,19 +43,19 @@ import type { InlineKeyboardMarkup } from 'node-telegram-bot-api';
  * ajoute du JSON autour de chaque morceau de texte, et c'est le total qui est
  * mesuré côté Telegram.
  */
-const PAGE_RICHE = Math.floor(MAX_RICHE * 0.7);
+const PAGE_RICHE = Math.floor(MAX_RICHE * 0.7)
 
 /** Ce que le journal du BFF sait faire, et tout ce que la Passerelle lui demande. */
 interface Journal {
-  info: (message: string) => void;
-  warn: (message: string) => void;
+  info: (message: string) => void
+  warn: (message: string) => void
 }
 
 /** Ce que la Passerelle garde d'une conversation. */
 interface Fil {
-  runId: string;
+  runId: string
   /** Se désabonner du runner quand le fil se défait. */
-  detache: () => void;
+  detache: () => void
   /**
    * L'abonnement a-t-il déjà rendu son premier `snapshot` ?
    *
@@ -91,11 +63,11 @@ interface Fil {
    * est donc celui de l'abonnement par construction, et non par ressemblance.
    * C'est ce qui permet de distinguer les deux sites d'émission sans deviner.
    */
-  abonne: boolean;
+  abonne: boolean
   /** Les textes de l'assistant du tour en cours, par uuid. */
-  tour: Map<string, string>;
+  tour: Map<string, string>
   /** Les formulaires en vol, pour retrouver ce qu'un bouton désigne. */
-  asks: Map<string, Formulaire>;
+  asks: Map<string, Formulaire>
   /**
    * Les messages qui portent encore des boutons de permission, par demande.
    *
@@ -104,7 +76,7 @@ interface Fil {
    * qui voie aussi les réponses données depuis l'Atelier et les refus du
    * garde-fou du quart d'heure.
    */
-  permissions: Map<string, number>;
+  permissions: Map<string, number>
   /**
    * Le formulaire qui capte le prochain message écrit, s'il y en a un.
    *
@@ -112,7 +84,7 @@ interface Fil {
    * Il ne capte que ce qui serait parti comme un tour : les commandes restent
    * des commandes sous une question.
    */
-  attente: string | null;
+  attente: string | null
   /**
    * Le remplissage de la fenêtre a-t-il déjà été signalé ?
    *
@@ -121,9 +93,9 @@ interface Fil {
    * compaction le remet à faux — la fenêtre a le droit de se remplir à nouveau,
    * et de le dire à nouveau.
    */
-  alerte: boolean;
+  alerte: boolean
   /** La bulle éphémère qui dit que ça travaille, et à quoi. */
-  battement: Battement;
+  battement: Battement
 }
 
 /**
@@ -133,7 +105,7 @@ interface Fil {
  * lieu d'en empiler une par changement. Un compteur suffit : rien ne le relie à
  * la session, et un brouillon ne survit pas trente secondes à son émission.
  */
-let prochainBrouillon = 1;
+let prochainBrouillon = 1
 
 /**
  * Ce qu'une conversation a sous les yeux, hors session.
@@ -144,13 +116,13 @@ let prochainBrouillon = 1;
  */
 interface Vue {
   /** La dernière liste de projets montrée — ce que les rangs désignent. */
-  projets: ProjectSummary[];
+  projets: ProjectSummary[]
   /** Le projet choisi, s'il y en a un. */
-  slug: string;
+  slug: string
   /** Les fichiers de ce projet, dans l'ordre où ils ont été numérotés. */
-  entrees: Entree[];
+  entrees: Entree[]
   /** Les mêmes, en arborescence : ce que la navigation parcourt. */
-  racine: Noeud;
+  racine: Noeud
   /**
    * Où l'on est dans cet arbre, segment par segment.
    *
@@ -159,7 +131,7 @@ interface Vue {
    * redescend depuis la racine à chaque pas — l'arbre tient en mémoire, le
    * parcours ne coûte rien.
    */
-  chemin: string[];
+  chemin: string[]
   /**
    * Le message qui porte la navigation, et qu'on réécrit à chaque pas.
    *
@@ -167,16 +139,16 @@ interface Vue {
    * derrière lui une liste périmée, et la conversation deviendrait un empilement
    * d'états morts.
    */
-  messageId: number | null;
+  messageId: number | null
 }
 
-let telegram: Telegram | null = null;
-const fils = new Map<number, Fil>();
-const vues = new Map<number, Vue>();
+let telegram: Telegram | null = null
+const fils = new Map<number, Fil>()
+const vues = new Map<number, Vue>()
 
 function vue(chatId: number): Vue {
-  const existante = vues.get(chatId);
-  if (existante) return existante;
+  const existante = vues.get(chatId)
+  if (existante) return existante
   const neuve: Vue = {
     projets: [],
     slug: '',
@@ -184,9 +156,9 @@ function vue(chatId: number): Vue {
     racine: { nom: '', enfants: [] },
     chemin: [],
     messageId: null,
-  };
-  vues.set(chatId, neuve);
-  return neuve;
+  }
+  vues.set(chatId, neuve)
+  return neuve
 }
 
 /**
@@ -198,16 +170,16 @@ function vue(chatId: number): Vue {
  * un clic sans effet visible.
  */
 async function ecran(chatId: number, texte: string, clavier: InlineKeyboardMarkup): Promise<void> {
-  const tg = telegram;
-  if (!tg) return;
-  const v = vue(chatId);
+  const tg = telegram
+  if (!tg) return
+  const v = vue(chatId)
 
   // Le clavier prend la largeur de la bulle, donc du texte : un en-tête court
   // donnerait des boutons trop étroits pour être lus. Voir `elargi`.
-  const large = elargi(texte);
+  const large = elargi(texte)
 
-  if (v.messageId !== null && (await tg.reecrit(chatId, v.messageId, large, clavier))) return;
-  v.messageId = await tg.envoieSuivi(chatId, large, clavier);
+  if (v.messageId !== null && (await tg.reecrit(chatId, v.messageId, large, clavier))) return
+  v.messageId = await tg.envoieSuivi(chatId, large, clavier)
 }
 
 /**
@@ -219,14 +191,14 @@ async function ecran(chatId: number, texte: string, clavier: InlineKeyboardMarku
  * son contenu.
  */
 async function ecranDossier(chatId: number, projet: ProjectSummary): Promise<void> {
-  const v = vue(chatId);
-  const dossier = descendre(v.racine, v.chemin);
+  const v = vue(chatId)
+  const dossier = descendre(v.racine, v.chemin)
   if (!dossier) {
     // Le chemin ne mène plus nulle part — l'inventaire a changé sous nos pieds.
     // On remonte à la racine plutôt que de laisser un écran vide.
-    v.chemin = [];
-    await ecranDossier(chatId, projet);
-    return;
+    v.chemin = []
+    await ecranDossier(chatId, projet)
+    return
   }
 
   const cases = dossier.enfants.map((n, i) =>
@@ -235,7 +207,7 @@ async function ecranDossier(chatId: number, projet: ProjectSummary): Promise<voi
         // `/voir` emploie, et les deux chemins doivent désigner le même fichier.
         { texte: nomCourt(n.nom), donnee: `n:f:${n.fichier.rang}` }
       : { texte: `${nomCourt(n.nom)}/ ${compte(n)}`, donnee: `n:d:${i}` },
-  );
+  )
 
   // À la racine, il n'y a pas de dossier parent : on remonte aux projets, et
   // c'est là que l'action d'ouverture a sa place.
@@ -244,16 +216,16 @@ async function ecranDossier(chatId: number, projet: ProjectSummary): Promise<voi
     : [
         { texte: t('passerelle.ouvrirIci'), donnee: 'n:a' },
         { texte: t('passerelle.retourProjets'), donnee: 'n:r' },
-      ];
+      ]
 
-  const ou = v.chemin.length ? v.chemin.join('/') : projet.name;
-  await ecran(chatId, t('passerelle.dossier', { ou, total: compte(dossier) }), grille(cases, solo));
+  const ou = v.chemin.length ? v.chemin.join('/') : projet.name
+  await ecran(chatId, t('passerelle.dossier', { ou, total: compte(dossier) }), grille(cases, solo))
 }
 
 /** Le nom d'un fichier, sans son chemin — la place manque sur un bouton. */
 function nomCourt(label: string): string {
-  const nom = label.slice(label.lastIndexOf('/') + 1);
-  return nom.length > 40 ? `${nom.slice(0, 39)}…` : nom;
+  const nom = label.slice(label.lastIndexOf('/') + 1)
+  return nom.length > 40 ? `${nom.slice(0, 39)}…` : nom
 }
 
 /**
@@ -261,21 +233,21 @@ function nomCourt(label: string): string {
  * ce qu'une commande tapée mérite, et qu'un clic ne mérite pas.
  */
 async function ecranProjets(chatId: number, neuf: boolean): Promise<void> {
-  const tg = telegram;
-  if (!tg) return;
-  const v = vue(chatId);
+  const tg = telegram
+  if (!tg) return
+  const v = vue(chatId)
   // La liste devient la référence des rangs : on la garde telle qu'elle a été
   // montrée, sans quoi un `/atelier 3` désignerait autre chose que la troisième
   // ligne lue.
-  v.projets = await listProjects();
-  if (neuf) v.messageId = null;
+  v.projets = await listProjects()
+  if (neuf) v.messageId = null
 
   if (!v.projets.length) {
-    await tg.envoie(chatId, t('passerelle.aucunProjet'));
-    return;
+    await tg.envoie(chatId, t('passerelle.aucunProjet'))
+    return
   }
-  const cases = v.projets.map((p, i) => ({ texte: nomCourt(p.name), donnee: `n:p:${i}` }));
-  await ecran(chatId, t('passerelle.projets'), grille(cases));
+  const cases = v.projets.map((p, i) => ({ texte: nomCourt(p.name), donnee: `n:p:${i}` }))
+  await ecran(chatId, t('passerelle.projets'), grille(cases))
 }
 
 /**
@@ -288,29 +260,29 @@ async function ecranProjets(chatId: number, neuf: boolean): Promise<void> {
  * une session tourner.
  */
 async function etatDesSessions(): Promise<string> {
-  const atelier = listSessions();
-  const systeme = await sessionsActives();
+  const atelier = listSessions()
+  const systeme = await sessionsActives()
   // Une session de l'Atelier a aussi son fichier d'état : sans ce filtre, elle
   // se compterait deux fois.
-  const runIds = new Set(atelier.map((s) => s.sessionId).filter(Boolean));
-  const ailleurs = systeme.filter((s) => !runIds.has(s.sessionId));
+  const runIds = new Set(atelier.map((s) => s.sessionId).filter(Boolean))
+  const ailleurs = systeme.filter((s) => !runIds.has(s.sessionId))
 
-  if (!atelier.length && !ailleurs.length) return t('passerelle.aucuneSession');
+  if (!atelier.length && !ailleurs.length) return t('passerelle.aucuneSession')
 
-  const lignes: string[] = [];
+  const lignes: string[] = []
   if (atelier.length) {
-    lignes.push(t('passerelle.sessionsAtelier'));
-    for (const s of atelier) lignes.push(`• ${s.cwd} — ${s.status}`);
+    lignes.push(t('passerelle.sessionsAtelier'))
+    for (const s of atelier) lignes.push(`• ${s.cwd} — ${s.status}`)
   }
   if (ailleurs.length) {
-    if (lignes.length) lignes.push('');
-    lignes.push(t('passerelle.sessionsAilleurs'));
+    if (lignes.length) lignes.push('')
+    lignes.push(t('passerelle.sessionsAilleurs'))
     for (const s of ailleurs) {
-      const etat = s.status ?? '?';
-      lignes.push(`• ${s.cwd || '?'} — ${etat}${s.waitingFor ? ` (${s.waitingFor})` : ''}`);
+      const etat = s.status ?? '?'
+      lignes.push(`• ${s.cwd || '?'} — ${etat}${s.waitingFor ? ` (${s.waitingFor})` : ''}`)
     }
   }
-  return lignes.join('\n');
+  return lignes.join('\n')
 }
 
 /**
@@ -323,12 +295,12 @@ async function etatDesSessions(): Promise<string> {
  * observé (`max`), et le modèle tel qu'il a été choisi dans les réglages.
  */
 async function fenetreDe(runner: SessionRunner): Promise<Fenetre> {
-  const releve = runner.contextWindow;
-  const { cwd, model, resolvedModel } = runner.session;
+  const releve = runner.contextWindow
+  const { cwd, model, resolvedModel } = runner.session
   return {
     tokens: releve.tokens,
     limite: contextLimitFor([resolvedModel ?? model], releve.max, await configuredLongWindow(cwd)),
-  };
+  }
 }
 
 /**
@@ -340,14 +312,14 @@ async function fenetreDe(runner: SessionRunner): Promise<Fenetre> {
  * Répéter à chaque tour, en revanche, n'apprendrait plus rien.
  */
 async function signaleFenetre(chatId: number, fil: Fil): Promise<void> {
-  const tg = telegram;
-  const runner = getRunner(fil.runId);
-  if (!tg || !runner) return;
+  const tg = telegram
+  const runner = getRunner(fil.runId)
+  if (!tg || !runner) return
 
-  const ratio = part(await fenetreDe(runner));
-  if (!alerte(fil.alerte, ratio)) return;
-  fil.alerte = true;
-  await tg.envoie(chatId, t('passerelle.fenetrePleine', { pourcent: Math.round(ratio * 100) }));
+  const ratio = part(await fenetreDe(runner))
+  if (!alerte(fil.alerte, ratio)) return
+  fil.alerte = true
+  await tg.envoie(chatId, t('passerelle.fenetrePleine', { pourcent: Math.round(ratio * 100) }))
 }
 
 /**
@@ -358,26 +330,18 @@ async function signaleFenetre(chatId: number, fil: Fil): Promise<void> {
  * l'affiche ; de loin, il n'y avait rien.
  */
 async function ecranEtat(chatId: number): Promise<void> {
-  const tg = telegram;
-  if (!tg) return;
+  const tg = telegram
+  if (!tg) return
 
-  const runner = courant(chatId);
+  const runner = courant(chatId)
   if (!runner) {
-    await tg.envoie(chatId, t('passerelle.aucunFil'));
-    return;
+    await tg.envoie(chatId, t('passerelle.aucunFil'))
+    return
   }
 
-  const { cwd, model, resolvedModel } = runner.session;
-  const fenetre = await fenetreDe(runner);
-  await tg.envoie(
-    chatId,
-    lignesEtat(
-      fenetre,
-      cwd,
-      resolvedModel || model || t('passerelle.etatModeleInconnu'),
-      mode(),
-    ).join('\n'),
-  );
+  const { cwd, model, resolvedModel } = runner.session
+  const fenetre = await fenetreDe(runner)
+  await tg.envoie(chatId, lignesEtat(fenetre, cwd, resolvedModel || model || t('passerelle.etatModeleInconnu'), mode()).join('\n'))
 }
 
 /**
@@ -394,24 +358,24 @@ async function ecranEtat(chatId: number): Promise<void> {
  * marche du même parcours que l'arborescence, pas un écran à part.
  */
 async function ecranAccueil(chatId: number): Promise<void> {
-  const v = vue(chatId);
-  v.projets = await listProjects();
+  const v = vue(chatId)
+  v.projets = await listProjects()
 
-  const lignes = [t('passerelle.accueil')];
-  if (!v.projets.length) lignes.push(t('passerelle.accueilAucunProjet'));
-  else if (v.projets.length === 1) lignes.push(t('passerelle.accueilUnProjet'));
-  else lignes.push(t('passerelle.accueilProjets', { n: v.projets.length }));
+  const lignes = [t('passerelle.accueil')]
+  if (!v.projets.length) lignes.push(t('passerelle.accueilAucunProjet'))
+  else if (v.projets.length === 1) lignes.push(t('passerelle.accueilUnProjet'))
+  else lignes.push(t('passerelle.accueilProjets', { n: v.projets.length }))
 
   // Ce que cette conversation tient déjà passe avant le parc : c'est la seule
   // ligne qui parle de vous plutôt que de la machine.
-  const sien = courant(chatId);
-  const parc = listSessions().length;
-  if (sien) lignes.push(t('passerelle.accueilSession', { cwd: sien.session.cwd }));
-  else if (parc === 1) lignes.push(t('passerelle.accueilUnTravail'));
-  else if (parc > 1) lignes.push(t('passerelle.accueilTravaux', { n: parc }));
+  const sien = courant(chatId)
+  const parc = listSessions().length
+  if (sien) lignes.push(t('passerelle.accueilSession', { cwd: sien.session.cwd }))
+  else if (parc === 1) lignes.push(t('passerelle.accueilUnTravail'))
+  else if (parc > 1) lignes.push(t('passerelle.accueilTravaux', { n: parc }))
 
   // Une commande tapée mérite son message, à sa date — comme `/projet`.
-  v.messageId = null;
+  v.messageId = null
   await ecran(
     chatId,
     lignes.join('\n'),
@@ -422,34 +386,30 @@ async function ecranAccueil(chatId: number): Promise<void> {
       { texte: t('passerelle.menuSessions'), donnee: 'n:s' },
       { texte: t('passerelle.menuAide'), donnee: 'n:h' },
     ]),
-  );
+  )
 }
 
 /** Charge l'inventaire d'un projet et montre sa fiche. */
 async function ouvreProjet(chatId: number, projet: ProjectSummary): Promise<void> {
-  const tg = telegram;
-  if (!tg) return;
-  const v = vue(chatId);
+  const tg = telegram
+  if (!tg) return
+  const v = vue(chatId)
   try {
     // Le même inventaire que la page Détail : la conversation ne montre ni plus
     // ni moins que l'écran.
-    v.entrees = aplatir(await getProjectResources(projet.slug));
-    v.racine = arborescence(v.entrees);
-    v.chemin = [];
-    v.slug = projet.slug;
+    v.entrees = aplatir(await getProjectResources(projet.slug))
+    v.racine = arborescence(v.entrees)
+    v.chemin = []
+    v.slug = projet.slug
   } catch (e) {
-    await tg.envoie(chatId, publicMessage(e));
-    return;
+    await tg.envoie(chatId, publicMessage(e))
+    return
   }
   if (!v.entrees.length) {
-    await ecran(
-      chatId,
-      t('passerelle.projetVide', { nom: projet.name }),
-      grille([], [{ texte: t('passerelle.retourProjets'), donnee: 'n:r' }]),
-    );
-    return;
+    await ecran(chatId, t('passerelle.projetVide', { nom: projet.name }), grille([], [{ texte: t('passerelle.retourProjets'), donnee: 'n:r' }]))
+    return
   }
-  await ecranDossier(chatId, projet);
+  await ecranDossier(chatId, projet)
 }
 
 /**
@@ -459,27 +419,27 @@ async function ouvreProjet(chatId: number, projet: ProjectSummary): Promise<void
  * elle n'a pas à être refaite ici.
  */
 async function ouvreAtelier(chatId: number, projet: ProjectSummary): Promise<void> {
-  const tg = telegram;
-  if (!tg) return;
+  const tg = telegram
+  if (!tg) return
   // Une conversation ne tient qu'une session : ouvrir en referme une.
-  defait(chatId, true);
+  defait(chatId, true)
   if (atCapacity()) {
-    await tg.envoie(chatId, t('errors.tooManySessions', { max: MAX_SESSIONS }));
-    return;
+    await tg.envoie(chatId, t('errors.tooManySessions', { max: MAX_SESSIONS }))
+    return
   }
   try {
-    const runner = createRunner({ cwd: projet.path, permissionMode: mode() });
-    attache(chatId, runner);
-    await tg.envoie(chatId, t('passerelle.sessionOuverte', { cwd: runner.session.cwd }));
+    const runner = createRunner({ cwd: projet.path, permissionMode: mode() })
+    attache(chatId, runner)
+    await tg.envoie(chatId, t('passerelle.sessionOuverte', { cwd: runner.session.cwd }))
   } catch (e) {
-    await tg.envoie(chatId, publicMessage(e));
+    await tg.envoie(chatId, publicMessage(e))
   }
 }
 
 /** Le projet dont la fiche est ouverte, si elle l'est encore. */
 function projetCourant(chatId: number): ProjectSummary | undefined {
-  const v = vue(chatId);
-  return v.projets.find((p) => p.slug === v.slug);
+  const v = vue(chatId)
+  return v.projets.find((p) => p.slug === v.slug)
 }
 
 /**
@@ -490,13 +450,13 @@ function projetCourant(chatId: number): ProjectSummary | undefined {
  * de ne rien faire — un bouton sans effet passe pour une panne.
  */
 async function navigue(chatId: number, ordre: string, argument: string): Promise<void> {
-  const tg = telegram;
-  if (!tg) return;
-  const v = vue(chatId);
+  const tg = telegram
+  if (!tg) return
+  const v = vue(chatId)
 
   if (ordre === 'r') {
-    await ecranProjets(chatId, false);
-    return;
+    await ecranProjets(chatId, false)
+    return
   }
 
   // Les deux sorties de l'accueil. Elles produisent du **contenu**, pas un pas
@@ -504,58 +464,58 @@ async function navigue(chatId: number, ordre: string, argument: string): Promise
   // l'accueil en place, là où « Les projets » le réécrit. C'est la même règle
   // que `/voir`, qui n'écrase jamais l'arborescence qu'on parcourait.
   if (ordre === 's') {
-    await tg.envoie(chatId, await etatDesSessions());
-    return;
+    await tg.envoie(chatId, await etatDesSessions())
+    return
   }
   if (ordre === 'h') {
-    await tg.envoie(chatId, aide());
-    return;
+    await tg.envoie(chatId, aide())
+    return
   }
 
   if (ordre === 'p') {
-    if (!v.projets.length) v.projets = await listProjects();
-    const projet = v.projets[Number(argument)];
+    if (!v.projets.length) v.projets = await listProjects()
+    const projet = v.projets[Number(argument)]
     if (!projet) {
-      await tg.envoie(chatId, t('passerelle.navigationPerimee'));
-      return;
+      await tg.envoie(chatId, t('passerelle.navigationPerimee'))
+      return
     }
-    await ouvreProjet(chatId, projet);
-    return;
+    await ouvreProjet(chatId, projet)
+    return
   }
 
-  const projet = projetCourant(chatId);
+  const projet = projetCourant(chatId)
   if (!projet) {
-    await tg.envoie(chatId, t('passerelle.navigationPerimee'));
-    return;
+    await tg.envoie(chatId, t('passerelle.navigationPerimee'))
+    return
   }
 
   if (ordre === 'u') {
-    v.chemin.pop();
-    await ecranDossier(chatId, projet);
-    return;
+    v.chemin.pop()
+    await ecranDossier(chatId, projet)
+    return
   }
   if (ordre === 'd') {
-    const dossier = descendre(v.racine, v.chemin);
-    const enfant = dossier?.enfants[Number(argument)];
+    const dossier = descendre(v.racine, v.chemin)
+    const enfant = dossier?.enfants[Number(argument)]
     // L'arbre a changé sous le message : le rang ne désigne plus le dossier
     // qu'on a montré, ou plus un dossier du tout. On le dit, comme partout
     // ailleurs — un bouton sans effet passe pour une panne.
     if (!enfant || enfant.fichier) {
-      await tg.envoie(chatId, t('passerelle.navigationPerimee'));
-      return;
+      await tg.envoie(chatId, t('passerelle.navigationPerimee'))
+      return
     }
-    v.chemin.push(enfant.nom);
-    await ecranDossier(chatId, projet);
-    return;
+    v.chemin.push(enfant.nom)
+    await ecranDossier(chatId, projet)
+    return
   }
   if (ordre === 'f') {
     // Le contenu part dans un message à lui : il est long, il se pagine, et il
     // doit rester lisible après qu'on a continué à naviguer au-dessus.
-    await page(chatId, Number(argument), 1);
-    return;
+    await page(chatId, Number(argument), 1)
+    return
   }
   if (ordre === 'a') {
-    await ouvreAtelier(chatId, projet);
+    await ouvreAtelier(chatId, projet)
   }
 }
 
@@ -569,18 +529,16 @@ async function navigue(chatId: number, ordre: string, argument: string): Promise
  * yeux de qui vient de lire.
  */
 async function trouve(chatId: number, ref: string): Promise<ProjectSummary | undefined> {
-  const v = vue(chatId);
-  if (!v.projets.length) v.projets = await listProjects();
-  return resoudreProjet(v.projets, ref);
+  const v = vue(chatId)
+  if (!v.projets.length) v.projets = await listProjects()
+  return resoudreProjet(v.projets, ref)
 }
 
 /** Le lecteur d'une origine. Chacun a son bac à sable ; aucun ne couvre l'autre. */
-function lecteur(
-  source: Entree['source'],
-): (slug: string, rel: string) => Promise<{ rel: string; content: string }> {
-  if (source === 'claude') return readProjectResource;
-  if (source === 'inclus') return readProjectIncludedFile;
-  return readProjectMemory;
+function lecteur(source: Entree['source']): (slug: string, rel: string) => Promise<{ rel: string; content: string }> {
+  if (source === 'claude') return readProjectResource
+  if (source === 'inclus') return readProjectIncludedFile
+  return readProjectMemory
 }
 
 /**
@@ -592,44 +550,36 @@ function lecteur(
  * personne n'a demandé les ennuis.
  */
 async function page(chatId: number, rang: number, numero: number): Promise<void> {
-  const tg = telegram;
-  const v = vue(chatId);
-  const entree = v.entrees[rang - 1];
-  if (!tg || !entree) return;
+  const tg = telegram
+  const v = vue(chatId)
+  const entree = v.entrees[rang - 1]
+  if (!tg || !entree) return
 
-  let contenu: string;
+  let contenu: string
   try {
-    contenu = (await lecteur(entree.source)(v.slug, entree.rel)).content;
+    contenu = (await lecteur(entree.source)(v.slug, entree.rel)).content
   } catch (e) {
-    await tg.envoie(chatId, publicMessage(e));
-    return;
+    await tg.envoie(chatId, publicMessage(e))
+    return
   }
 
   // La borne est celle du message riche, huit fois celle d'un message ordinaire.
   // Un document qui tenait en sept pages en tient désormais en une.
-  const pages = paginer(contenu, PAGE_RICHE);
-  const index = Math.min(Math.max(numero, 1), pages.length);
-  const source = pages[index - 1] ?? '';
-  const entete =
-    pages.length > 1
-      ? t('passerelle.pageDe', { fichier: entree.label, page: index, total: pages.length })
-      : entree.label;
+  const pages = paginer(contenu, PAGE_RICHE)
+  const index = Math.min(Math.max(numero, 1), pages.length)
+  const source = pages[index - 1] ?? ''
+  const entete = pages.length > 1 ? t('passerelle.pageDe', { fichier: entree.label, page: index, total: pages.length }) : entree.label
 
   // Le rendu ne vaut que pour du Markdown : appliquer la traduction à un JSON ou
   // à un fichier de réglages y verrait des puces et des emphases qui n'existent
   // pas. Les autres partent en chasse fixe, qui est leur forme lisible.
-  const markdown = estMarkdown(entree.rel);
+  const markdown = estMarkdown(entree.rel)
   const blocs: InputRichBlock[] = [
     { type: 'heading', text: entete, size: 3 },
     ...(markdown ? enBlocs(source) : [{ type: 'pre' as const, text: source }]),
-  ];
+  ]
 
-  await tg.envoieRendu(
-    chatId,
-    blocs,
-    `${entete}\n\n${source}`,
-    navigation(rang, index, pages.length),
-  );
+  await tg.envoieRendu(chatId, blocs, `${entete}\n\n${source}`, navigation(rang, index, pages.length))
 }
 
 /**
@@ -647,12 +597,12 @@ async function page(chatId: number, rang: number, numero: number): Promise<void>
  * session.
  */
 async function repond(chatId: number, texte: string): Promise<void> {
-  const tg = telegram;
-  if (!tg) return;
+  const tg = telegram
+  if (!tg) return
   // La borne du riche est huit fois celle d'un message ordinaire : ce qui était
   // coupé à 4 000 caractères passe désormais entier dans presque tous les cas.
-  const source = texte.length > PAGE_RICHE ? `${texte.slice(0, PAGE_RICHE)}…` : texte;
-  await tg.envoieRendu(chatId, enBlocs(source), source);
+  const source = texte.length > PAGE_RICHE ? `${texte.slice(0, PAGE_RICHE)}…` : texte
+  await tg.envoieRendu(chatId, enBlocs(source), source)
 }
 
 /**
@@ -663,13 +613,13 @@ async function repond(chatId: number, texte: string): Promise<void> {
  * pas une perte ici, une question posée ayant sa place dans le fil à sa date.
  */
 async function poseQuestion(chatId: number, fil: Fil, f: Formulaire): Promise<void> {
-  const tg = telegram;
-  if (!tg) return;
-  await desarme(chatId, f);
-  const vue = ecranQuestion(f);
-  const rendu = await tg.envoieRendu(chatId, vue.blocs, vue.brut, vue.clavier);
-  f.messageId = rendu.messageId;
-  fil.attente = f.id;
+  const tg = telegram
+  if (!tg) return
+  await desarme(chatId, f)
+  const vue = ecranQuestion(f)
+  const rendu = await tg.envoieRendu(chatId, vue.blocs, vue.brut, vue.clavier)
+  f.messageId = rendu.messageId
+  fil.attente = f.id
 }
 
 /**
@@ -680,9 +630,9 @@ async function poseQuestion(chatId: number, fil: Fil, f: Formulaire): Promise<vo
  * Un clic destiné à la première question cocherait une option de la deuxième.
  */
 async function desarme(chatId: number, f: Formulaire): Promise<void> {
-  if (f.messageId === null) return;
-  await telegram?.reecritClavier(chatId, f.messageId, { inline_keyboard: [] });
-  f.messageId = null;
+  if (f.messageId === null) return
+  await telegram?.reecritClavier(chatId, f.messageId, { inline_keyboard: [] })
+  f.messageId = null
 }
 
 /**
@@ -691,37 +641,31 @@ async function desarme(chatId: number, f: Formulaire): Promise<void> {
  * `questions.ts` décide, ce qui suit ne fait qu'émettre. Cocher ne réécrit que
  * le clavier — la question au-dessus n'a aucune raison de bouger.
  */
-async function avanceQuestion(
-  chatId: number,
-  fil: Fil,
-  f: Formulaire,
-  quoi: ReturnType<typeof presse>,
-): Promise<void> {
-  const tg = telegram;
-  if (!tg) return;
+async function avanceQuestion(chatId: number, fil: Fil, f: Formulaire, quoi: ReturnType<typeof presse>): Promise<void> {
+  const tg = telegram
+  if (!tg) return
 
   if (quoi === 'coche') {
-    if (f.messageId !== null)
-      await tg.reecritClavier(chatId, f.messageId, ecranQuestion(f).clavier);
-    return;
+    if (f.messageId !== null) await tg.reecritClavier(chatId, f.messageId, ecranQuestion(f).clavier)
+    return
   }
   if (quoi === 'suivant') {
-    await poseQuestion(chatId, fil, f);
-    return;
+    await poseQuestion(chatId, fil, f)
+    return
   }
-  if (quoi !== 'fini') return;
+  if (quoi !== 'fini') return
 
-  await desarme(chatId, f);
-  fil.asks.delete(f.id);
-  fil.attente = null;
+  await desarme(chatId, f)
+  fil.asks.delete(f.id)
+  fil.attente = null
   // Le tour suspendu repart ici : `answerAsk` dénoue la promesse que l'outil
   // MCP tient depuis `ask.ts`. Rien à attendre, la main revient aussitôt.
-  courant(chatId)?.answerAsk(f.id, reponses(f));
+  courant(chatId)?.answerAsk(f.id, reponses(f))
 }
 
 /** Ce fichier se lit-il comme du Markdown ? */
 function estMarkdown(rel: string): boolean {
-  return /\.(md|markdown|mdx)$/i.test(rel);
+  return /\.(md|markdown|mdx)$/i.test(rel)
 }
 
 /**
@@ -731,19 +675,17 @@ function estMarkdown(rel: string): boolean {
  * occupe l'écran et invite à un geste sans effet.
  */
 function navigation(rang: number, index: number, total: number): InlineKeyboardMarkup | undefined {
-  if (total <= 1) return undefined;
-  const paires: { texte: string; donnee: string }[] = [];
-  if (index > 1)
-    paires.push({ texte: t('passerelle.precedent'), donnee: `v:${rang}:${index - 1}` });
-  if (index < total)
-    paires.push({ texte: t('passerelle.suivant'), donnee: `v:${rang}:${index + 1}` });
-  return boutons(paires);
+  if (total <= 1) return undefined
+  const paires: { texte: string; donnee: string }[] = []
+  if (index > 1) paires.push({ texte: t('passerelle.precedent'), donnee: `v:${rang}:${index - 1}` })
+  if (index < total) paires.push({ texte: t('passerelle.suivant'), donnee: `v:${rang}:${index + 1}` })
+  return boutons(paires)
 }
 
 /** Le mode de permission des sessions ouvertes de loin. */
 function mode(): string {
-  const brut = (process.env.AURA_TELEGRAM_MODE ?? '').trim();
-  return brut && isPermissionMode(brut) ? brut : 'default';
+  const brut = (process.env.AURA_TELEGRAM_MODE ?? '').trim()
+  return brut && isPermissionMode(brut) ? brut : 'default'
 }
 
 /**
@@ -755,7 +697,7 @@ function mode(): string {
  * serait ramassée au bout d'une demi-heure, en pleine conversation.
  */
 function attache(chatId: number, runner: SessionRunner): void {
-  const tg = telegram;
+  const tg = telegram
   const fil: Fil = {
     runId: runner.session.runId,
     detache: () => {},
@@ -768,16 +710,16 @@ function attache(chatId: number, runner: SessionRunner): void {
     battement: new Battement(
       {
         brouillon: async (id, draft, texte) => {
-          await tg?.brouillon(id, draft, texte);
+          await tg?.brouillon(id, draft, texte)
         },
         saisie: async (id) => {
-          await tg?.saisie(id);
+          await tg?.saisie(id)
         },
       },
       chatId,
       prochainBrouillon++,
     ),
-  };
+  }
   /**
    * Les événements se traitent **à la file**, jamais de front.
    *
@@ -791,11 +733,11 @@ function attache(chatId: number, runner: SessionRunner): void {
    * propres erreurs, le `catch` n'est là que pour qu'une exception inattendue ne
    * casse pas la file elle-même.
    */
-  let file: Promise<void> = Promise.resolve();
+  let file: Promise<void> = Promise.resolve()
   fil.detache = runner.subscribe((upsert) => {
-    file = file.then(() => applique(chatId, fil, upsert)).catch(() => {});
-  });
-  fils.set(chatId, fil);
+    file = file.then(() => applique(chatId, fil, upsert)).catch(() => {})
+  })
+  fils.set(chatId, fil)
 }
 
 /**
@@ -805,12 +747,12 @@ function attache(chatId: number, runner: SessionRunner): void {
  * dont la session est déjà morte, ou on ferme une session qui vit encore.
  */
 function defait(chatId: number, ferme: boolean): void {
-  const fil = fils.get(chatId);
-  if (!fil) return;
-  fil.detache();
-  fil.battement.arrete();
-  fils.delete(chatId);
-  if (ferme) removeRunner(fil.runId);
+  const fil = fils.get(chatId)
+  if (!fil) return
+  fil.detache()
+  fil.battement.arrete()
+  fils.delete(chatId)
+  if (ferme) removeRunner(fil.runId)
 }
 
 /**
@@ -826,8 +768,8 @@ function defait(chatId: number, ferme: boolean): void {
  * `activite.ts`.
  */
 async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<void> {
-  const tg = telegram;
-  if (!tg) return;
+  const tg = telegram
+  if (!tg) return
 
   switch (upsert.kind) {
     /**
@@ -846,31 +788,31 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
      */
     case 'snapshot': {
       if (!fil.abonne) {
-        fil.abonne = true;
-        return;
+        fil.abonne = true
+        return
       }
-      fil.battement.arrete();
+      fil.battement.arrete()
       // Les textes du tour en cours parlent d'une conversation qui n'existe
       // plus : les envoyer maintenant serait citer un souvenir effacé.
-      fil.tour.clear();
+      fil.tour.clear()
       // Le contexte est vide : la fenêtre a de nouveau le droit de se remplir,
       // et de le signaler. Même raison qu'après une compaction.
-      fil.alerte = false;
+      fil.alerte = false
       const dit = upsert.events
         .filter((e) => e.kind === 'system')
         .flatMap((e) => e.blocks)
         .map((b) => b.text ?? '')
         .join('\n')
-        .trim();
+        .trim()
       // Les mêmes mots qu'à l'écran (`agent.cleared`), et non une phrase de
       // plus : une session lue de deux endroits ne raconte pas deux histoires.
-      if (dit) await tg.envoie(chatId, dit);
-      return;
+      if (dit) await tg.envoie(chatId, dit)
+      return
     }
 
     case 'append-event':
     case 'replace-event': {
-      const event = upsert.event;
+      const event = upsert.event
 
       /**
        * La compaction : le seul moment où la fenêtre change sans qu'on ait
@@ -895,21 +837,21 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
             .filter((b) => b.kind === 'text')
             .map((b) => b.text ?? '')
             .join('\n\n')
-            .trim();
-          if (!resume) return;
-          const titre = t('passerelle.compactionResume');
-          const source = resume.length > PAGE_RICHE ? `${resume.slice(0, PAGE_RICHE)}…` : resume;
+            .trim()
+          if (!resume) return
+          const titre = t('passerelle.compactionResume')
+          const source = resume.length > PAGE_RICHE ? `${resume.slice(0, PAGE_RICHE)}…` : resume
           // Le repli refusé, on préfère un document déplié à un document perdu :
           // c'est la même règle que la cascade de `envoieRendu`.
           if (!(await tg.envoieReplie(chatId, titre, enBlocs(source)))) {
-            await repond(chatId, `${titre}\n\n${source}`);
+            await repond(chatId, `${titre}\n\n${source}`)
           }
-          return;
+          return
         }
 
         // La fenêtre repart de bas : elle a de nouveau le droit de se remplir,
         // et de le signaler.
-        fil.alerte = false;
+        fil.alerte = false
         await tg.envoie(
           chatId,
           t('passerelle.compaction', {
@@ -919,68 +861,68 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
             avant: nombre(event.compaction.preTokens),
             apres: nombre(event.compaction.postTokens),
           }),
-        );
-        return;
+        )
+        return
       }
 
-      if (event.kind !== 'assistant' || event.isSidechain) return;
+      if (event.kind !== 'assistant' || event.isSidechain) return
       const texte = event.blocks
         .filter((b) => b.kind === 'text')
         .map((b) => b.text ?? '')
         .join('')
-        .trim();
+        .trim()
       // `replace-event` porte le même uuid : la carte écrase, elle n'ajoute pas.
-      if (texte) fil.tour.set(event.uuid, texte);
-      return;
+      if (texte) fil.tour.set(event.uuid, texte)
+      return
     }
 
     // Le seul flux qu'on relaie, et il ne devient pas un message : la bulle
     // éphémère qui dit que ça travaille. Voir `activite.ts`.
     case 'activity':
-      fil.battement.montre(upsert.activity);
-      return;
+      fil.battement.montre(upsert.activity)
+      return
 
     case 'status': {
       if (upsert.status === 'working') {
-        fil.tour.clear();
-        return;
+        fil.tour.clear()
+        return
       }
       // Tout ce qui n'est plus `working` vide le tour, `waiting` compris — et
       // c'est voulu. `waiting`, c'est l'agent qui s'arrête pour vous demander
       // quelque chose : ce qu'il a écrit avant part **maintenant**, et la
       // demande suit avec ses boutons. On voit ce qu'il veut faire avant d'avoir
       // à le trancher, au lieu de choisir à l'aveugle puis de lire pourquoi.
-      fil.battement.arrete();
-      const dit = [...fil.tour.values()].join('\n\n').trim();
-      fil.tour.clear();
-      if (dit) await repond(chatId, dit);
+      fil.battement.arrete()
+      const dit = [...fil.tour.values()].join('\n\n').trim()
+      fil.tour.clear()
+      if (dit) await repond(chatId, dit)
 
       if (upsert.status === 'failed') {
-        await tg.envoie(chatId, t('passerelle.sessionEchouee', { message: upsert.error ?? '' }));
-        defait(chatId, false);
+        await tg.envoie(chatId, t('passerelle.sessionEchouee', { message: upsert.error ?? '' }))
+        defait(chatId, false)
       } else if (upsert.status === 'ended') {
-        await tg.envoie(chatId, t('passerelle.sessionFinie'));
-        defait(chatId, false);
+        await tg.envoie(chatId, t('passerelle.sessionFinie'))
+        defait(chatId, false)
       } else {
         // Après la réponse, jamais avant : ce qu'on attendait passe d'abord, et
         // l'avertissement ne s'interpose pas entre la question et sa réponse.
-        await signaleFenetre(chatId, fil);
+        await signaleFenetre(chatId, fil)
       }
-      return;
+      return
     }
 
     case 'permission-request': {
       // La balle est dans votre camp : ce n'est plus AURA qui travaille, et
       // laisser battre la bulle ferait croire le contraire.
-      fil.battement.arrete();
-      const demande = upsert.request;
-      const plan = planPropose(demande);
+      fil.battement.arrete()
+      const demande = upsert.request
+      const plan = planPropose(demande)
       if (plan) {
         // Le plan est le seul appel dont l'argument *est* la décision : le nom
         // de l'outil n'apprend rien, et deux boutons sans le texte reviennent à
         // faire approuver ce qu'on n'a pas lu.
-        const source = `${t('passerelle.plan')}\n\n${plan}`;
-        const coupe = source.length > PAGE_RICHE ? `${source.slice(0, PAGE_RICHE)}…` : source;
+        const source = `${t('passerelle.plan')}\n\n${plan}`
+        const coupe = source.length > PAGE_RICHE ? `${source.slice(0, PAGE_RICHE)}…` : source
         const rendu = await tg.envoieRendu(
           chatId,
           enBlocs(coupe),
@@ -989,11 +931,11 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
             { texte: t('passerelle.approuver'), donnee: `p:${demande.id}:a` },
             { texte: t('passerelle.refuser'), donnee: `p:${demande.id}:d` },
           ]),
-        );
-        if (rendu.messageId !== null) fil.permissions.set(demande.id, rendu.messageId);
-        return;
+        )
+        if (rendu.messageId !== null) fil.permissions.set(demande.id, rendu.messageId)
+        return
       }
-      const quoi = demande.title || demande.displayName || demande.toolName;
+      const quoi = demande.title || demande.displayName || demande.toolName
       const messageId = await tg.envoieSuivi(
         chatId,
         t('passerelle.permission', { outil: quoi }),
@@ -1001,9 +943,9 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
           { texte: t('passerelle.autoriser'), donnee: `p:${demande.id}:a` },
           { texte: t('passerelle.refuser'), donnee: `p:${demande.id}:d` },
         ]),
-      );
-      if (messageId !== null) fil.permissions.set(demande.id, messageId);
-      return;
+      )
+      if (messageId !== null) fil.permissions.set(demande.id, messageId)
+      return
     }
 
     /**
@@ -1015,23 +957,23 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
      * question attend encore.
      */
     case 'permission-settled': {
-      const messageId = fil.permissions.get(upsert.id);
-      fil.permissions.delete(upsert.id);
-      if (messageId === undefined) return;
-      await tg.reecritClavier(chatId, messageId, { inline_keyboard: [] });
-      return;
+      const messageId = fil.permissions.get(upsert.id)
+      fil.permissions.delete(upsert.id)
+      if (messageId === undefined) return
+      await tg.reecritClavier(chatId, messageId, { inline_keyboard: [] })
+      return
     }
 
     case 'ask-request': {
       // La balle est dans votre camp : laisser battre la bulle ferait croire
       // qu'AURA travaille encore.
-      fil.battement.arrete();
-      const demande = upsert.request;
-      if (!demande.questions.length) return;
-      const f = formulaire(demande.id, demande.questions);
-      fil.asks.set(demande.id, f);
-      await poseQuestion(chatId, fil, f);
-      return;
+      fil.battement.arrete()
+      const demande = upsert.request
+      if (!demande.questions.length) return
+      const f = formulaire(demande.id, demande.questions)
+      fil.asks.set(demande.id, f)
+      await poseQuestion(chatId, fil, f)
+      return
     }
 
     /**
@@ -1040,21 +982,21 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
      * c'est nous qui répondons, l'entrée est déjà partie.
      */
     case 'ask-settled': {
-      const perime = fil.asks.get(upsert.id);
-      fil.asks.delete(upsert.id);
-      if (fil.attente === upsert.id) fil.attente = null;
-      if (!perime) return;
+      const perime = fil.asks.get(upsert.id)
+      fil.asks.delete(upsert.id)
+      if (fil.attente === upsert.id) fil.attente = null
+      if (!perime) return
       // Sans cela, des boutons morts resteraient pressables sous une question
       // que plus rien n'attend.
       if (perime.messageId !== null) {
-        await tg.reecritClavier(chatId, perime.messageId, { inline_keyboard: [] });
+        await tg.reecritClavier(chatId, perime.messageId, { inline_keyboard: [] })
       }
-      await tg.envoie(chatId, t('passerelle.questionExpiree'));
-      return;
+      await tg.envoie(chatId, t('passerelle.questionExpiree'))
+      return
     }
 
     default:
-      return;
+      return
   }
 }
 
@@ -1065,148 +1007,145 @@ async function applique(chatId: number, fil: Fil, upsert: AgentUpsert): Promise<
  * alors plus rien, et il vaut mieux l'oublier que de parler dans le vide.
  */
 function courant(chatId: number): SessionRunner | undefined {
-  const fil = fils.get(chatId);
-  if (!fil) return undefined;
-  const runner = getRunner(fil.runId);
+  const fil = fils.get(chatId)
+  if (!fil) return undefined
+  const runner = getRunner(fil.runId)
   if (!runner) {
-    defait(chatId, false);
-    return undefined;
+    defait(chatId, false)
+    return undefined
   }
-  return runner;
+  return runner
 }
 
 /** Exécute ce qu'un message voulait dire. */
 async function traite(chatId: number, brut: string): Promise<void> {
-  const tg = telegram;
-  if (!tg) return;
-  const intention = parseIntention(brut);
+  const tg = telegram
+  if (!tg) return
+  const intention = parseIntention(brut)
 
   switch (intention.kind) {
     case 'ignorer':
       // Un message vide ne mérite pas de réponse ; une commande inconnue, si —
       // sans quoi une faute de frappe passerait pour une panne.
       if (intention.raison === 'commande-inconnue') {
-        await tg.envoie(
-          chatId,
-          t('passerelle.commandeInconnue', { commande: intention.commande ?? '' }),
-        );
+        await tg.envoie(chatId, t('passerelle.commandeInconnue', { commande: intention.commande ?? '' }))
       }
-      return;
+      return
 
     case 'aide':
-      await tg.envoie(chatId, aide());
-      return;
+      await tg.envoie(chatId, aide())
+      return
 
     case 'etat':
-      await ecranEtat(chatId);
-      return;
+      await ecranEtat(chatId)
+      return
 
     case 'compacter': {
-      const runner = courant(chatId);
+      const runner = courant(chatId)
       if (!runner) {
-        await tg.envoie(chatId, t('passerelle.aucunFil'));
-        return;
+        await tg.envoie(chatId, t('passerelle.aucunFil'))
+        return
       }
       // La seule commande de Claude Code qu'on relaie, et elle passe par la file
       // d'entrée comme un tour : c'est le CLI qui compacte, pas nous. Rien à
       // annoncer ici — la frontière de compaction s'annoncera d'elle-même, avec
       // ses chiffres, quand elle arrivera.
-      runner.send('/compact');
-      return;
+      runner.send('/compact')
+      return
     }
 
     case 'sessions':
-      await tg.envoie(chatId, await etatDesSessions());
-      return;
+      await tg.envoie(chatId, await etatDesSessions())
+      return
 
     case 'accueil':
-      await ecranAccueil(chatId);
-      return;
+      await ecranAccueil(chatId)
+      return
 
     case 'projets':
-      await ecranProjets(chatId, true);
-      return;
+      await ecranProjets(chatId, true)
+      return
 
     case 'projet': {
-      const projet = await trouve(chatId, intention.ref);
+      const projet = await trouve(chatId, intention.ref)
       if (!projet) {
-        await tg.envoie(chatId, t('passerelle.projetInconnu'));
-        return;
+        await tg.envoie(chatId, t('passerelle.projetInconnu'))
+        return
       }
       // Un nouvel écran, et non une réécriture : la commande a été tapée, donc
       // elle a sa place dans le fil, à sa date.
-      vue(chatId).messageId = null;
-      await ouvreProjet(chatId, projet);
-      return;
+      vue(chatId).messageId = null
+      await ouvreProjet(chatId, projet)
+      return
     }
 
     case 'voir': {
-      const v = vue(chatId);
+      const v = vue(chatId)
       if (!v.entrees.length) {
-        await tg.envoie(chatId, t('passerelle.aucuneListe'));
-        return;
+        await tg.envoie(chatId, t('passerelle.aucuneListe'))
+        return
       }
-      const rang = Number(intention.ref);
+      const rang = Number(intention.ref)
       if (!/^\d+$/.test(intention.ref.trim()) || !v.entrees[rang - 1]) {
-        await tg.envoie(chatId, t('passerelle.fichierInconnu'));
-        return;
+        await tg.envoie(chatId, t('passerelle.fichierInconnu'))
+        return
       }
-      await page(chatId, rang, 1);
-      return;
+      await page(chatId, rang, 1)
+      return
     }
 
     case 'ouvrir': {
-      const projet = await trouve(chatId, intention.ref);
+      const projet = await trouve(chatId, intention.ref)
       // La garde de l'Atelier à distance : on n'ouvre que sur un projet que
       // Claude Code connaît déjà. Un chemin quelconque de la machine ne tombe
       // sur rien — il n'y a donc pas de règle à contourner, seulement une liste
       // dans laquelle être.
       if (!projet) {
-        await tg.envoie(chatId, t('passerelle.projetInconnu'));
-        return;
+        await tg.envoie(chatId, t('passerelle.projetInconnu'))
+        return
       }
-      await ouvreAtelier(chatId, projet);
-      return;
+      await ouvreAtelier(chatId, projet)
+      return
     }
 
     case 'fin': {
       if (!fils.has(chatId)) {
-        await tg.envoie(chatId, t('passerelle.aucunFil'));
-        return;
+        await tg.envoie(chatId, t('passerelle.aucunFil'))
+        return
       }
-      defait(chatId, true);
-      await tg.envoie(chatId, t('agent.sessionStopped'));
-      return;
+      defait(chatId, true)
+      await tg.envoie(chatId, t('agent.sessionStopped'))
+      return
     }
 
     case 'stop': {
-      const runner = courant(chatId);
+      const runner = courant(chatId)
       if (!runner) {
-        await tg.envoie(chatId, t('passerelle.aucunFil'));
-        return;
+        await tg.envoie(chatId, t('passerelle.aucunFil'))
+        return
       }
-      await runner.interrupt();
-      return;
+      await runner.interrupt()
+      return
     }
 
     case 'parler': {
-      const runner = courant(chatId);
+      const runner = courant(chatId)
       if (!runner) {
-        await tg.envoie(chatId, t('passerelle.aucunFil'));
-        return;
+        await tg.envoie(chatId, t('passerelle.aucunFil'))
+        return
       }
       // Une question qui attend capte ce qui serait parti comme un tour : c'est
       // le « Other » du harnais, et la seule façon de répondre ce qu'aucun
       // bouton ne dit. L'interception vit **ici**, après `parseIntention` : sous
       // une question, `/stop` et `/fin` restent des commandes.
-      const fil = fils.get(chatId);
-      const f = fil?.attente ? fil.asks.get(fil.attente) : undefined;
+      const fil = fils.get(chatId)
+      const f = fil?.attente ? fil.asks.get(fil.attente) : undefined
       if (fil && f) {
-        await avanceQuestion(chatId, fil, f, repondLibre(f, intention.texte));
-        return;
+        await avanceQuestion(chatId, fil, f, repondLibre(f, intention.texte))
+        return
       }
-      runner.send(intention.texte);
-      return;
+      runner.send(intention.texte)
+      return
     }
   }
 }
@@ -1226,8 +1165,8 @@ async function traite(chatId: number, brut: string): Promise<void> {
  * suspendu qui repart, pas cet appel.
  */
 async function tranche(chatId: number, donnee: string): Promise<void> {
-  const [type, id, suffixe] = donnee.split(':');
-  if (!type || !id) return;
+  const [type, id, suffixe] = donnee.split(':')
+  if (!type || !id) return
 
   // Naviguer et tourner une page ne tranchent rien et ne demandent aucune
   // session : ces cas passent donc **avant** la garde ci-dessous, qui refuserait
@@ -1236,33 +1175,29 @@ async function tranche(chatId: number, donnee: string): Promise<void> {
   // La navigation seule admet un ordre sans argument — « retour », « ouvrir
   // ici » n'ont rien à désigner.
   if (type === 'n') {
-    await navigue(chatId, id, suffixe ?? '');
-    return;
+    await navigue(chatId, id, suffixe ?? '')
+    return
   }
-  if (!suffixe) return;
+  if (!suffixe) return
   if (type === 'v') {
-    await page(chatId, Number(id), Number(suffixe));
-    return;
+    await page(chatId, Number(id), Number(suffixe))
+    return
   }
 
-  const runner = courant(chatId);
-  const fil = fils.get(chatId);
-  if (!runner || !fil) return;
+  const runner = courant(chatId)
+  const fil = fils.get(chatId)
+  if (!runner || !fil) return
 
   if (type === 'p') {
-    const reponse: PermissionAnswer = suffixe === 'a' ? 'allow' : 'deny';
-    runner.answerPermission(
-      id,
-      reponse,
-      reponse === 'deny' ? t('passerelle.refuseDeLoin') : undefined,
-    );
-    return;
+    const reponse: PermissionAnswer = suffixe === 'a' ? 'allow' : 'deny'
+    runner.answerPermission(id, reponse, reponse === 'deny' ? t('passerelle.refuseDeLoin') : undefined)
+    return
   }
 
   if (type === 'q') {
-    const f = fil.asks.get(id);
-    if (!f) return;
-    await avanceQuestion(chatId, fil, f, presse(f, suffixe));
+    const f = fil.asks.get(id)
+    if (!f) return
+    await avanceQuestion(chatId, fil, f, presse(f, suffixe))
   }
 }
 
@@ -1275,21 +1210,18 @@ async function tranche(chatId: number, donnee: string): Promise<void> {
  * indéfiniment.
  */
 export function demarrePasserelle(journal: Journal): void {
-  const token = (process.env.AURA_TELEGRAM_TOKEN ?? '').trim();
-  if (!token) return;
+  const token = (process.env.AURA_TELEGRAM_TOKEN ?? '').trim()
+  if (!token) return
 
-  const chats = lireChats(process.env.AURA_TELEGRAM_CHATS);
+  const chats = lireChats(process.env.AURA_TELEGRAM_CHATS)
   if (chats.size === 0) {
-    journal.warn(
-      "Passerelle : un jeton est configuré mais aucune conversation n'est autorisée " +
-        '(AURA_TELEGRAM_CHATS). Je ne démarre pas.',
-    );
-    return;
+    journal.warn("Passerelle : un jeton est configuré mais aucune conversation n'est autorisée " + '(AURA_TELEGRAM_CHATS). Je ne démarre pas.')
+    return
   }
 
-  const tg = new Telegram(token);
-  telegram = tg;
-  void boucle(tg, chats, journal);
+  const tg = new Telegram(token)
+  telegram = tg
+  void boucle(tg, chats, journal)
 }
 
 /**
@@ -1318,39 +1250,38 @@ export function demarrePasserelle(journal: Journal): void {
  * ce qui est chez Telegram y reste tant qu'on ne le retire pas.
  */
 async function declareCommandes(tg: Telegram, chats: Set<number>, journal: Journal): Promise<void> {
-  const rate = (quoi: string): void =>
-    journal.warn(`Passerelle : Telegram a refusé la liste des commandes (${quoi}).`);
+  const rate = (quoi: string): void => journal.warn(`Passerelle : Telegram a refusé la liste des commandes (${quoi}).`)
 
   for (const chatId of chats) {
     // Le repli de la conversation : ce que voit un client dont la langue n'est
     // pas des nôtres.
     if (!(await tg.declare(withLocale(DEFAULT_LOCALE, pourTelegram), undefined, chatId))) {
-      rate('défaut');
+      rate('défaut')
     }
 
     for (const langue of SUPPORTED_LOCALES) {
-      if (!(await tg.declare(withLocale(langue, pourTelegram), langue, chatId))) rate(langue);
+      if (!(await tg.declare(withLocale(langue, pourTelegram), langue, chatId))) rate(langue)
     }
   }
 
   // Telegram garde une liste par langue : les effacer toutes, sans quoi la
   // langue survivrait au défaut qu'elle double.
-  if (!(await tg.efface())) rate('effacement du défaut');
+  if (!(await tg.efface())) rate('effacement du défaut')
   for (const langue of SUPPORTED_LOCALES) {
-    if (!(await tg.efface(langue))) rate(`effacement du défaut, ${langue}`);
+    if (!(await tg.efface(langue))) rate(`effacement du défaut, ${langue}`)
   }
 }
 
 /** Le long-polling, jusqu'à l'extinction du serveur. */
 async function boucle(tg: Telegram, chats: Set<number>, journal: Journal): Promise<void> {
-  const nom = await tg.identite();
+  const nom = await tg.identite()
   if (!nom) {
-    journal.warn('Passerelle : Telegram refuse ce jeton. Je ne démarre pas.');
-    telegram = null;
-    return;
+    journal.warn('Passerelle : Telegram refuse ce jeton. Je ne démarre pas.')
+    telegram = null
+    return
   }
-  journal.info(`Passerelle ouverte sur @${nom} — ${chats.size} conversation(s) autorisée(s).`);
-  await declareCommandes(tg, chats, journal);
+  journal.info(`Passerelle ouverte sur @${nom} — ${chats.size} conversation(s) autorisée(s).`)
+  await declareCommandes(tg, chats, journal)
 
   tg.ecoute(
     // La garde passe avant tout traitement, et le silence est la réponse à un
@@ -1358,20 +1289,20 @@ async function boucle(tg: Telegram, chats: Set<number>, journal: Journal): Promi
     (chatId) => autorise(chats, chatId),
     async (message) => {
       try {
-        await traite(message.chatId, message.texte);
+        await traite(message.chatId, message.texte)
       } catch (e) {
-        journal.warn(`Passerelle : ${publicMessage(e)}`);
+        journal.warn(`Passerelle : ${publicMessage(e)}`)
       }
     },
     async (bouton) => {
       try {
-        await tranche(bouton.chatId, bouton.donnee);
+        await tranche(bouton.chatId, bouton.donnee)
       } catch (e) {
-        journal.warn(`Passerelle : ${publicMessage(e)}`);
+        journal.warn(`Passerelle : ${publicMessage(e)}`)
       }
     },
     (message) => journal.warn(`Passerelle : ${message}`),
-  );
+  )
 }
 
 /**
@@ -1382,8 +1313,8 @@ async function boucle(tg: Telegram, chats: Set<number>, journal: Journal): Promi
  * qu'à l'onglet qui la regardait.
  */
 export function arretePasserelle(): void {
-  for (const chatId of [...fils.keys()]) defait(chatId, false);
-  vues.clear();
-  telegram?.stop();
-  telegram = null;
+  for (const chatId of [...fils.keys()]) defait(chatId, false)
+  vues.clear()
+  telegram?.stop()
+  telegram = null
 }

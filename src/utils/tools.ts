@@ -1,4 +1,4 @@
-import { t, te } from '@/i18n';
+import { t, te } from '@/i18n'
 
 // Read the tools fields of skills (`allowed-tools`) and agents (`tools`), and
 // explain each token. The value is a comma-separated list, but a token can carry
@@ -7,29 +7,29 @@ import { t, te } from '@/i18n';
 
 /** Split a tools string into trimmed tokens, respecting parentheses. */
 export function parseTools(value: string): string[] {
-  const out: string[] = [];
-  let depth = 0;
-  let cur = '';
+  const out: string[] = []
+  let depth = 0
+  let cur = ''
   for (const ch of value) {
-    if (ch === '(') depth++;
-    else if (ch === ')') depth = Math.max(0, depth - 1);
+    if (ch === '(') depth++
+    else if (ch === ')') depth = Math.max(0, depth - 1)
     if (ch === ',' && depth === 0) {
-      const t = cur.trim();
-      if (t) out.push(t);
-      cur = '';
+      const t = cur.trim()
+      if (t) out.push(t)
+      cur = ''
     } else {
-      cur += ch;
+      cur += ch
     }
   }
-  const last = cur.trim();
-  if (last) out.push(last);
-  return out;
+  const last = cur.trim()
+  if (last) out.push(last)
+  return out
 }
 
 /** The base name of a token, ignoring any (…) argument — `Bash(x)` → `Bash`. */
 export function toolBase(token: string): string {
-  const i = token.indexOf('(');
-  return (i === -1 ? token : token.slice(0, i)).trim();
+  const i = token.indexOf('(')
+  return (i === -1 ? token : token.slice(0, i)).trim()
 }
 
 /**
@@ -41,22 +41,20 @@ export function toolBase(token: string): string {
  * sans quoi un outil inconnu afficherait sa propre clé.
  */
 export function describeToolToken(token: string): string {
-  const base = toolBase(token);
+  const base = toolBase(token)
   const arg = token
     .slice(base.length)
     .replace(/^\(|\)$/g, '')
-    .trim();
+    .trim()
 
   if (base.startsWith('mcp__')) {
-    const [, server, tool] = base.split('__');
-    return tool
-      ? t('tools.mcpTool', { tool, server: server ?? '?' })
-      : t('tools.mcpAll', { server: server ?? '?' });
+    const [, server, tool] = base.split('__')
+    return tool ? t('tools.mcpTool', { tool, server: server ?? '?' }) : t('tools.mcpAll', { server: server ?? '?' })
   }
-  if (arg && base === 'Bash') return t('tools.bashRestricted', { arg });
-  if (arg && base === 'Agent') return t('tools.agentRestricted', { arg });
-  if (arg) return t('tools.restricted', { base, arg });
+  if (arg && base === 'Bash') return t('tools.bashRestricted', { arg })
+  if (arg && base === 'Agent') return t('tools.agentRestricted', { arg })
+  if (arg) return t('tools.restricted', { base, arg })
 
-  const key = `tools.info.${base}`;
-  return te(key) ? t(key) : t('tools.unknown');
+  const key = `tools.info.${base}`
+  return te(key) ? t(key) : t('tools.unknown')
 }

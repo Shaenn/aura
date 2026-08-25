@@ -15,16 +15,15 @@
 // Rien de tout cela ne fait autorité : le message `assistant` livre l'entrée
 // entière quelques centaines de millisecondes plus tard et l'écrase.
 
-type Rec = Record<string, unknown>;
+type Rec = Record<string, unknown>
 
 /** Ce qu'il reste à fermer, et si une chaîne y serait lue comme une clé. */
 interface Level {
-  close: '}' | ']';
-  expectKey: boolean;
+  close: '}' | ']'
+  expectKey: boolean
 }
 
-const asRecord = (v: unknown): Rec | null =>
-  v && typeof v === 'object' && !Array.isArray(v) ? (v as Rec) : null;
+const asRecord = (v: unknown): Rec | null => (v && typeof v === 'object' && !Array.isArray(v) ? (v as Rec) : null)
 
 /**
  * L'objet que porte un fragment de JSON, au plus près de ce qui est arrivé.
@@ -32,78 +31,78 @@ const asRecord = (v: unknown): Rec | null =>
  * ou une racine qui n'est pas un objet.
  */
 export function repairJson(fragment: string): Rec | null {
-  if (!fragment.trim()) return null;
+  if (!fragment.trim()) return null
   try {
-    return asRecord(JSON.parse(fragment));
+    return asRecord(JSON.parse(fragment))
   } catch {
     // Le cas nominal pendant la frappe : on répare plus bas.
   }
 
-  const stack: Level[] = [];
+  const stack: Level[] = []
   // Le plus long préfixe qu'il suffit de refermer pour obtenir du JSON valide,
   // et l'état de la pile à cet endroit-là.
-  let safe = 0;
-  let safeStack: Level[] = [];
+  let safe = 0
+  let safeStack: Level[] = []
   const mark = (at: number): void => {
-    safe = at;
-    safeStack = stack.map((l) => ({ ...l }));
-  };
+    safe = at
+    safeStack = stack.map((l) => ({ ...l }))
+  }
 
-  let inString = false;
-  let escaped = false;
+  let inString = false
+  let escaped = false
   /** La chaîne en cours est-elle une clé ? Une clé tronquée se jette. */
-  let keyString = false;
+  let keyString = false
 
   for (let i = 0; i < fragment.length; i++) {
-    const ch = fragment[i];
+    const ch = fragment[i]
 
     if (inString) {
-      if (escaped) escaped = false;
-      else if (ch === '\\') escaped = true;
+      if (escaped) escaped = false
+      else if (ch === '\\') escaped = true
       else if (ch === '"') {
-        inString = false;
-        if (!keyString) mark(i + 1);
+        inString = false
+        if (!keyString) mark(i + 1)
       }
-      continue;
+      continue
     }
 
-    const top = stack[stack.length - 1];
+    const top = stack[stack.length - 1]
     if (ch === '"') {
-      inString = true;
-      escaped = false;
-      keyString = top?.expectKey === true;
+      inString = true
+      escaped = false
+      keyString = top?.expectKey === true
     } else if (ch === '{' || ch === '[') {
-      stack.push({ close: ch === '{' ? '}' : ']', expectKey: ch === '{' });
+      stack.push({ close: ch === '{' ? '}' : ']', expectKey: ch === '{' })
       // Un conteneur qu'on vient d'ouvrir est déjà refermable : `{` donne `{}`.
-      mark(i + 1);
+      mark(i + 1)
     } else if (ch === '}' || ch === ']') {
-      stack.pop();
-      mark(i + 1);
+      stack.pop()
+      mark(i + 1)
     } else if (ch === ':') {
-      if (top) top.expectKey = false;
+      if (top) top.expectKey = false
     } else if (ch === ',') {
-      if (top) top.expectKey = top.close === '}';
+      if (top) top.expectKey = top.close === '}'
     }
   }
 
   // Une valeur textuelle en cours : on la garde et on la ferme ici même.
   // `escaped` en suspens veut dire qu'on s'est arrêté sur l'antislash d'une
   // séquence d'échappement — le retrancher évite de clore sur `\"`.
-  let patched: string;
-  let closing: Level[];
+  let patched: string
+  let closing: Level[]
   if (inString && !keyString) {
-    patched = (escaped ? fragment.slice(0, -1) : fragment) + '"';
-    closing = stack;
+    patched = (escaped ? fragment.slice(0, -1) : fragment) + '"'
+    closing = stack
   } else {
-    patched = fragment.slice(0, safe);
-    closing = safeStack;
+    patched = fragment.slice(0, safe)
+    closing = safeStack
   }
 
-  for (let i = closing.length - 1; i >= 0; i--) patched += closing[i]!.close;
+  for (let i = closing.length - 1; i >= 0; i--) patched += closing[i]!.close
 
   try {
-    return asRecord(JSON.parse(patched));
+    return asRecord(JSON.parse(patched))
   } catch {
-    return null;
+    return null
   }
 }

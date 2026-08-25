@@ -12,34 +12,34 @@
 // `disable-model-invocation`, agents use `tools` / `permissionMode`. A key from
 // one is not valid in the other, and the cards flag it as ignored.
 
-import { parseTools } from './tools';
-import { t } from '@/i18n';
+import { t } from '@/i18n'
+import { parseTools } from './tools'
 
-const FENCE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
+const FENCE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/
 
 /** How a key's value should be rendered, and how it is read from YAML. */
-export type KeyKind = 'text' | 'tools' | 'bool' | 'globs' | 'enum' | 'list' | 'block';
+export type KeyKind = 'text' | 'tools' | 'bool' | 'globs' | 'enum' | 'list' | 'block'
 
 export interface FmEntry {
-  key: string;
+  key: string
   /** Scalar value, or the joined list, or '' for a nested block. */
-  value: string;
+  value: string
   /** Non-empty only for an explicit YAML list (`- item` or `[a, b]`). */
-  list: string[];
+  list: string[]
   /** Raw indented lines, for nested blocks (hooks) we do not model. */
-  raw: string;
+  raw: string
 }
 
 export interface ParsedDoc {
-  present: boolean;
-  entries: FmEntry[];
-  body: string;
+  present: boolean
+  entries: FmEntry[]
+  body: string
 }
 
 function unquote(v: string): string {
-  const t = v.trim();
-  const quoted = (t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"));
-  return quoted ? t.slice(1, -1) : t;
+  const t = v.trim()
+  const quoted = (t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))
+  return quoted ? t.slice(1, -1) : t
 }
 
 /**
@@ -49,8 +49,8 @@ function unquote(v: string): string {
  * are split by the consumer via `entryTokens`, which respects `Bash(a, b)`.
  */
 function flowList(value: string): string[] {
-  if (!(value.startsWith('[') && value.endsWith(']'))) return [];
-  return parseTools(value.slice(1, -1)).map(unquote).filter(Boolean);
+  if (!(value.startsWith('[') && value.endsWith(']'))) return []
+  return parseTools(value.slice(1, -1)).map(unquote).filter(Boolean)
 }
 
 /**
@@ -58,8 +58,8 @@ function flowList(value: string): string[] {
  * on commas at paren depth 0 — so `Bash(git status, git log)` stays one token.
  */
 export function entryTokens(e: FmEntry): string[] {
-  if (e.list.length) return e.list;
-  return e.value ? parseTools(e.value) : [];
+  if (e.list.length) return e.list
+  return e.value ? parseTools(e.value) : []
 }
 
 /**
@@ -67,53 +67,53 @@ export function entryTokens(e: FmEntry): string[] {
  * keys only: a scalar, a `- item` list, or an indented block kept as raw text.
  */
 export function parseDoc(text: string): ParsedDoc {
-  const m = FENCE.exec(text);
-  if (!m) return { present: false, entries: [], body: text };
+  const m = FENCE.exec(text)
+  if (!m) return { present: false, entries: [], body: text }
 
-  const lines = (m[1] ?? '').split(/\r?\n/);
-  const entries: FmEntry[] = [];
+  const lines = (m[1] ?? '').split(/\r?\n/)
+  const entries: FmEntry[] = []
 
   for (let i = 0; i < lines.length; i++) {
-    const kv = /^([A-Za-z0-9_-]+)\s*:\s*(.*)$/.exec(lines[i] ?? '');
-    const key = kv?.[1];
-    if (!key) continue;
+    const kv = /^([A-Za-z0-9_-]+)\s*:\s*(.*)$/.exec(lines[i] ?? '')
+    const key = kv?.[1]
+    if (!key) continue
 
-    const scalar = (kv?.[2] ?? '').trim();
+    const scalar = (kv?.[2] ?? '').trim()
     if (scalar) {
-      const value = unquote(scalar);
-      const list = flowList(value);
-      entries.push({ key, value: list.length ? list.join(', ') : value, list, raw: '' });
-      continue;
+      const value = unquote(scalar)
+      const list = flowList(value)
+      entries.push({ key, value: list.length ? list.join(', ') : value, list, raw: '' })
+      continue
     }
 
     // No scalar: gather the indented lines that belong to this key.
-    const indented: string[] = [];
-    let j = i + 1;
+    const indented: string[] = []
+    let j = i + 1
     while (j < lines.length && /^\s+\S/.test(lines[j] ?? '')) {
-      indented.push(lines[j] ?? '');
-      j++;
+      indented.push(lines[j] ?? '')
+      j++
     }
-    i = j - 1;
-    if (!indented.length) continue; // a bare `key:` carries nothing to show
+    i = j - 1
+    if (!indented.length) continue // a bare `key:` carries nothing to show
 
-    const bullets = indented.map((l) => /^\s*-\s+(.*)$/.exec(l)?.[1]);
+    const bullets = indented.map((l) => /^\s*-\s+(.*)$/.exec(l)?.[1])
     if (bullets.every((b) => b !== undefined)) {
-      const list = bullets.map((b) => unquote((b ?? '').trim())).filter(Boolean);
-      entries.push({ key, value: list.join(', '), list, raw: '' });
+      const list = bullets.map((b) => unquote((b ?? '').trim())).filter(Boolean)
+      entries.push({ key, value: list.join(', '), list, raw: '' })
     } else {
-      entries.push({ key, value: '', list: [], raw: indented.join('\n') });
+      entries.push({ key, value: '', list: [], raw: indented.join('\n') })
     }
   }
 
-  return { present: true, entries, body: text.slice(m[0].length) };
+  return { present: true, entries, body: text.slice(m[0].length) }
 }
 
 /** Le vocabulaire auquel une clé appartient — voir `src/i18n/<langue>/frontmatter.ts`. */
-export type KeyNs = 'skill' | 'agent' | 'rule';
+export type KeyNs = 'skill' | 'agent' | 'rule'
 
 export interface KeySpec {
-  key: string;
-  kind: KeyKind;
+  key: string
+  kind: KeyKind
   /**
    * Où lire les mots de cette clé (nom, explication, valeur par défaut).
    *
@@ -122,35 +122,34 @@ export interface KeySpec {
    * cette clé — ce qui mérite d'être signalé ; `null`, quand la ressource n'a
    * pas de vocabulaire du tout, auquel cas se taire est la seule chose honnête.
    */
-  ns: KeyNs | 'unknown' | null;
+  ns: KeyNs | 'unknown' | null
   /** Documented values, for `enum` keys. */
-  values?: string[];
+  values?: string[]
   /** The resource is invalid without it — flagged when missing. */
-  required?: boolean;
+  required?: boolean
 }
 
 /** Rattache tout un vocabulaire à son catalogue, sans l'annoter clé par clé. */
 function vocabulary(ns: KeyNs, specs: Omit<KeySpec, 'ns'>[]): KeySpec[] {
-  return specs.map((s) => ({ ...s, ns }));
+  return specs.map((s) => ({ ...s, ns }))
 }
 
-const documented = (spec: KeySpec): spec is KeySpec & { ns: KeyNs } =>
-  spec.ns !== null && spec.ns !== 'unknown';
+const documented = (spec: KeySpec): spec is KeySpec & { ns: KeyNs } => spec.ns !== null && spec.ns !== 'unknown'
 
 /** Le nom d'affichage d'une clé — son propre nom si rien ne la documente. */
 export function keyLabel(spec: KeySpec): string {
-  return documented(spec) ? t(`frontmatter.${spec.ns}.${spec.key}.label`) : spec.key;
+  return documented(spec) ? t(`frontmatter.${spec.ns}.${spec.key}.label`) : spec.key
 }
 
 /** Ce que la clé fait — rendu en infobulle. Vide quand il n'y a rien à en dire. */
 export function keyInfo(spec: KeySpec): string {
-  if (documented(spec)) return t(`frontmatter.${spec.ns}.${spec.key}.info`);
-  return spec.ns === 'unknown' ? t('frontmatter.unknown') : '';
+  if (documented(spec)) return t(`frontmatter.${spec.ns}.${spec.key}.info`)
+  return spec.ns === 'unknown' ? t('frontmatter.unknown') : ''
 }
 
 /** Ce que Claude Code suppose quand la clé est absente. */
 export function keyFallback(spec: KeySpec): string {
-  return documented(spec) ? t(`frontmatter.${spec.ns}.${spec.key}.fallback`) : '';
+  return documented(spec) ? t(`frontmatter.${spec.ns}.${spec.key}.fallback`) : ''
 }
 
 /** The keys Claude Code reads from a SKILL.md, in the order we present them. */
@@ -224,7 +223,7 @@ export const SKILL_KEYS: KeySpec[] = vocabulary('skill', [
     key: 'hooks',
     kind: 'block',
   },
-]);
+])
 
 /**
  * The keys Claude Code reads from an agents/<name>.md. Note the camelCase —
@@ -305,7 +304,7 @@ export const AGENT_KEYS: KeySpec[] = vocabulary('agent', [
     key: 'initialPrompt',
     kind: 'text',
   },
-]);
+])
 
 /**
  * A `rules/*.md` file declares which files it applies to, and nothing else. This
@@ -318,7 +317,7 @@ export const RULE_KEYS: KeySpec[] = vocabulary('rule', [
     key: 'paths',
     kind: 'globs',
   },
-]);
+])
 
 /** The documented spec for a key, or a generic one for keys we don't know. */
 export function keySpec(keys: KeySpec[], key: string): KeySpec {
@@ -328,9 +327,8 @@ export function keySpec(keys: KeySpec[], key: string): KeySpec {
       kind: 'text',
       ns: 'unknown',
     }
-  );
+  )
 }
 
 /** True when Claude Code documents this key for the given resource type. */
-export const isKnownKey = (keys: KeySpec[], key: string): boolean =>
-  keys.some((s) => s.key === key);
+export const isKnownKey = (keys: KeySpec[], key: string): boolean => keys.some((s) => s.key === key)

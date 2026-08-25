@@ -75,13 +75,13 @@ Quand une action peut être retentée, le bouton est dans l'état d'erreur — p
 appliquer) ne remplace pas la section : elle passe par `useNotify`.
 
 ```ts
-const { notifyError, notifyDone } = useNotify();
+const { notifyError, notifyDone } = useNotify()
 
 try {
-  await removeBackup(id);
-  notifyDone('Version supprimée.');
+  await removeBackup(id)
+  notifyDone('Version supprimée.')
 } catch (e) {
-  notifyError(e, "Je n'ai pas pu supprimer cette version");
+  notifyError(e, "Je n'ai pas pu supprimer cette version")
 }
 ```
 

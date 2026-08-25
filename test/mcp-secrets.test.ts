@@ -10,15 +10,15 @@
 // reconduction côté serveur, changer la commande d'un serveur effacerait ses
 // clés — une perte silencieuse, que rien à l'écran n'annoncerait.
 
-import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type * as Mcp from '../server/mcp.ts';
+import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import type * as Mcp from '../server/mcp.ts'
 
-let home: string;
-let claudeJson: string;
-let mcp: typeof Mcp;
+let home: string
+let claudeJson: string
+let mcp: typeof Mcp
 
 const CONFIG = {
   mcpServers: {
@@ -30,7 +30,7 @@ const CONFIG = {
     sansEnv: { command: 'node', args: ['serveur.js'] },
   },
   autreCle: { intacte: true },
-};
+}
 
 /**
  * Les instantanés que l'écriture laisse derrière elle.
@@ -41,80 +41,80 @@ const CONFIG = {
  * déposerait trois copies du `.claude.json` de test dans les sauvegardes de la
  * machine — jeton d'exemple compris.
  */
-const laisses: string[] = [];
+const laisses: string[] = []
 
 beforeAll(async () => {
-  home = await mkdtemp(join(tmpdir(), 'aura-mcp-'));
-  claudeJson = join(home, '.claude.json');
+  home = await mkdtemp(join(tmpdir(), 'aura-mcp-'))
+  claudeJson = join(home, '.claude.json')
   // `mcp.ts` situe `~/.claude.json` à côté du dossier géré.
-  process.env.AURA_CLAUDE_DIR = join(home, '.claude');
-  mcp = await import('../server/mcp.ts');
-});
+  process.env.AURA_CLAUDE_DIR = join(home, '.claude')
+  mcp = await import('../server/mcp.ts')
+})
 
 afterAll(async () => {
-  delete process.env.AURA_CLAUDE_DIR;
-  await rm(home, { recursive: true, force: true });
-  for (const dir of laisses) await rm(dir, { recursive: true, force: true });
-});
+  delete process.env.AURA_CLAUDE_DIR
+  await rm(home, { recursive: true, force: true })
+  for (const dir of laisses) await rm(dir, { recursive: true, force: true })
+})
 
 /** Applique, et retient l'instantané pour le retirer à la fin. */
 async function applique(name: string, server: Parameters<typeof mcp.applyMcpWrite>[1]) {
-  const { expectedHash } = await mcp.proposeMcpWrite(name, server);
-  const { backupPath } = await mcp.applyMcpWrite(name, server, expectedHash);
-  if (backupPath) laisses.push(dirname(backupPath));
+  const { expectedHash } = await mcp.proposeMcpWrite(name, server)
+  const { backupPath } = await mcp.applyMcpWrite(name, server, expectedHash)
+  if (backupPath) laisses.push(dirname(backupPath))
 }
 
 beforeEach(async () => {
-  await writeFile(claudeJson, JSON.stringify(CONFIG, null, 2));
-});
+  await writeFile(claudeJson, JSON.stringify(CONFIG, null, 2))
+})
 
 describe('inventaire', () => {
   it('ne sert pas les valeurs d’environnement, seulement leurs noms', async () => {
-    const inv = await mcp.getMcpInventory();
-    const github = inv.globalServers.github;
-    expect(github?.env).toBeUndefined();
-    expect(github?.envKeys).toEqual(['GITHUB_TOKEN', 'REGION']);
-    expect(JSON.stringify(inv)).not.toContain('ghp_secret_a_ne_pas_servir');
-  });
+    const inv = await mcp.getMcpInventory()
+    const github = inv.globalServers.github
+    expect(github?.env).toBeUndefined()
+    expect(github?.envKeys).toEqual(['GITHUB_TOKEN', 'REGION'])
+    expect(JSON.stringify(inv)).not.toContain('ghp_secret_a_ne_pas_servir')
+  })
 
   it('laisse intact un serveur qui n’a pas d’environnement', async () => {
-    const inv = await mcp.getMcpInventory();
-    expect(inv.globalServers.sansEnv).toEqual({ command: 'node', args: ['serveur.js'] });
-  });
-});
+    const inv = await mcp.getMcpInventory()
+    expect(inv.globalServers.sansEnv).toEqual({ command: 'node', args: ['serveur.js'] })
+  })
+})
 
 describe('écriture', () => {
   /** Ce que le formulaire renvoie : ce qu'il a reçu, donc sans `env`. */
-  const commeLeFront = { command: 'npx', args: ['-y', 'autre-serveur'], envKeys: ['GITHUB_TOKEN'] };
+  const commeLeFront = { command: 'npx', args: ['-y', 'autre-serveur'], envKeys: ['GITHUB_TOKEN'] }
 
   const relire = async (): Promise<Record<string, Record<string, unknown>>> =>
-    (JSON.parse(await readFile(claudeJson, 'utf8')) as { mcpServers: never }).mcpServers;
+    (JSON.parse(await readFile(claudeJson, 'utf8')) as { mcpServers: never }).mcpServers
 
   it('reconduit l’environnement que le client n’a pas reçu', async () => {
-    await applique('github', commeLeFront);
+    await applique('github', commeLeFront)
 
-    const servers = await relire();
+    const servers = await relire()
     expect(servers.github?.env).toEqual({
       GITHUB_TOKEN: 'ghp_secret_a_ne_pas_servir',
       REGION: 'eu',
-    });
-    expect(servers.github?.args).toEqual(['-y', 'autre-serveur']);
+    })
+    expect(servers.github?.args).toEqual(['-y', 'autre-serveur'])
     // `envKeys` est une vue : elle ne descend pas sur le disque.
-    expect(servers.github).not.toHaveProperty('envKeys');
-  });
+    expect(servers.github).not.toHaveProperty('envKeys')
+  })
 
   it('laisse écrire un environnement neuf quand il en vient un', async () => {
-    const avecEnv = { command: 'npx', env: { GITHUB_TOKEN: 'nouveau' } };
-    await applique('github', avecEnv);
+    const avecEnv = { command: 'npx', env: { GITHUB_TOKEN: 'nouveau' } }
+    await applique('github', avecEnv)
 
-    expect((await relire()).github?.env).toEqual({ GITHUB_TOKEN: 'nouveau' });
-  });
+    expect((await relire()).github?.env).toEqual({ GITHUB_TOKEN: 'nouveau' })
+  })
 
   it('ne touche pas au reste du fichier', async () => {
-    await applique('sansEnv', null);
+    await applique('sansEnv', null)
 
-    const obj = JSON.parse(await readFile(claudeJson, 'utf8')) as Record<string, unknown>;
-    expect(obj.autreCle).toEqual({ intacte: true });
-    expect(await relire()).not.toHaveProperty('sansEnv');
-  });
-});
+    const obj = JSON.parse(await readFile(claudeJson, 'utf8')) as Record<string, unknown>
+    expect(obj.autreCle).toEqual({ intacte: true })
+    await expect(relire()).resolves.not.toHaveProperty('sansEnv')
+  })
+})

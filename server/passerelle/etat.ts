@@ -9,7 +9,7 @@
 // emploie (`transcript.ts`, `settleTurn`). Ce fichier ne fait que le rapporter à
 // la fenêtre du modèle et juger s'il y a lieu d'en parler.
 
-import { locale, t } from '../i18n/index.ts';
+import { locale, t } from '../i18n/index.ts'
 
 /**
  * À partir d'où la fenêtre mérite qu'on en parle sans qu'on ait rien demandé.
@@ -21,7 +21,7 @@ import { locale, t } from '../i18n/index.ts';
  * chose (le diagnostic juge le pic d'une session finie contre le parc, celle-ci
  * lit une session vivante maintenant). Un test tient les deux nombres égaux.
  */
-export const SEUIL_ALERTE = 0.8;
+export const SEUIL_ALERTE = 0.8
 
 /**
  * Un relevé de fenêtre, rapporté à la limite du modèle.
@@ -33,9 +33,9 @@ export const SEUIL_ALERTE = 0.8;
  */
 export interface Fenetre {
   /** Le contexte du dernier tour, exact. `0` quand aucun tour n'a répondu. */
-  tokens: number;
+  tokens: number
   /** La fenêtre du modèle, telle que `contextLimitFor` la déduit. */
-  limite: number;
+  limite: number
 }
 
 /**
@@ -47,8 +47,8 @@ export interface Fenetre {
  * l'écran là où « 100 % » dit déjà tout ce qu'il y a à dire.
  */
 export function part(f: Fenetre): number {
-  if (f.tokens <= 0 || f.limite <= 0) return 0;
-  return Math.min(1, f.tokens / f.limite);
+  if (f.tokens <= 0 || f.limite <= 0) return 0
+  return Math.min(1, f.tokens / f.limite)
 }
 
 /**
@@ -60,12 +60,12 @@ export function part(f: Fenetre): number {
  * reste nominale, comme `docs/voix.md` le demande.
  */
 export function lignes(f: Fenetre, cwd: string, modele: string, mode: string): string[] {
-  const entete = t('passerelle.etatEntete', { cwd, modele, mode });
+  const entete = t('passerelle.etatEntete', { cwd, modele, mode })
 
   // Une session neuve n'a rien fait répondre au modèle : il n'y a pas de
   // fenêtre à annoncer. Le dire vaut mieux que de montrer un zéro, qui se lit
   // comme une mesure alors que c'est une absence de mesure.
-  if (f.tokens <= 0) return [entete, '', t('passerelle.etatSansReleve')];
+  if (f.tokens <= 0) return [entete, '', t('passerelle.etatSansReleve')]
 
   return [
     entete,
@@ -75,7 +75,7 @@ export function lignes(f: Fenetre, cwd: string, modele: string, mode: string): s
       limite: nombre(f.limite),
       pourcent: Math.round(part(f) * 100),
     }),
-  ];
+  ]
 }
 
 /**
@@ -86,7 +86,7 @@ export function lignes(f: Fenetre, cwd: string, modele: string, mode: string): s
  * transformerait un avertissement en bruit de fond.
  */
 export function alerte(deja: boolean, ratio: number): boolean {
-  return !deja && ratio >= SEUIL_ALERTE;
+  return !deja && ratio >= SEUIL_ALERTE
 }
 
 /**
@@ -112,5 +112,5 @@ export function nombre(n: number): string {
   return new Intl.NumberFormat(locale(), {
     notation: 'compact',
     maximumFractionDigits: 0,
-  }).format(n);
+  }).format(n)
 }

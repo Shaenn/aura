@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const sessions: MessageSchema['pages']['sessions'] = {
   title: 'Live sessions',
@@ -57,6 +57,6 @@ const sessions: MessageSchema['pages']['sessions'] = {
     added: 'Rule added to settings.json.',
     addedNote: 'It applies to further requests, not to this one.',
   },
-};
+}
 
-export default sessions;
+export default sessions

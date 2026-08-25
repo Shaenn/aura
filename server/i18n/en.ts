@@ -1,5 +1,5 @@
-import type { Catalog } from './index.ts';
-import diagnostics from './en-diagnostics.ts';
+import diagnostics from './en-diagnostics.ts'
+import type { Catalog } from './index.ts'
 
 // Anglais du BFF. La charte `docs/voice.md` s'applique : sobre et direct, jamais
 // de `please`, jamais de `sorry`, et une erreur qui dit ce qui reste possible.
@@ -13,10 +13,8 @@ const en: Catalog = {
     backupNotFound: 'Backup not found.',
     planNotFound: 'Plan not found.',
     unknownSession: 'Unknown session.',
-    processNotFound:
-      'I cannot find that process among Claude’s. It may have just exited — reload the list.',
-    cannotKillSelf:
-      'I do not terminate myself. Use the shutdown: it stops the Workshop sessions first.',
+    processNotFound: 'I cannot find that process among Claude’s. It may have just exited — reload the list.',
+    cannotKillSelf: 'I do not terminate myself. Use the shutdown: it stops the Workshop sessions first.',
     paramRequired: 'The "{name}" parameter is required.',
     paramsRequired: 'The "{first}" and "{second}" parameters are required.',
     bodyExpected: 'Expected body: {shape}.',
@@ -27,14 +25,11 @@ const en: Catalog = {
     invalidPreferences: 'Invalid preferences.',
     serverNameRequired: 'A server name is required.',
     workdirRequired: 'A working folder is required.',
-    tooManySessions:
-      'I am not opening another session: {max} are already running, and each holds a process. Close one and I will open this one.',
+    tooManySessions: 'I am not opening another session: {max} are already running, and each holds a process. Close one and I will open this one.',
     emptyMessage: 'Empty message.',
     attachmentsShape: 'I could not read the attached images. The turn was not sent.',
-    attachmentType:
-      'I cannot attach an image of type {type}. The turn was not sent — PNG, JPEG, GIF and WebP work.',
-    attachmentTooBig:
-      'This image is over 5 MB, which the API refuses. The turn was not sent; a smaller capture will go through.',
+    attachmentType: 'I cannot attach an image of type {type}. The turn was not sent — PNG, JPEG, GIF and WebP work.',
+    attachmentTooBig: 'This image is over 5 MB, which the API refuses. The turn was not sent; a smaller capture will go through.',
     unknownAttachment: 'This image is no longer in memory. It remains in the transcript.',
     /** La sortie d'un shell de fond : le fichier est temporaire, il s'efface. */
     unknownShell: "I can't find this shell's output. The temporary file is gone.",
@@ -64,15 +59,12 @@ const en: Catalog = {
   },
 
   agent: {
-    permissionTimeout:
-      'Nobody answered this permission request within fifteen minutes; I am denying it by default.',
+    permissionTimeout: 'Nobody answered this permission request within fifteen minutes; I am denying it by default.',
     sessionStopped: 'Session stopped.',
     deniedFromAtelier: 'Denied from the Workshop.',
     sessionEnded: 'The session stopped: {message}',
-    cleared:
-      'I am opening a new session. The context is empty; the previous exchange stays on disk.',
-    clearedByCommand:
-      'I am opening a new session: /clear emptied the context. The previous exchange stays on disk.',
+    cleared: 'I am opening a new session. The context is empty; the previous exchange stays on disk.',
+    clearedByCommand: 'I am opening a new session: /clear emptied the context. The previous exchange stays on disk.',
     pickerUnavailable: 'No folder picker available on {platform}.',
     noPowerShell: 'No PowerShell host found.',
   },
@@ -183,6 +175,6 @@ const en: Catalog = {
     'shell-snapshots': 'Shell snapshots',
     plans: 'Generated plans',
   },
-};
+}
 
-export default en;
+export default en

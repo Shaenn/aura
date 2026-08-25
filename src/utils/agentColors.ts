@@ -11,18 +11,9 @@
 // so wiring that override in later is a lookup, not a redesign.
 
 /** The eight names Claude Code accepts in an agent's `color:` frontmatter. */
-export const AGENT_HUES = [
-  'blue',
-  'green',
-  'yellow',
-  'purple',
-  'pink',
-  'orange',
-  'cyan',
-  'red',
-] as const;
+export const AGENT_HUES = ['blue', 'green', 'yellow', 'purple', 'pink', 'orange', 'cyan', 'red'] as const
 
-export type AgentHue = (typeof AGENT_HUES)[number];
+export type AgentHue = (typeof AGENT_HUES)[number]
 
 /**
  * FNV-1a, then murmur3's finalizer.
@@ -42,23 +33,23 @@ export type AgentHue = (typeof AGENT_HUES)[number];
  * repaints every agent in every past transcript.
  */
 function hashString(s: string): number {
-  let hash = 0xfced3cef;
+  let hash = 0xfced3cef
   for (let i = 0; i < s.length; i++) {
-    hash ^= s.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
+    hash ^= s.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193)
   }
   // murmur3 fmix32
-  hash ^= hash >>> 16;
-  hash = Math.imul(hash, 0x85ebca6b);
-  hash ^= hash >>> 13;
-  hash = Math.imul(hash, 0xc2b2ae35);
-  hash ^= hash >>> 16;
-  return hash >>> 0;
+  hash ^= hash >>> 16
+  hash = Math.imul(hash, 0x85ebca6b)
+  hash ^= hash >>> 13
+  hash = Math.imul(hash, 0xc2b2ae35)
+  hash ^= hash >>> 16
+  return hash >>> 0
 }
 
 /** The hue an agent name maps to. Same name, same hue, always. */
 export function agentHue(name: string): AgentHue {
-  return AGENT_HUES[hashString(name) % AGENT_HUES.length] as AgentHue;
+  return AGENT_HUES[hashString(name) % AGENT_HUES.length] as AgentHue
 }
 
 /**
@@ -66,7 +57,7 @@ export function agentHue(name: string): AgentHue {
  * A stroke or a dot — never a text color; see the note in `app.scss`.
  */
 export function agentColor(name: string): string {
-  return `var(--agent-${agentHue(name)})`;
+  return `var(--agent-${agentHue(name)})`
 }
 
 /**
@@ -79,5 +70,5 @@ export function agentColor(name: string): string {
  * c'est les laisser diverger le jour où l'une des deux gagne un cas.
  */
 export function agentColorOf(run: { agentType?: string; agentId?: string }): string {
-  return agentColor(run.agentType ?? run.agentId ?? '');
+  return agentColor(run.agentType ?? run.agentId ?? '')
 }

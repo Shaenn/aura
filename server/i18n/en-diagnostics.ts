@@ -1,4 +1,4 @@
-import type { DiagnosticsCatalog } from './fr-diagnostics.ts';
+import type { DiagnosticsCatalog } from './fr-diagnostics.ts'
 
 // Le diagnostic, en anglais. Charte `docs/voice.md` : sobre et direct, et le
 // vocabulaire arbitré là-bas — Atelier → Workshop, seuil → threshold,
@@ -9,14 +9,12 @@ const enDiagnostics: DiagnosticsCatalog = {
     sessionCost: {
       label: 'Session cost',
       help: 'What the session cost in total, at API rates — main-thread turns and subagents included. Carried by every session whose cost is known and non-zero.',
-      guardBasis:
-        'A few dollars: below that, no optimisation pays back the time spent reading the session. No effect once your P90 rises above it.',
+      guardBasis: 'A few dollars: below that, no optimisation pays back the time spent reading the session. No effect once your P90 rises above it.',
     },
     cacheReadCost: {
       label: 'History re-reads',
       help: 'What the tokens re-read from cache cost. At every turn the whole history goes back to the model: it is the largest single expense across the fleet, and it grows with the length of the conversation, not with the work done.',
-      guardBasis:
-        'Three dollars of re-reading alone: half the total-cost floor, since this item can never account for the whole session.',
+      guardBasis: 'Three dollars of re-reading alone: half the total-cost floor, since this item can never account for the whole session.',
     },
     toolTokens: {
       label: 'Context consumed by tools',
@@ -39,8 +37,7 @@ const enDiagnostics: DiagnosticsCatalog = {
     subagentCost: {
       label: 'Subagent cost',
       help: 'What delegations cost, across the sessions that delegate. In dollars rather than as a share of cost: a session whose main thread only starts agents owes them 100% of its spend, and a ratio that saturates no longer singles anyone out.',
-      guardBasis:
-        'Three dollars of delegation: the price below which running it another way would cost more than it saves.',
+      guardBasis: 'Three dollars of delegation: the price below which running it another way would cost more than it saves.',
     },
     injectedContext: {
       label: 'Context injected by the harness',
@@ -57,8 +54,7 @@ const enDiagnostics: DiagnosticsCatalog = {
     explorationRatio: {
       label: 'Explorations per edit',
       help: 'How many reads and searches for one write. It describes a way of working, it does not grade it: hunting a bug for two hours and fixing it in one line gives a huge ratio and excellent work. On sessions that changed something and made at least 20 calls.',
-      guardBasis:
-        'Two explorations for one edit: below that, the ratio describes ordinary work. No effect once your P90 rises above it.',
+      guardBasis: 'Two explorations for one edit: below that, the ratio describes ordinary work. No effect once your P90 rises above it.',
     },
     turnsPerPrompt: {
       label: 'Turns per prompt',
@@ -69,8 +65,7 @@ const enDiagnostics: DiagnosticsCatalog = {
     interruptions: {
       label: 'Interruptions',
       help: 'The times you cut in (Esc). Their direct cost is negligible; what they signal is not: each time, the work was heading somewhere other than expected. On sessions carrying at least one.',
-      guardBasis:
-        'The threshold is crossed beyond two, so on the third interruption: one happens, two are arguable, three make a pattern.',
+      guardBasis: 'The threshold is crossed beyond two, so on the third interruption: one happens, two are arguable, three make a pattern.',
     },
     rereadTokens: {
       label: 'File re-reads',
@@ -100,10 +95,8 @@ const enDiagnostics: DiagnosticsCatalog = {
   rules: {
     'historique-relu': {
       title: 'History re-reads',
-      message:
-        'Session {id}: {cost} spent re-reading history, {share} of its {total}, over {turns} turns and a window that peaked at {peak} tokens.',
-      basis:
-        'Cache-read tokens × the model’s rate, day by day. A measured cost, not a promised saving.',
+      message: 'Session {id}: {cost} spent re-reading history, {share} of its {total}, over {turns} turns and a window that peaked at {peak} tokens.',
+      basis: 'Cache-read tokens × the model’s rate, day by day. A measured cost, not a promised saving.',
     },
     'cache-faible': {
       title: 'Cache poorly used',
@@ -111,13 +104,11 @@ const enDiagnostics: DiagnosticsCatalog = {
         'Session {id}: only {ratio} cache over {turns} turns (the fleet sits at {median}). {tokens} tokens came in at full price rather than a tenth of it',
       unpriced: ', on a model with no known rate.',
       priced: ', which is {cost}.',
-      basis:
-        'Uncached input, plus the cache written (1.25× the input rate). Some of it was unavoidable — the first pass is always paid for.',
+      basis: 'Uncached input, plus the cache written (1.25× the input rate). Some of it was unavoidable — the first pass is always paid for.',
     },
     'sous-agents-couteux': {
       title: 'Expensive subagents',
-      message:
-        'Session {id}: {count} subagent(s) ({types}) for {cost}, {share} of the session’s cost, over {turns} delegated turns.',
+      message: 'Session {id}: {count} subagent(s) ({types}) for {cost}, {share} of the session’s cost, over {turns} delegated turns.',
       unknownType: 'unknown type',
       basis:
         'Measured cost of the session’s subagent files, at their model’s rate. A recorded expense, not waste: delegating was often the right call.',
@@ -126,8 +117,7 @@ const enDiagnostics: DiagnosticsCatalog = {
       title: 'Tools heavy on context',
       message: 'Session {id}: ~{tokens} tokens of tools, {share} of the window we can name. ',
       top: '{name} accounts for ~{tokens} across {calls} calls ({inputShare} on input).',
-      basis:
-        'Text of the calls and their results, estimated at 4 characters per token; images counted in 28px tiles.',
+      basis: 'Text of the calls and their results, estimated at 4 characters per token; images counted in 28px tiles.',
     },
     'outils-en-echec': {
       title: 'Failed tool calls',
@@ -135,13 +125,11 @@ const enDiagnostics: DiagnosticsCatalog = {
       worst: ', mostly {name} ({errors}).',
       noWorst: '.',
       wasted: ' ~{tokens} tokens spent for nothing.',
-      basis:
-        'Each tool’s weight prorated by its failures — the transcript does not price a failed call separately.',
+      basis: 'Each tool’s weight prorated by its failures — the transcript does not price a failed call separately.',
     },
     'compaction-lourde': {
       title: 'Heavy compactions',
-      message:
-        'Session {id}: {count} compaction(s) ({kind}) dropped {tokens} tokens of context, from a window that peaked at {peak}.',
+      message: 'Session {id}: {count} compaction(s) ({kind}) dropped {tokens} tokens of context, from a window that peaked at {peak}.',
       auto: '{count} forced',
       manual: 'all triggered by hand',
       basis: '`preTokens − postTokens` of each compaction, two figures written by the harness.',
@@ -151,8 +139,7 @@ const enDiagnostics: DiagnosticsCatalog = {
       message: 'Session {id}: ~{tokens} tokens of memories, catalogues and hooks',
       top: ' — mostly {list}.',
       noTop: '.',
-      basis:
-        'Text of the harness attachments, estimated at 4 characters per token. Paid once per window, and again after every compaction.',
+      basis: 'Text of the harness attachments, estimated at 4 characters per token. Paid once per window, and again after every compaction.',
     },
     'exploration-sans-fin': {
       title: 'Much searched, little built',
@@ -177,8 +164,7 @@ const enDiagnostics: DiagnosticsCatalog = {
     },
     relectures: {
       title: 'Files re-read',
-      message:
-        'Session {id}: {calls} reads were of a file already read, ~{tokens} tokens put back in',
+      message: 'Session {id}: {calls} reads were of a file already read, ~{tokens} tokens put back in',
       share: ' — {share} of what Read brought in.',
       noShare: '.',
       basis:
@@ -189,15 +175,13 @@ const enDiagnostics: DiagnosticsCatalog = {
       message: 'Session {id}: the window reached {peak} tokens, {fill} of the {limit} limit',
       auto: ', and {count} compaction(s) were forced.',
       noAuto: '.',
-      basis:
-        'Largest window recorded across the session’s replies, against the model’s limit as its usage reveals it (see `contextLimitFor`).',
+      basis: 'Largest window recorded across the session’s replies, against the model’s limit as its usage reveals it (see `contextLimitFor`).',
     },
     'socle-gaspille': {
       title: 'Sessions opened for nothing',
       message:
         '{sessions} sessions of 3 turns or fewer each paid more than {threshold} tokens of baseline before saying anything: {tokens} tokens in total for {turns} turns, which is {cost}.',
-      basis:
-        'Measured cost of these sessions, and the exact window size of their first reply — system prompt, tool schemas and memories included.',
+      basis: 'Measured cost of these sessions, and the exact window size of their first reply — system prompt, tool schemas and memories included.',
     },
     'rythme-5h': {
       title: '5-hour window loaded',
@@ -250,8 +234,7 @@ const enDiagnostics: DiagnosticsCatalog = {
         'Go and look at these sessions: a tool failing in series points to a malformed command or a path that does not exist, and I bill you for every attempt.',
       'compaction-lourde':
         'Compact earlier: dropping 600k tokens means you paid to build them, then paid to re-read them all the way up to that point.',
-      'contexte-injecte':
-        'I’d suggest trimming your memories and skill descriptions: they enter every window, and again after every compaction.',
+      'contexte-injecte': 'I’d suggest trimming your memories and skill descriptions: they enter every window, and again after every compaction.',
       'socle-gaspille':
         'Group short questions into a session that is already open: the system prompt and the tool schemas are paid for at every opening.',
       'exploration-sans-fin':
@@ -272,8 +255,7 @@ const enDiagnostics: DiagnosticsCatalog = {
     bodies: {
       'historique-relu':
         '{sessions} spend {share} of their cost (median) re-reading what they had already read. They run for {turns} turns at the median, with a window that peaked at {peak} tokens. The cache divides that price by ten, it does not cancel it: at every turn, the whole conversation goes back through.',
-      'cache-faible':
-        '{sessions} run at {ratio} cache (median) where the fleet sits at {median}. Their window is rebuilt rather than re-read.',
+      'cache-faible': '{sessions} run at {ratio} cache (median) where the fleet sits at {median}. Their window is rebuilt rather than re-read.',
       'sous-agents-couteux':
         '{sessions} delegated to {agents} subagents in total, carrying {share} of their session’s cost (median). A subagent does not share its parent’s cache: it rebuilds its own context.',
       'outils-gourmands':
@@ -307,22 +289,19 @@ const enDiagnostics: DiagnosticsCatalog = {
         'Worth noting: {n} of these sessions also have a window filled by tool output — that is the volume they are re-reading. Bounding reads acts on both fronts.',
       compactRelu:
         'Worth noting: {n} of these sessions are also among the most expensive in re-reading — the compaction came after the bill had been paid.',
-      agentsRelu:
-        'Worth noting: {n} of these sessions also re-read a great deal of their own history; delegation did not lighten the main thread.',
+      agentsRelu: 'Worth noting: {n} of these sessions also re-read a great deal of their own history; delegation did not lighten the main thread.',
     },
     caveats: {
       throughput:
         'The throughput separating the two quarters is a number of edits per hour: I measure activity, not value. A session that hunts a subtle bug for two hours and fixes it in one line sits at the very bottom of my ranking, and it did good work.',
       listPrices:
         'I count at public API rates. A Pro or Max subscription is billed as a flat fee: my amounts say what this usage would have cost the API, not what you paid.',
-      unpriced:
-        'I don’t know the rate for {count} model(s) ({models}): I counted their tokens, but their cost is missing from my amounts.',
-      uncalibrated:
-        'I don’t have enough cases to calibrate the threshold for {rules}: those findings rest on a fallback value, not on your fleet.',
+      unpriced: 'I don’t know the rate for {count} model(s) ({models}): I counted their tokens, but their cost is missing from my amounts.',
+      uncalibrated: 'I don’t have enough cases to calibrate the threshold for {rules}: those findings rest on a fallback value, not on your fleet.',
       estimates:
         'The token figures marked “~” I estimate at 4 characters per token: they are indications, never a count. The dollar amounts come from counters written by the harness.',
     },
   },
-};
+}
 
-export default enDiagnostics;
+export default enDiagnostics

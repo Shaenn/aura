@@ -26,13 +26,13 @@
 // Ce module ne lit aucun transcript et ne juge aucune session. Il ne fait que
 // répondre, signal par signal : « à partir de combien ? ».
 
-import { t } from '../i18n/index.ts';
-import type { SessionSignal } from './signals.ts';
+import { t } from '../i18n/index.ts'
+import type { SessionSignal } from './signals.ts'
 
 // ── Ce qu'on publie ──────────────────────────────────────────────────────────
 
 /** Sens du signal : « plus haut est pire », ou l'inverse (le taux de cache). */
-export type Direction = 'high' | 'low';
+export type Direction = 'high' | 'low'
 
 /**
  * `ratio` est une part, qui s'écrit en pour-cent ; `rate` un rapport entre deux
@@ -40,12 +40,12 @@ export type Direction = 'high' | 'low';
  * prompt — qu'aucun pour-cent ne rendrait lisible. La distinction n'existe que
  * pour l'affichage, et c'est déjà une raison suffisante.
  */
-export type Unit = 'usd' | 'tokens' | 'ratio' | 'count' | 'rate';
+export type Unit = 'usd' | 'tokens' | 'ratio' | 'count' | 'rate'
 
 export interface Calibration {
-  metric: string;
+  metric: string
   /** Libellé destiné à l'UI. */
-  label: string;
+  label: string
   /**
    * Ce que le signal mesure, en une phrase ou deux, destiné à l'UI.
    *
@@ -53,20 +53,20 @@ export interface Calibration {
    * calcule : un libellé et une explication qui s'éloignent de leur `of()`
    * finissent par décrire autre chose que ce qui est mesuré.
    */
-  help: string;
-  unit: Unit;
-  direction: Direction;
+  help: string
+  unit: Unit
+  direction: Direction
   /** Le seuil retenu. Une valeur au-delà (ou en deçà, si `low`) est un signal. */
-  value: number;
+  value: number
   /** Le percentile calculé sur le parc, ou `null` si l'échantillon est trop maigre. */
-  percentile: number | null;
+  percentile: number | null
   /** Le rang visé — 0.9 pour le décile supérieur. */
-  rank: number;
+  rank: number
   /**
    * La borne absolue, qui ne peut que faire taire (`max` si `high`, `min` si
    * `low`). Elle porte l'unique jugement écrit à la main de ce module.
    */
-  guard: number;
+  guard: number
   /**
    * D'où sort ce garde-fou — l'ordre de grandeur qui le justifie, en une phrase.
    *
@@ -74,20 +74,20 @@ export interface Calibration {
    * phrase, la seule réponse à « pourquoi 200 000 ? » serait « parce que ». Elle
    * est aussi ce qu'on relit pour décider s'il faut le réviser.
    */
-  guardBasis: string;
+  guardBasis: string
   /**
    * Qui a décidé le seuil. `guard` signifie que **le parc est sain sur ce
    * signal** : le décile le moins bon reste sous ce qui vaut une action.
    */
-  bound: 'percentile' | 'guard';
+  bound: 'percentile' | 'guard'
   /** Sessions où le signal a un sens — les autres ne sont pas des zéros, elles sont hors sujet. */
-  sampleSize: number;
+  sampleSize: number
   /** Faux sous `MIN_SAMPLE` : le percentile n'est pas fiable, seul le garde-fou parle. */
-  calibrated: boolean;
+  calibrated: boolean
   /** Combien de sessions de l'échantillon franchissent le seuil. */
-  hits: number;
+  hits: number
   /** Ce que pèsent ces sessions, en dollars. `null` quand les coûts n'ont pas été fournis. */
-  hitsCost: number | null;
+  hitsCost: number | null
   /**
    * Ce que le garde-fou fait taire : les sessions au-delà du percentile mais en
    * deçà du seuil retenu.
@@ -98,8 +98,8 @@ export interface Calibration {
    * percentile décide : il n'y a alors rien à taire.
    */
   silenced: {
-    sessions: number;
-    cost: number | null;
+    sessions: number
+    cost: number | null
     /**
      * La part de cette bande qu'aucun *autre* signal ne désigne — la seule perte
      * d'information réelle, et donc le vrai prix du plancher.
@@ -111,10 +111,10 @@ export interface Calibration {
      * seul le parc complet permet de séparer — d'où `null` quand on calibre un
      * signal isolé.
      */
-    orphans: { sessions: number; cost: number } | null;
-  } | null;
+    orphans: { sessions: number; cost: number } | null
+  } | null
   /** Des repères, pour l'UI et pour le doute. */
-  quantiles: { p50: number; p75: number; p90: number; min: number; max: number };
+  quantiles: { p50: number; p75: number; p90: number; min: number; max: number }
 }
 
 /**
@@ -122,7 +122,7 @@ export interface Calibration {
  * sessions donnent un « P90 » qui n'est que la pire des trois. Seuil repris du CLI
  * d'origine, qui avait raison sur ce point.
  */
-export const MIN_SAMPLE = 30;
+export const MIN_SAMPLE = 30
 
 /**
  * En dessous de ce coût, une session n'a rien à gagner à être optimisée.
@@ -132,7 +132,7 @@ export const MIN_SAMPLE = 30;
  * est mauvaise et l'enjeu nul. Les signaux qui mesurent déjà des dollars ou des
  * tokens n'en ont pas besoin — leur grandeur porte sa propre matérialité.
  */
-export const MIN_MATERIAL_COST = 1;
+export const MIN_MATERIAL_COST = 1
 
 // ── Les signaux calibrés ─────────────────────────────────────────────────────
 
@@ -144,13 +144,13 @@ export const MIN_MATERIAL_COST = 1;
  * catalogue sous `diagnostics.metrics.<signal>`.
  */
 export interface MetricMeta {
-  label: string;
-  help: string;
-  unit: Unit;
-  direction: Direction;
-  rank: number;
-  guard: number;
-  guardBasis: string;
+  label: string
+  help: string
+  unit: Unit
+  direction: Direction
+  rank: number
+  guard: number
+  guardBasis: string
 }
 
 /**
@@ -160,7 +160,7 @@ export interface MetricMeta {
  * passe à `calibrateFrom`. Un signal n'a donc plus à porter ses phrases : il
  * suffit qu'il ait un nom.
  */
-export type MetricNumbers = Omit<MetricMeta, 'label' | 'help' | 'guardBasis'>;
+export type MetricNumbers = Omit<MetricMeta, 'label' | 'help' | 'guardBasis'>
 
 interface MetricSpec extends MetricNumbers {
   /**
@@ -169,7 +169,7 @@ interface MetricSpec extends MetricNumbers {
    * compactions » sur les sessions qui n'en ont aucune — l'écrasante majorité —
    * donnerait un P90 à zéro, et le signal ne se déclencherait plus jamais.
    */
-  of: (s: SessionSignal) => number | null;
+  of: (s: SessionSignal) => number | null
 }
 
 /**
@@ -184,7 +184,7 @@ interface MetricSpec extends MetricNumbers {
  * disaient long sur l'installation qui a servi de référence, et n'apprenaient
  * rien à qui lit le rapport chez lui.
  */
-export const GUARDS_REVIEWED = { on: '2026-08-05' } as const;
+export const GUARDS_REVIEWED = { on: '2026-08-05' } as const
 
 /**
  * Les planchers ci-dessous sont des ordres de grandeur écrits à la main, chacun
@@ -231,9 +231,9 @@ const SPECS = {
     rank: 0.9,
     guard: 0.15,
     of: (s) => {
-      const calls = s.tools.reduce((n, t) => n + t.calls, 0);
+      const calls = s.tools.reduce((n, t) => n + t.calls, 0)
       // Sous une vingtaine d'appels, un taux n'est qu'un accident d'arrondi.
-      return calls >= 20 ? s.toolErrors / calls : null;
+      return calls >= 20 ? s.toolErrors / calls : null
     },
   },
   /**
@@ -249,10 +249,7 @@ const SPECS = {
     direction: 'high',
     rank: 0.9,
     guard: 500_000,
-    of: (s) =>
-      s.compactions.length
-        ? s.compactions.reduce((n, c) => n + Math.max(0, c.preTokens - c.postTokens), 0)
-        : null,
+    of: (s) => (s.compactions.length ? s.compactions.reduce((n, c) => n + Math.max(0, c.preTokens - c.postTokens), 0) : null),
   },
   /**
    * Ce que les délégations ont coûté, en dollars. Ne concerne que les sessions
@@ -283,8 +280,8 @@ const SPECS = {
     // d'un outil qui, lui, travaille.
     guard: 10_000,
     of: (s) => {
-      const injected = s.byCategory.memory + s.byCategory.skills + s.byCategory.harness;
-      return injected > 0 ? injected : null;
+      const injected = s.byCategory.memory + s.byCategory.skills + s.byCategory.harness
+      return injected > 0 ? injected : null
     },
   },
   /**
@@ -319,10 +316,10 @@ const SPECS = {
     rank: 0.9,
     guard: 2,
     of: (s) => {
-      const { explorationCalls, productionCalls } = s.families;
+      const { explorationCalls, productionCalls } = s.families
       // Sous une vingtaine d'appels, un rapport n'est qu'un accident d'arrondi.
-      if (productionCalls === 0 || explorationCalls + productionCalls < 20) return null;
-      return explorationCalls / productionCalls;
+      if (productionCalls === 0 || explorationCalls + productionCalls < 20) return null
+      return explorationCalls / productionCalls
     },
   },
   /**
@@ -413,20 +410,20 @@ const SPECS = {
     guard: 0.7,
     of: (s) => (s.turns >= 5 && s.cost >= MIN_MATERIAL_COST ? s.cacheHitRatio : null),
   },
-} satisfies Record<string, MetricSpec>;
+} satisfies Record<string, MetricSpec>
 
-export type MetricName = keyof typeof SPECS;
+export type MetricName = keyof typeof SPECS
 
-export const METRIC_NAMES = Object.keys(SPECS) as MetricName[];
+export const METRIC_NAMES = Object.keys(SPECS) as MetricName[]
 
 export interface Thresholds {
   /** Sessions fournies en entrée, tous signaux confondus. */
-  sessions: number;
+  sessions: number
   /** Vrai si *tous* les signaux ont pu être calibrés sur un échantillon suffisant. */
-  reliable: boolean;
+  reliable: boolean
   /** Quand les garde-fous ont été revus, et sur quel corpus. */
-  reviewed: { on: string };
-  metrics: Record<MetricName, Calibration>;
+  reviewed: { on: string }
+  metrics: Record<MetricName, Calibration>
 }
 
 // ── Percentiles ──────────────────────────────────────────────────────────────
@@ -441,15 +438,15 @@ export interface Thresholds {
  * sans qu'aucune donnée ne l'ait demandé.
  */
 export function percentile(values: number[], rank: number): number {
-  if (!values.length) return 0;
-  if (values.length === 1) return values[0] as number;
-  const clamped = Math.min(1, Math.max(0, rank));
-  const position = clamped * (values.length - 1);
-  const low = Math.floor(position);
-  const high = Math.ceil(position);
-  const lower = values[low] as number;
-  if (low === high) return lower;
-  return lower + (position - low) * ((values[high] as number) - lower);
+  if (!values.length) return 0
+  if (values.length === 1) return values[0] as number
+  const clamped = Math.min(1, Math.max(0, rank))
+  const position = clamped * (values.length - 1)
+  const low = Math.floor(position)
+  const high = Math.ceil(position)
+  const lower = values[low] as number
+  if (low === high) return lower
+  return lower + (position - low) * ((values[high] as number) - lower)
 }
 
 /**
@@ -466,14 +463,14 @@ export function percentile(values: number[], rank: number): number {
  * n'est vrai.
  */
 export function percentileRank(values: number[], value: number): number {
-  if (!values.length) return 0;
-  let below = 0;
-  let equal = 0;
+  if (!values.length) return 0
+  let below = 0
+  let equal = 0
   for (const v of values) {
-    if (v < value) below++;
-    else if (v === value) equal++;
+    if (v < value) below++
+    else if (v === value) equal++
   }
-  return (below + equal / 2) / values.length;
+  return (below + equal / 2) / values.length
 }
 
 // ── Calibration ──────────────────────────────────────────────────────────────
@@ -500,36 +497,29 @@ export function calibrateFrom(
 ): Calibration {
   // Trier les paires et non les seules valeurs : c'est ce qui garde chaque coût
   // avec la valeur qu'il accompagne.
-  const pairs = values.map((v, i) => ({ v, cost: costs?.[i] ?? null })).sort((a, b) => a.v - b.v);
-  const sorted = pairs.map((p) => p.v);
-  const size = sorted.length;
-  const calibrated = size >= MIN_SAMPLE;
-  const computed = calibrated ? percentile(sorted, spec.rank) : null;
+  const pairs = values.map((v, i) => ({ v, cost: costs?.[i] ?? null })).sort((a, b) => a.v - b.v)
+  const sorted = pairs.map((p) => p.v)
+  const size = sorted.length
+  const calibrated = size >= MIN_SAMPLE
+  const computed = calibrated ? percentile(sorted, spec.rank) : null
 
   // Sans échantillon fiable, le garde-fou parle seul : c'est la position prudente,
   // puisqu'il ne sait que faire taire.
-  const fromParc = computed ?? spec.guard;
-  const value =
-    override ??
-    (spec.direction === 'high' ? Math.max(fromParc, spec.guard) : Math.min(fromParc, spec.guard));
+  const fromParc = computed ?? spec.guard
+  const value = override ?? (spec.direction === 'high' ? Math.max(fromParc, spec.guard) : Math.min(fromParc, spec.guard))
 
-  const beyond = (v: number): boolean => (spec.direction === 'high' ? v > value : v < value);
-  const hits = pairs.filter((p) => beyond(p.v));
+  const beyond = (v: number): boolean => (spec.direction === 'high' ? v > value : v < value)
+  const hits = pairs.filter((p) => beyond(p.v))
 
   /** La somme des coûts connus, ou `null` si aucun ne l'est. */
-  const costOf = (list: typeof pairs): number | null =>
-    costs ? list.reduce((n, p) => n + (p.cost ?? 0), 0) : null;
+  const costOf = (list: typeof pairs): number | null => (costs ? list.reduce((n, p) => n + (p.cost ?? 0), 0) : null)
 
   // La bande que le garde-fou étouffe : au-delà du percentile, en deçà du seuil.
   // Vide par construction quand le percentile décide — les deux bornes coïncident.
   const band =
     computed === null || value === computed
       ? null
-      : pairs.filter((p) =>
-          spec.direction === 'high'
-            ? p.v > computed && p.v <= value
-            : p.v < computed && p.v >= value,
-        );
+      : pairs.filter((p) => (spec.direction === 'high' ? p.v > computed && p.v <= value : p.v < computed && p.v >= value))
 
   return {
     metric,
@@ -544,8 +534,7 @@ export function calibrateFrom(
     rank: spec.rank,
     guard: spec.guard,
     guardBasis: t(`diagnostics.metrics.${metric}.guardBasis`),
-    bound:
-      override !== undefined || computed === null || value !== computed ? 'guard' : 'percentile',
+    bound: override !== undefined || computed === null || value !== computed ? 'guard' : 'percentile',
     sampleSize: size,
     calibrated,
     hits: hits.length,
@@ -560,7 +549,7 @@ export function calibrateFrom(
       p90: percentile(sorted, 0.9),
       max: size ? (sorted[size - 1] as number) : 0,
     },
-  };
+  }
 }
 
 /**
@@ -569,66 +558,61 @@ export function calibrateFrom(
  * `overrides` porte les seuils que l'utilisateur a fixés lui-même (destinés à
  * venir des préférences AURA) ; un signal absent de la table est calibré.
  */
-export function calibrate(
-  signals: SessionSignal[],
-  overrides: Partial<Record<MetricName, number>> = {},
-): Thresholds {
-  const metrics = {} as Record<MetricName, Calibration>;
-  let reliable = true;
+export function calibrate(signals: SessionSignal[], overrides: Partial<Record<MetricName, number>> = {}): Thresholds {
+  const metrics = {} as Record<MetricName, Calibration>
+  let reliable = true
 
   for (const name of METRIC_NAMES) {
-    const spec = SPECS[name] as MetricSpec;
-    const values: number[] = [];
-    const costs: number[] = [];
+    const spec = SPECS[name] as MetricSpec
+    const values: number[] = []
+    const costs: number[] = []
     for (const s of signals) {
-      const v = spec.of(s);
+      const v = spec.of(s)
       if (v !== null && Number.isFinite(v)) {
-        values.push(v);
-        costs.push(s.cost);
+        values.push(v)
+        costs.push(s.cost)
       }
     }
-    const calibration = calibrateFrom(name, spec, values, overrides[name], costs);
-    if (!calibration.calibrated) reliable = false;
-    metrics[name] = calibration;
+    const calibration = calibrateFrom(name, spec, values, overrides[name], costs)
+    if (!calibration.calibrated) reliable = false
+    metrics[name] = calibration
   }
 
   // Seconde passe : ce que chaque garde-fou tait *et que personne d'autre ne
   // voit*. Elle exige tous les seuils arrêtés, d'où le second tour.
   for (const name of METRIC_NAMES) {
-    const c = metrics[name];
-    if (!c.silenced || c.percentile === null) continue;
-    const p = c.percentile;
+    const c = metrics[name]
+    if (!c.silenced || c.percentile === null) continue
+    const p = c.percentile
 
-    let sessions = 0;
-    let cost = 0;
+    let sessions = 0
+    let cost = 0
     for (const s of signals) {
-      const v = valueOf(name, s);
-      if (v === null) continue;
-      const inBand = c.direction === 'high' ? v > p && v <= c.value : v < p && v >= c.value;
-      if (!inBand) continue;
+      const v = valueOf(name, s)
+      if (v === null) continue
+      const inBand = c.direction === 'high' ? v > p && v <= c.value : v < p && v >= c.value
+      if (!inBand) continue
       // Orpheline : la taire la fait disparaître du rapport, elle n'y figure
       // sous aucun autre titre.
-      const seenElsewhere = METRIC_NAMES.some(
-        (other) => other !== name && exceeds(metrics[other], valueOf(other, s)),
-      );
+      const seenElsewhere = METRIC_NAMES.some((other) => other !== name && exceeds(metrics[other], valueOf(other, s)))
       if (!seenElsewhere) {
-        sessions++;
-        cost += s.cost;
+        sessions++
+        cost += s.cost
       }
     }
-    c.silenced.orphans = { sessions, cost };
+    c.silenced.orphans = { sessions, cost }
   }
 
-  return { sessions: signals.length, reliable, reviewed: GUARDS_REVIEWED, metrics };
+  return { sessions: signals.length, reliable, reviewed: GUARDS_REVIEWED, metrics }
 }
 
 /** La valeur d'un signal pour une session — ce que les règles interrogeront. */
 export function valueOf(metric: MetricName, signal: SessionSignal): number | null {
-  return (SPECS[metric] as MetricSpec).of(signal);
+  return (SPECS[metric] as MetricSpec).of(signal)
 }
 
 /** La session franchit-elle ce seuil ? Faux quand elle ne porte pas le signal. */
 export function exceeds(calibration: Calibration, value: number | null): boolean {
-  if (value === null) return false;
-  return calibration.direction === 'high' ? value > calibration.value : value < calibration.value;
+  if (value === null) return false
+  return calibration.direction === 'high' ? value > calibration.value : value < calibration.value
 }

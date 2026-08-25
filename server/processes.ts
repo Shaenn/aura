@@ -10,19 +10,19 @@
 // `buildProcessList` et `killOrder` sont des fonctions pures, et c'est sur elles
 // que portent les tests. Seul `enumerate` parle à la plateforme.
 
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-import type { ClaudeProcess, ClaudeProcessKind, ProcessList } from '../shared/processes.ts';
-import { alive, listSessions, type SessionInfo } from './maintenance.ts';
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
+import type { ClaudeProcess, ClaudeProcessKind, ProcessList } from '../shared/processes.ts'
+import { alive, listSessions, type SessionInfo } from './maintenance.ts'
 
-const run = promisify(execFile);
+const run = promisify(execFile)
 
 /** Ce que la plateforme sait dire d'un processus, avant toute interprétation. */
 export interface RawProcess {
-  pid: number;
-  ppid: number;
-  command: string;
-  startedAt?: number;
+  pid: number
+  ppid: number
+  command: string
+  startedAt?: number
 }
 
 /**
@@ -32,7 +32,7 @@ export interface RawProcess {
  * transporter un prompt entier — certaines lignes du SDK dépassent le millier de
  * caractères, et rien à l'écran n'en montrerait la fin.
  */
-const COMMAND_MAX = 300;
+const COMMAND_MAX = 300
 
 /**
  * Le délai au-delà duquel on renonce à énumérer.
@@ -41,7 +41,7 @@ const COMMAND_MAX = 300;
  * requête WMI un peu plus. Cinq secondes laissent une marge confortable à une
  * machine chargée, tout en évitant qu'un écran de maintenance reste suspendu.
  */
-const ENUMERATE_TIMEOUT_MS = 5_000;
+const ENUMERATE_TIMEOUT_MS = 5_000
 
 /**
  * L'énumération Windows.
@@ -67,10 +67,10 @@ Get-CimInstance Win32_Process -Filter "Name='claude.exe' OR Name='node.exe'" |
       cmd     = $_.CommandLine
     }
   } | ConvertTo-Json -Compress
-`;
+`
 
-const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
-const text = (v: unknown): string => (typeof v === 'string' ? v : '');
+const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0)
+const text = (v: unknown): string => (typeof v === 'string' ? v : '')
 
 /**
  * Énumère les processus, ou rend `null` si la plateforme ne s'y prête pas.
@@ -81,36 +81,36 @@ const text = (v: unknown): string => (typeof v === 'string' ? v : '');
  */
 export async function enumerate(): Promise<RawProcess[] | null> {
   try {
-    return process.platform === 'win32' ? await enumerateWindows() : await enumeratePosix();
+    return process.platform === 'win32' ? await enumerateWindows() : await enumeratePosix()
   } catch {
-    return null;
+    return null
   }
 }
 
 async function enumerateWindows(): Promise<RawProcess[]> {
-  const { stdout } = await run(
-    'powershell.exe',
-    ['-NoProfile', '-NonInteractive', '-Command', WINDOWS_SCRIPT],
-    { timeout: ENUMERATE_TIMEOUT_MS, maxBuffer: 4 * 1024 * 1024, windowsHide: true },
-  );
+  const { stdout } = await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', WINDOWS_SCRIPT], {
+    timeout: ENUMERATE_TIMEOUT_MS,
+    maxBuffer: 4 * 1024 * 1024,
+    windowsHide: true,
+  })
 
-  const trimmed = stdout.trim();
-  if (!trimmed) return [];
-  const parsed: unknown = JSON.parse(trimmed);
+  const trimmed = stdout.trim()
+  if (!trimmed) return []
+  const parsed: unknown = JSON.parse(trimmed)
   // `ConvertTo-Json` rend un objet nu quand il n'y a qu'un résultat, un tableau
   // au-delà. Les deux arrivent en pratique — un poste où seul AURA tourne.
-  const rows: unknown[] = Array.isArray(parsed) ? parsed : [parsed];
+  const rows: unknown[] = Array.isArray(parsed) ? parsed : [parsed]
 
   return rows.map((row) => {
-    const r = (row ?? {}) as Record<string, unknown>;
-    const started = num(r.started);
+    const r = (row ?? {}) as Record<string, unknown>
+    const started = num(r.started)
     return {
       pid: num(r.pid),
       ppid: num(r.ppid),
       command: text(r.cmd),
       ...(started ? { startedAt: started } : {}),
-    };
-  });
+    }
+  })
 }
 
 /**
@@ -125,15 +125,15 @@ async function enumeratePosix(): Promise<RawProcess[]> {
   const { stdout } = await run('ps', ['-Ao', 'pid=,ppid=,args='], {
     timeout: ENUMERATE_TIMEOUT_MS,
     maxBuffer: 4 * 1024 * 1024,
-  });
+  })
 
-  const out: RawProcess[] = [];
+  const out: RawProcess[] = []
   for (const line of stdout.split('\n')) {
-    const m = /^\s*(\d+)\s+(\d+)\s+(.*)$/.exec(line);
-    if (!m) continue;
-    out.push({ pid: Number(m[1]), ppid: Number(m[2]), command: (m[3] ?? '').trim() });
+    const m = /^\s*(\d+)\s+(\d+)\s+(.*)$/.exec(line)
+    if (!m) continue
+    out.push({ pid: Number(m[1]), ppid: Number(m[2]), command: (m[3] ?? '').trim() })
   }
-  return out;
+  return out
 }
 
 /** Ce qui trahit un rôle dans une ligne de commande. */
@@ -141,12 +141,12 @@ const MARKERS: { needle: string; kind: ClaudeProcessKind }[] = [
   { needle: '--chrome-native-host', kind: 'native-host' },
   { needle: '--bg-pty-host', kind: 'pty-host' },
   { needle: 'daemon run', kind: 'daemon' },
-];
+]
 
 /** Le binaire que le SDK embarque, et qu'il lance pour une session d'Atelier. */
-const SDK_BINARY = /node_modules[\\/]@anthropic-ai[\\/]claude-agent-sdk/i;
+const SDK_BINARY = /node_modules[\\/]@anthropic-ai[\\/]claude-agent-sdk/i
 
-const mentionsClaude = (command: string): boolean => /claude/i.test(command);
+const mentionsClaude = (command: string): boolean => /claude/i.test(command)
 
 /**
  * Le PID que le daemon dit avoir eu pour lanceur.
@@ -159,8 +159,8 @@ const mentionsClaude = (command: string): boolean => /claude/i.test(command);
  * `0` quand la ligne ne dit rien, ce qui est le cas de tout le reste.
  */
 export function spawnedByPid(command: string): number {
-  const m = /--spawned-by[\s\S]*?pid\\?"\s*:\s*(\d+)/.exec(command);
-  return m ? Number(m[1]) : 0;
+  const m = /--spawned-by[\s\S]*?pid\\?"\s*:\s*(\d+)/.exec(command)
+  return m ? Number(m[1]) : 0
 }
 
 /**
@@ -171,26 +171,22 @@ export function spawnedByPid(command: string): number {
  * l'enfant d'un hôte de pseudo-terminal est un job. Les marqueurs textuels ne
  * servent qu'à ce que la parenté ne dit pas.
  */
-function classify(
-  p: RawProcess,
-  selfPid: number,
-  byPid: Map<number, RawProcess>,
-): ClaudeProcessKind {
-  if (p.pid === selfPid) return 'aura';
+function classify(p: RawProcess, selfPid: number, byPid: Map<number, RawProcess>): ClaudeProcessKind {
+  if (p.pid === selfPid) return 'aura'
 
   for (const { needle, kind } of MARKERS) {
-    if (p.command.includes(needle)) return kind;
+    if (p.command.includes(needle)) return kind
   }
 
-  if (p.ppid === selfPid || SDK_BINARY.test(p.command)) return 'atelier';
+  if (p.ppid === selfPid || SDK_BINARY.test(p.command)) return 'atelier'
 
-  const parent = byPid.get(p.ppid);
-  if (parent?.command.includes('--bg-pty-host')) return 'bg-job';
+  const parent = byPid.get(p.ppid)
+  if (parent?.command.includes('--bg-pty-host')) return 'bg-job'
   // Un job dont l'hôte est déjà tombé : la ligne le dit encore. Une session
   // ouverte à la main n'a jamais d'identifiant imposé.
-  if (p.command.includes('--session-id')) return 'bg-job';
+  if (p.command.includes('--session-id')) return 'bg-job'
 
-  return mentionsClaude(p.command) ? 'interactive' : 'other';
+  return mentionsClaude(p.command) ? 'interactive' : 'other'
 }
 
 /**
@@ -201,9 +197,9 @@ function classify(
  * tout le reste, le parent réel fait foi.
  */
 function isOrphan(p: RawProcess, isAlive: (pid: number) => boolean): boolean {
-  const origin = spawnedByPid(p.command);
-  if (origin) return !isAlive(origin);
-  return p.ppid > 0 && !isAlive(p.ppid);
+  const origin = spawnedByPid(p.command)
+  if (origin) return !isAlive(origin)
+  return p.ppid > 0 && !isAlive(p.ppid)
 }
 
 /**
@@ -224,13 +220,13 @@ export function buildProcessList(
   sessions: SessionInfo[] = [],
   isAlive: (pid: number) => boolean = alive,
 ): ClaudeProcess[] {
-  const all = new Map(raw.map((p) => [p.pid, p]));
-  const byPid = new Map(sessions.filter((s) => s.pid).map((s) => [s.pid as number, s]));
+  const all = new Map(raw.map((p) => [p.pid, p]))
+  const byPid = new Map(sessions.filter((s) => s.pid).map((s) => [s.pid as number, s]))
 
   return raw
     .filter((p) => p.pid === selfPid || mentionsClaude(p.command))
     .map((p) => {
-      const session = byPid.get(p.pid);
+      const session = byPid.get(p.pid)
       return {
         pid: p.pid,
         ppid: p.ppid,
@@ -247,9 +243,9 @@ export function buildProcessList(
               ...(session.status ? { status: session.status } : {}),
             }
           : {}),
-      };
+      }
     })
-    .sort((a, b) => (a.startedAt ?? 0) - (b.startedAt ?? 0) || a.pid - b.pid);
+    .sort((a, b) => (a.startedAt ?? 0) - (b.startedAt ?? 0) || a.pid - b.pid)
 }
 
 /**
@@ -264,41 +260,41 @@ export function buildProcessList(
  * protège du cycle qu'un PID recyclé pourrait former.
  */
 export function killOrder(pid: number, descendants: boolean, procs: ClaudeProcess[]): number[] {
-  if (!descendants) return [pid];
+  if (!descendants) return [pid]
 
-  const children = new Map<number, number[]>();
+  const children = new Map<number, number[]>()
   for (const p of procs) {
-    if (p.ppid === p.pid) continue;
-    children.set(p.ppid, [...(children.get(p.ppid) ?? []), p.pid]);
+    if (p.ppid === p.pid) continue
+    children.set(p.ppid, [...(children.get(p.ppid) ?? []), p.pid])
   }
 
-  const order: number[] = [];
-  const seen = new Set<number>();
-  const queue = [pid];
+  const order: number[] = []
+  const seen = new Set<number>()
+  const queue = [pid]
   while (queue.length) {
-    const current = queue.shift() as number;
-    if (seen.has(current)) continue;
-    seen.add(current);
-    order.push(current);
-    queue.push(...(children.get(current) ?? []));
+    const current = queue.shift() as number
+    if (seen.has(current)) continue
+    seen.add(current)
+    order.push(current)
+    queue.push(...(children.get(current) ?? []))
   }
-  return order;
+  return order
 }
 
 /** La liste complète, enrichie de ce que les fichiers de session savent. */
 export async function listClaudeProcesses(): Promise<ProcessList> {
-  const raw = await enumerate();
-  if (!raw) return { processes: [], unsupported: true };
+  const raw = await enumerate()
+  if (!raw) return { processes: [], unsupported: true }
 
   // Les fichiers de session ne sont pas indispensables : sans eux la liste perd
   // les noms, pas les processus.
-  let sessions: SessionInfo[] = [];
+  let sessions: SessionInfo[] = []
   try {
-    sessions = await listSessions();
+    sessions = await listSessions()
   } catch {
     /* la liste vaut sans les noms */
   }
-  return { processes: buildProcessList(raw, process.pid, sessions) };
+  return { processes: buildProcessList(raw, process.pid, sessions) }
 }
 
 /**
@@ -310,14 +306,14 @@ export async function listClaudeProcesses(): Promise<ProcessList> {
  * soit précisément l'état qu'on venait défaire.
  */
 export function killTree(pid: number, descendants: boolean, procs: ClaudeProcess[]): number[] {
-  const killed: number[] = [];
+  const killed: number[] = []
   for (const target of killOrder(pid, descendants, procs)) {
     try {
-      process.kill(target, 'SIGKILL');
-      killed.push(target);
+      process.kill(target, 'SIGKILL')
+      killed.push(target)
     } catch {
       /* déjà parti, ou hors de portée */
     }
   }
-  return killed;
+  return killed
 }

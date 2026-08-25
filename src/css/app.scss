@@ -190,8 +190,7 @@
   // `--code-header-bg` above).
   --glow-shadow:
     inset 0 0 0 var(--glow-edge) color-mix(in srgb, var(--glow-color) 72%, transparent),
-    inset 0 0 var(--glow-depth) color-mix(in srgb, var(--glow-hue) 18%, transparent),
-    0 0 18px color-mix(in srgb, var(--glow-hue) 12%, transparent);
+    inset 0 0 var(--glow-depth) color-mix(in srgb, var(--glow-hue) 18%, transparent), 0 0 18px color-mix(in srgb, var(--glow-hue) 12%, transparent);
 
   --glow-shadow-hover:
     inset 0 0 0 var(--glow-edge) color-mix(in srgb, var(--glow-color) 88%, transparent),
@@ -316,13 +315,13 @@ body.body--light {
 
   --glow-shadow:
     inset 0 0 0 var(--glow-edge) color-mix(in srgb, var(--glow-color) 57%, transparent),
-    inset 0 0 calc(var(--glow-depth) * 0.5) color-mix(in srgb, var(--glow-hue) 10%, transparent),
-    0 2px 11px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    inset 0 0 calc(var(--glow-depth) * 0.5) color-mix(in srgb, var(--glow-hue) 10%, transparent), 0 2px 11px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
 
   --glow-shadow-hover:
     inset 0 0 0 var(--glow-edge) color-mix(in srgb, var(--glow-color) 75%, transparent),
-    inset 0 0 calc(var(--glow-depth) * 0.5) color-mix(in srgb, var(--glow-hue) 14%, transparent),
-    0 4px 14px rgba(0, 0, 0, 0.13), 0 1px 2px rgba(0, 0, 0, 0.07);
+    inset 0 0 calc(var(--glow-depth) * 0.5) color-mix(in srgb, var(--glow-hue) 14%, transparent), 0 4px 14px rgba(0, 0, 0, 0.13),
+    0 1px 2px rgba(0, 0, 0, 0.07);
 
   --glow-line: color-mix(in srgb, var(--glow-color) 45%, transparent);
   --glow-soft: color-mix(in srgb, var(--glow-hue) 12%, transparent);
@@ -447,9 +446,7 @@ body.body--dark {
   border: 2px solid var(--glow-color);
   border-radius: inherit;
   // Le noir n'est pas une couleur du thème : c'est l'opacité pleine du masque.
-  mask-image:
-    linear-gradient(#000 0 0), linear-gradient(#000 0 0), linear-gradient(#000 0 0),
-    linear-gradient(#000 0 0);
+  mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0), linear-gradient(#000 0 0), linear-gradient(#000 0 0);
   mask-size: 20px 20px;
   mask-position:
     top left,
@@ -483,12 +480,7 @@ body.body--dark {
     radial-gradient(ellipse 46% 66% at 50% 50%, var(--brand-soft), transparent 70%),
     repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 64px),
     repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 64px);
-  mask-image: radial-gradient(
-    ellipse 58% 85% at 50% 50%,
-    transparent 18%,
-    #000 46%,
-    transparent 88%
-  );
+  mask-image: radial-gradient(ellipse 58% 85% at 50% 50%, transparent 18%, #000 46%, transparent 88%);
 }
 
 // Variante pour tout écran dont la racine est bornée par un `max-width`,

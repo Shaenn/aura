@@ -10,4 +10,4 @@ export default {
   bytes: { b: 'o', kb: 'Ko', mb: 'Mo', gb: 'Go' },
   duration: { ms: 'ms', s: 's', min: 'min', h: 'h' },
   justNow: "à l'instant",
-};
+}

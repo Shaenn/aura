@@ -5,18 +5,11 @@
 // travail. Les requêtes poussent (`send`, `interrupt`) et s'abonnent
 // (`subscribe`) ; le cycle de vie appartient au registre, pas à la requête.
 
-import { randomUUID } from 'node:crypto';
-import { stat } from 'node:fs/promises';
-import { join } from 'node:path';
-import { CLAUDE_DIR } from '../claude/paths.ts';
-import { t } from '../i18n/index.ts';
-import { query } from '@anthropic-ai/claude-agent-sdk';
-import type {
-  PermissionResult,
-  PermissionUpdate,
-  Query,
-  SDKUserMessage,
-} from '@anthropic-ai/claude-agent-sdk';
+import { randomUUID } from 'node:crypto'
+import { stat } from 'node:fs/promises'
+import { join } from 'node:path'
+import { query } from '@anthropic-ai/claude-agent-sdk'
+import type { PermissionResult, PermissionUpdate, Query, SDKUserMessage } from '@anthropic-ai/claude-agent-sdk'
 import type {
   AgentSession,
   AgentStatus,
@@ -26,33 +19,35 @@ import type {
   PermissionRequest,
   PromptAttachment,
   SlashCommandInfo,
-} from '../../shared/agent.ts';
-import type { TranscriptImage } from '../../shared/transcript.ts';
-import { imageSize, isHiResVisionModel, visualTokens } from '../transcript.ts';
-import { AsyncQueue } from './queue.ts';
-import { ActivityTracker, type Change } from './activity.ts';
-import { isOutputPath, readSince, ShellTracker } from './shells.ts';
-import { Translator } from './translate.ts';
-import { longPath, projectSlug } from './slug.ts';
-import { PendingAnswer } from './pending.ts';
-import { ASK_TOOL, createAskServer, harnessSentence, NO_ANSWER } from './ask.ts';
-import { num, str } from '../json.ts';
+} from '../../shared/agent.ts'
+import type { TranscriptImage } from '../../shared/transcript.ts'
+import { CLAUDE_DIR } from '../claude/paths.ts'
+import { t } from '../i18n/index.ts'
+import { num, str } from '../json.ts'
+import { imageSize, isHiResVisionModel, visualTokens } from '../transcript.ts'
+import { ActivityTracker, type Change } from './activity.ts'
+import { ASK_TOOL, createAskServer, harnessSentence, NO_ANSWER } from './ask.ts'
+import { PendingAnswer } from './pending.ts'
+import { AsyncQueue } from './queue.ts'
+import { isOutputPath, readSince, ShellTracker } from './shells.ts'
+import { longPath, projectSlug } from './slug.ts'
+import { Translator } from './translate.ts'
 
-type Rec = Record<string, unknown>;
+type Rec = Record<string, unknown>
 
 /** Ce que l'API accepte de lire ; la route filtre sur la même liste. */
-type ImageMediaType = 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp';
+type ImageMediaType = 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp'
 
 /** Une image telle qu'elle part dans le message, en base64. */
 interface ImageBlock {
-  type: 'image';
-  source: { type: 'base64'; media_type: ImageMediaType; data: string };
+  type: 'image'
+  source: { type: 'base64'; media_type: ImageMediaType; data: string }
 }
 
 // Mêmes coercions que `translate.ts`, qui les garde locales pour la même
 // raison : ce qui vient du SDK n'est typé qu'à moitié.
-const rec = (v: unknown): Rec => (v && typeof v === 'object' ? (v as Rec) : {});
-const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+const rec = (v: unknown): Rec => (v && typeof v === 'object' ? (v as Rec) : {})
+const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : [])
 
 /**
  * Les commandes du SDK, ramenées à la forme du wire.
@@ -65,27 +60,27 @@ const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 export function toCommands(input: unknown): SlashCommandInfo[] {
   return arr(input)
     .map((raw) => {
-      const c = rec(raw);
-      const name = str(c.name);
-      if (!name) return null;
-      const hint = str(c.argumentHint);
-      const aliases = arr(c.aliases).map(String).filter(Boolean);
+      const c = rec(raw)
+      const name = str(c.name)
+      if (!name) return null
+      const hint = str(c.argumentHint)
+      const aliases = arr(c.aliases).map(String).filter(Boolean)
       return {
         name,
         description: str(c.description),
         ...(hint ? { argumentHint: hint } : {}),
         ...(aliases.length ? { aliases } : {}),
-      };
+      }
     })
-    .filter((c): c is SlashCommandInfo => c !== null);
+    .filter((c): c is SlashCommandInfo => c !== null)
 }
 
 export interface RunnerOptions {
-  cwd: string;
-  model?: string;
-  permissionMode?: string;
+  cwd: string
+  model?: string
+  permissionMode?: string
   /** Identifiant SDK d'une session à prolonger. Voir `resume` plus bas. */
-  resume?: string;
+  resume?: string
 }
 
 /**
@@ -96,7 +91,7 @@ export interface RunnerOptions {
  * Un quart d'heure laisse le temps d'aller réfléchir devant le code, et refuse
  * par défaut — jamais l'inverse.
  */
-const ANSWER_TIMEOUT_MS = 15 * 60_000;
+const ANSWER_TIMEOUT_MS = 15 * 60_000
 
 /**
  * Le délai laissé au CLI pour sortir de lui-même avant qu'on le tue.
@@ -109,7 +104,7 @@ const ANSWER_TIMEOUT_MS = 15 * 60_000;
  * Cinq secondes : une session au repos rend la main en moins d'une, et attendre
  * davantage ne changerait rien à celles qui ne répondent plus du tout.
  */
-const STOP_GRACE_MS = 5_000;
+const STOP_GRACE_MS = 5_000
 
 /**
  * Le pas minimal entre deux relevés d'activité qui ne changent qu'un compteur.
@@ -119,7 +114,7 @@ const STOP_GRACE_MS = 5_000;
  * lit à cette vitesse ; un quart de seconde donne un compteur qui court sans
  * saccade. Un changement de phase, lui, ne passe jamais par ce filtre.
  */
-const ACTIVITY_STEP_MS = 250;
+const ACTIVITY_STEP_MS = 250
 
 /**
  * Le pas auquel on va voir si un shell de fond a écrit quelque chose.
@@ -130,15 +125,15 @@ const ACTIVITY_STEP_MS = 250;
  * un `stat` sur une poignée de fichiers, et seulement tant qu'un shell est
  * réputé vivant.
  */
-const SHELL_POLL_MS = 2_000;
+const SHELL_POLL_MS = 2_000
 
 export class SessionRunner {
-  readonly session: AgentSession;
+  readonly session: AgentSession
 
-  private readonly translator = new Translator();
+  private readonly translator = new Translator()
   /** Ce que l'agent fait *maintenant* — un présent, pas une histoire. */
-  private readonly activity = new ActivityTracker();
-  private lastActivityAt = 0;
+  private readonly activity = new ActivityTracker()
+  private lastActivityAt = 0
   /**
    * Ce que la fenêtre de contexte porte, relevé sur les réponses du modèle.
    *
@@ -152,7 +147,7 @@ export class SessionRunner {
    * Rapporter ce nombre à la fenêtre du modèle demande `contextLimitFor`, et
    * décider s'il mérite qu'on en parle est l'affaire de qui l'affiche.
    */
-  private readonly fenetre = { tokens: 0, max: 0 };
+  private readonly fenetre = { tokens: 0, max: 0 }
   /**
    * La compaction qui attend son résumé, s'il y en a une.
    *
@@ -161,16 +156,16 @@ export class SessionRunner {
    * réécrite. Mesuré : il suit immédiatement, et rien d'autre ne s'intercale.
    * Ce champ est ce qui relie les deux, et il ne vit qu'entre eux.
    */
-  private compactionSansResume: string | null = null;
+  private compactionSansResume: string | null = null
   /** Ce que la session a lancé en arrière-plan, et qui lui survit. */
-  private readonly shells = new ShellTracker();
-  private shellPoll: ReturnType<typeof setInterval> | null = null;
+  private readonly shells = new ShellTracker()
+  private shellPoll: ReturnType<typeof setInterval> | null = null
   /** Où en est la lecture du transcript, en octets. Voir `readShellEnds`. */
-  private transcriptAt = 0;
-  private readonly queue = new AsyncQueue<SDKUserMessage>();
-  private readonly subscribers = new Set<(upsert: AgentUpsert) => void>();
-  private query: Query | null = null;
-  private stopped = false;
+  private transcriptAt = 0
+  private readonly queue = new AsyncQueue<SDKUserMessage>()
+  private readonly subscribers = new Set<(upsert: AgentUpsert) => void>()
+  private query: Query | null = null
+  private stopped = false
   /**
    * Le dernier geste humain reçu — pas le dernier octet du modèle.
    *
@@ -180,9 +175,9 @@ export class SessionRunner {
    * bouger au rythme du SDK ferait qu'une session partie en boucle se
    * garderait elle-même en vie indéfiniment — l'inverse de ce qu'on cherche.
    */
-  private touchedAt = Date.now();
+  private touchedAt = Date.now()
   /** Le dernier tour envoyé, pour savoir d'où vient une remise à zéro. */
-  private lastPrompt = '';
+  private lastPrompt = ''
   /**
    * Les images collées, par identifiant, le temps de la session.
    *
@@ -191,7 +186,7 @@ export class SessionRunner {
    * sert qu'à les afficher dans le fil avant que le fichier n'existe. Elle
    * meurt avec le runner, comme le reste de la session.
    */
-  private readonly attachments = new Map<string, { mediaType: string; bytes: Buffer }>();
+  private readonly attachments = new Map<string, { mediaType: string; bytes: Buffer }>()
   /**
    * De quoi couper le processus du CLI, et non seulement lui parler.
    *
@@ -200,23 +195,23 @@ export class SessionRunner {
    * levier, arrêter une session en cours la retirait du registre — donc la
    * rendait injoignable — pendant que son processus continuait de tourner.
    */
-  private readonly aborter = new AbortController();
+  private readonly aborter = new AbortController()
 
   /** Les demandes de permission en vol, par identifiant AURA. */
-  private readonly permissions = new Map<string, PendingAnswer<PermissionResult>>();
+  private readonly permissions = new Map<string, PendingAnswer<PermissionResult>>()
   /** Les questions en vol. Même mécanique, autre canal : rien à autoriser ici. */
-  private readonly asks = new Map<string, PendingAnswer<string>>();
+  private readonly asks = new Map<string, PendingAnswer<string>>()
   /**
    * Les règles suggérées par le SDK pour la demande en cours, gardées le temps
    * qu'un humain choisisse « toujours autoriser ». Elles ne se devinent pas :
    * c'est le SDK qui sait quelle règle couvrirait exactement ce cas.
    */
-  private readonly suggestions = new Map<string, PermissionUpdate[]>();
+  private readonly suggestions = new Map<string, PermissionUpdate[]>()
   /**
    * L'entrée d'origine de chaque demande, qu'une autorisation doit repasser
    * telle quelle — voir `answerPermission`.
    */
-  private readonly permissionInputs = new Map<string, Record<string, unknown>>();
+  private readonly permissionInputs = new Map<string, Record<string, unknown>>()
 
   /**
    * La session que celle-ci prolonge, s'il y en a une.
@@ -226,11 +221,11 @@ export class SessionRunner {
    * fichier à fusionner ni d'identifiant à réconcilier — c'est la même session,
    * qui recommence à respirer.
    */
-  private readonly resume: string;
+  private readonly resume: string
 
   constructor(options: RunnerOptions) {
-    const cwd = longPath(options.cwd);
-    this.resume = options.resume ?? '';
+    const cwd = longPath(options.cwd)
+    this.resume = options.resume ?? ''
     this.session = {
       runId: randomUUID(),
       // Reprise : l'identifiant est connu d'avance, on le pré-renseigne au lieu
@@ -244,7 +239,7 @@ export class SessionRunner {
       status: 'idle',
       startedAt: Date.now(),
       ...(this.resume ? { resumed: true } : {}),
-    };
+    }
   }
 
   // ── Abonnement ────────────────────────────────────────────────────────────
@@ -265,16 +260,16 @@ export class SessionRunner {
       // Les shells encore plus : celui qui tient un port a pu partir il y a une
       // heure, bien avant que cet onglet n'existe.
       shells: this.shells.snapshot(),
-    });
-    this.touchedAt = Date.now();
-    this.subscribers.add(send);
+    })
+    this.touchedAt = Date.now()
+    this.subscribers.add(send)
     return () => {
-      this.subscribers.delete(send);
+      this.subscribers.delete(send)
       // Le départ compte autant que l'arrivée : sans cela, une session qu'on
       // regarde depuis une heure partirait à la seconde où le dernier onglet se
       // ferme, l'horloge n'ayant pas bougé depuis l'abonnement.
-      this.touchedAt = Date.now();
-    };
+      this.touchedAt = Date.now()
+    }
   }
 
   /**
@@ -285,8 +280,8 @@ export class SessionRunner {
    * CLI, pas de nous.
    */
   shellOutputPath(shellId: string): string | undefined {
-    const path = this.shells.outputPath(shellId);
-    return path && isOutputPath(path, shellId) ? path : undefined;
+    const path = this.shells.outputPath(shellId)
+    return path && isOutputPath(path, shellId) ? path : undefined
   }
 
   /**
@@ -310,10 +305,10 @@ export class SessionRunner {
    * pour qu'un autre les recombine inviterait à recombiner autrement.
    */
   expired(ttlMs: number): boolean {
-    if (this.stopped) return false;
-    if (this.subscribers.size > 0) return false;
-    if (this.session.status === 'working') return false;
-    return Date.now() - this.touchedAt > ttlMs;
+    if (this.stopped) return false
+    if (this.subscribers.size > 0) return false
+    if (this.session.status === 'working') return false
+    return Date.now() - this.touchedAt > ttlMs
   }
 
   /**
@@ -325,14 +320,14 @@ export class SessionRunner {
    * la grande fenêtre. Une copie, pour que personne n'écrive dans le relevé.
    */
   get contextWindow(): { tokens: number; max: number } {
-    return { ...this.fenetre };
+    return { ...this.fenetre }
   }
 
   private emit(upserts: AgentUpsert[]): void {
     for (const upsert of upserts) {
       for (const send of this.subscribers) {
         try {
-          send(upsert);
+          send(upsert)
         } catch {
           // Un abonné mort ne doit pas interrompre le tour ; sa route le retirera.
         }
@@ -341,13 +336,13 @@ export class SessionRunner {
   }
 
   private setStatus(status: AgentStatus, error?: string): void {
-    this.session.status = status;
-    if (error) this.session.error = error;
-    this.emit([{ kind: 'status', status, ...(error ? { error } : {}) }]);
+    this.session.status = status
+    if (error) this.session.error = error
+    this.emit([{ kind: 'status', status, ...(error ? { error } : {}) }])
     // Hors travail, il n'y a plus rien en cours : sans cette remise à zéro, la
     // dernière phase resterait affichée jusqu'au tour suivant — un « Réflexion »
     // figé sous un composeur qui attend, ce qui est pire que rien.
-    if (status !== 'working') this.pushActivity(this.activity.reset());
+    if (status !== 'working') this.pushActivity(this.activity.reset())
   }
 
   /**
@@ -370,17 +365,17 @@ export class SessionRunner {
    * l'ancien identifiant le temps d'un aller-retour.
    */
   private resetConversation(): void {
-    this.translator.reset();
+    this.translator.reset()
     // La fenêtre est vide dès maintenant, et non au prochain tour : sans cela,
     // qui demande son état juste après un `/clear` lirait le remplissage d'une
     // conversation qui n'existe plus. `max` survit — il ne dit rien de cette
     // conversation-ci, il prouve la taille de la fenêtre du modèle.
-    this.fenetre.tokens = 0;
+    this.fenetre.tokens = 0
     // Le SDK émet aussi ce message hors `/clear` — sortie du mode plan, ouverture
     // d'une session neuve. On ne nomme donc la commande que si c'est bien elle
     // qu'on vient d'envoyer.
-    const byClear = /^\/clear\b/.test(this.lastPrompt);
-    this.translator.appendSystem(t(byClear ? 'agent.clearedByCommand' : 'agent.cleared'), 'warn');
+    const byClear = /^\/clear\b/.test(this.lastPrompt)
+    this.translator.appendSystem(t(byClear ? 'agent.clearedByCommand' : 'agent.cleared'), 'warn')
     this.emit([
       {
         kind: 'snapshot',
@@ -391,7 +386,7 @@ export class SessionRunner {
         // le `/clear` tient toujours son port, et reste donc à l'écran.
         shells: this.shells.snapshot(),
       },
-    ]);
+    ])
   }
 
   /**
@@ -401,11 +396,11 @@ export class SessionRunner {
    * simple compteur attend le pas : voir `ACTIVITY_STEP_MS`.
    */
   private pushActivity(change: Change): void {
-    if (!change) return;
-    const now = Date.now();
-    if (change === 'minor' && now - this.lastActivityAt < ACTIVITY_STEP_MS) return;
-    this.lastActivityAt = now;
-    this.emit([{ kind: 'activity', activity: this.activity.snapshot() }]);
+    if (!change) return
+    const now = Date.now()
+    if (change === 'minor' && now - this.lastActivityAt < ACTIVITY_STEP_MS) return
+    this.lastActivityAt = now
+    this.emit([{ kind: 'activity', activity: this.activity.snapshot() }])
   }
 
   /**
@@ -417,22 +412,22 @@ export class SessionRunner {
    * doit pas battre toutes les deux secondes pour rien.
    */
   private pushShells(): void {
-    this.emit([{ kind: 'shells', shells: this.shells.snapshot() }]);
-    this.armShellPoll();
+    this.emit([{ kind: 'shells', shells: this.shells.snapshot() }])
+    this.armShellPoll()
   }
 
   private armShellPoll(): void {
-    const watching = this.shells.running().length > 0;
+    const watching = this.shells.running().length > 0
     if (watching && !this.shellPoll) {
       // `unref` : suivre un serveur de dev ne doit jamais être la raison pour
       // laquelle Node reste en vie.
-      this.shellPoll = setInterval(() => void this.readShellSizes(), SHELL_POLL_MS);
-      this.shellPoll.unref();
-      return;
+      this.shellPoll = setInterval(() => void this.readShellSizes(), SHELL_POLL_MS)
+      this.shellPoll.unref()
+      return
     }
     if (!watching && this.shellPoll) {
-      clearInterval(this.shellPoll);
-      this.shellPoll = null;
+      clearInterval(this.shellPoll)
+      this.shellPoll = null
     }
   }
 
@@ -445,19 +440,19 @@ export class SessionRunner {
    * laisse se lit déjà comme un silence.
    */
   private async readShellSizes(): Promise<void> {
-    let changed = false;
+    let changed = false
     for (const shell of this.shells.running()) {
-      const path = this.shells.outputPath(shell.id);
-      if (!path) continue;
+      const path = this.shells.outputPath(shell.id)
+      if (!path) continue
       try {
-        const info = await stat(path);
-        if (this.shells.observe(shell.id, info.size, info.mtimeMs)) changed = true;
+        const info = await stat(path)
+        if (this.shells.observe(shell.id, info.size, info.mtimeMs)) changed = true
       } catch {
         // Rien à dire : ni le fichier ni son absence ne sont une nouvelle.
       }
     }
-    if (await this.readShellEnds()) changed = true;
-    if (changed) this.emit([{ kind: 'shells', shells: this.shells.snapshot() }]);
+    if (await this.readShellEnds()) changed = true
+    if (changed) this.emit([{ kind: 'shells', shells: this.shells.snapshot() }])
   }
 
   /**
@@ -470,35 +465,35 @@ export class SessionRunner {
    * deux secondes.
    */
   private async readShellEnds(): Promise<boolean> {
-    const { sessionId, slug } = this.session;
-    if (!sessionId || !slug) return false;
-    const path = join(CLAUDE_DIR, 'projects', slug, `${sessionId}.jsonl`);
+    const { sessionId, slug } = this.session
+    if (!sessionId || !slug) return false
+    const path = join(CLAUDE_DIR, 'projects', slug, `${sessionId}.jsonl`)
 
     try {
-      const { size } = await stat(path);
+      const { size } = await stat(path)
       if (size <= this.transcriptAt) {
         // Un fichier qui rétrécit veut dire qu'on regarde un autre transcript :
         // un `/clear` en a ouvert un neuf. On repart de son début.
-        if (size < this.transcriptAt) this.transcriptAt = 0;
-        return false;
+        if (size < this.transcriptAt) this.transcriptAt = 0
+        return false
       }
       // Page par page jusqu'à rattraper le fichier. La queue ne conviendrait
       // pas : au-delà de sa borne elle jette le milieu, et le milieu est
       // précisément là où une notification de fin se trouve quand le tour
       // précédent a beaucoup écrit. Une fin manquée l'est pour de bon — le
       // harnais ne la réécrit jamais.
-      let changed = false;
-      let cursor = this.transcriptAt;
+      let changed = false
+      let cursor = this.transcriptAt
       while (cursor < size) {
-        const page = await readSince(path, cursor);
-        this.transcriptAt = page.next;
-        if (this.shells.fromTranscript(page.text)) changed = true;
-        if (page.next <= cursor) break;
-        cursor = page.next;
+        const page = await readSince(path, cursor)
+        this.transcriptAt = page.next
+        if (this.shells.fromTranscript(page.text)) changed = true
+        if (page.next <= cursor) break
+        cursor = page.next
       }
-      return changed;
+      return changed
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -506,13 +501,13 @@ export class SessionRunner {
 
   /** Pousse un tour. Le premier démarre la boucle ; les suivants la nourrissent. */
   send(prompt: string, attachments: PromptAttachment[] = []): void {
-    if (this.stopped) return;
-    this.touchedAt = Date.now();
+    if (this.stopped) return
+    this.touchedAt = Date.now()
     // Gardé pour une seule raison : quand la conversation se remet à zéro, c'est
     // lui qui dit si l'ordre venait de `/clear` ou d'ailleurs.
-    this.lastPrompt = prompt.trimStart();
-    const joined = this.keep(attachments);
-    this.emit(this.translator.appendUserPrompt(prompt, joined.images));
+    this.lastPrompt = prompt.trimStart()
+    const joined = this.keep(attachments)
+    this.emit(this.translator.appendUserPrompt(prompt, joined.images))
     this.queue.push({
       type: 'user',
       // Les images avant le texte, comme le CLI les envoie : la consigne se lit
@@ -520,12 +515,12 @@ export class SessionRunner {
       message: { role: 'user', content: [...joined.blocks, { type: 'text', text: prompt }] },
       parent_tool_use_id: null,
       session_id: this.session.sessionId,
-    });
-    this.setStatus('working');
+    })
+    this.setStatus('working')
     // Après `setStatus`, qui ne remet à zéro que hors travail : l'attente
     // commence à l'envoi, pas au premier message du SDK.
-    this.pushActivity(this.activity.beginTurn());
-    this.ensureQuery();
+    this.pushActivity(this.activity.beginTurn())
+    this.ensureQuery()
   }
 
   /**
@@ -543,28 +538,28 @@ export class SessionRunner {
    * palier bas — sous-estimer une fois vaut mieux qu'inventer.
    */
   private keep(attachments: PromptAttachment[]): {
-    blocks: ImageBlock[];
-    images: TranscriptImage[];
+    blocks: ImageBlock[]
+    images: TranscriptImage[]
   } {
-    const blocks: ImageBlock[] = [];
-    const images: TranscriptImage[] = [];
-    const hiRes = isHiResVisionModel(this.session.resolvedModel ?? this.session.model);
+    const blocks: ImageBlock[] = []
+    const images: TranscriptImage[] = []
+    const hiRes = isHiResVisionModel(this.session.resolvedModel ?? this.session.model)
 
     for (const [index, attachment] of attachments.entries()) {
-      const data = attachment.data;
-      const mediaType = attachment.mediaType || 'image/png';
-      if (!data) continue;
+      const data = attachment.data
+      const mediaType = attachment.mediaType || 'image/png'
+      if (!data) continue
 
-      const id = randomUUID();
-      this.attachments.set(id, { mediaType, bytes: Buffer.from(data, 'base64') });
+      const id = randomUUID()
+      this.attachments.set(id, { mediaType, bytes: Buffer.from(data, 'base64') })
 
       blocks.push({
         type: 'image',
         // Le type est une union fermée côté SDK ; la route l'a déjà vérifié
         // contre la même liste avant d'accepter le tour.
         source: { type: 'base64', media_type: mediaType as ImageMediaType, data },
-      });
-      const size = imageSize(data, mediaType);
+      })
+      const size = imageSize(data, mediaType)
       images.push({
         // `uuid` et `index` désignent une ligne de `.jsonl` : celle-ci n'existe
         // pas encore. C'est `url` qui porte l'adresse, et le rejeu reprendra la
@@ -575,14 +570,14 @@ export class SessionRunner {
         bytes: Buffer.byteLength(data, 'base64'),
         ...(size ? { ...size, tokens: visualTokens(size.width, size.height, hiRes) } : {}),
         url: `/api/agent/sessions/${this.session.runId}/attachment?id=${id}`,
-      });
+      })
     }
-    return { blocks, images };
+    return { blocks, images }
   }
 
   /** Les octets d'une image jointe, pour la route qui la sert. */
   attachment(id: string): { mediaType: string; bytes: Buffer } | undefined {
-    return this.attachments.get(id);
+    return this.attachments.get(id)
   }
 
   /**
@@ -598,7 +593,7 @@ export class SessionRunner {
    * `Query` est donc déjà là.
    */
   private ensureQuery(): void {
-    if (!this.query && !this.stopped) void this.run();
+    if (!this.query && !this.stopped) void this.run()
   }
 
   /**
@@ -613,12 +608,12 @@ export class SessionRunner {
    * d'interrompre une session pour ça.
    */
   async commands(): Promise<SlashCommandInfo[]> {
-    if (this.stopped) return [];
-    this.ensureQuery();
+    if (this.stopped) return []
+    this.ensureQuery()
     try {
-      return toCommands(await this.query?.supportedCommands());
+      return toCommands(await this.query?.supportedCommands())
     } catch {
-      return [];
+      return []
     }
   }
 
@@ -636,19 +631,19 @@ export class SessionRunner {
    * barre de session le montre.
    */
   async setPermissionMode(mode: string): Promise<void> {
-    this.session.permissionMode = mode;
-    if (this.query) await this.query.setPermissionMode(mode as never);
-    this.emit([{ kind: 'session', session: this.session }]);
+    this.session.permissionMode = mode
+    if (this.query) await this.query.setPermissionMode(mode as never)
+    this.emit([{ kind: 'session', session: this.session }])
   }
 
   async interrupt(): Promise<void> {
     // `interrupt()` n'existe qu'en entrée streamée — c'est le cas ici — et rend
     // la main quand le tour est effectivement coupé.
-    await this.query?.interrupt();
-    this.emit(this.translator.appendSystem('Tour interrompu.', 'warn'));
+    await this.query?.interrupt()
+    this.emit(this.translator.appendSystem('Tour interrompu.', 'warn'))
     // Le `result` qui suit remettrait l'activité à zéro de toute façon ; le
     // faire ici évite qu'un « Bash · 12 s » survive au geste qui l'a coupé.
-    this.pushActivity(this.activity.reset());
+    this.pushActivity(this.activity.reset())
   }
 
   /**
@@ -667,31 +662,31 @@ export class SessionRunner {
    * d'être patiente.
    */
   stop(grace = STOP_GRACE_MS): void {
-    if (this.stopped) return;
-    this.stopped = true;
+    if (this.stopped) return
+    this.stopped = true
     if (this.shellPoll) {
-      clearInterval(this.shellPoll);
-      this.shellPoll = null;
+      clearInterval(this.shellPoll)
+      this.shellPoll = null
     }
     // Une demande en attente tient le SDK suspendu : il ne lirait jamais la fin
     // de la file tant qu'elle dure. On tranche avant de fermer.
     for (const pending of this.permissions.values()) {
-      pending.settle({ behavior: 'deny', message: t('agent.sessionStopped') });
+      pending.settle({ behavior: 'deny', message: t('agent.sessionStopped') })
     }
-    for (const pending of this.asks.values()) pending.settle(NO_ANSWER);
-    this.queue.close();
+    for (const pending of this.asks.values()) pending.settle(NO_ANSWER)
+    this.queue.close()
 
     // Pas de boucle démarrée : il n'y a aucun processus derrière.
-    if (!this.query) return;
+    if (!this.query) return
     if (grace <= 0) {
-      this.aborter.abort();
-      return;
+      this.aborter.abort()
+      return
     }
     // `unref` : ce filet ne doit pas retenir Node en vie. À l'extinction on
     // passe `grace: 0`, donc il n'y a rien à attendre de ce minuteur-là.
     setTimeout(() => {
-      if (this.query) this.aborter.abort();
-    }, grace).unref();
+      if (this.query) this.aborter.abort()
+    }, grace).unref()
   }
 
   // ── Les deux ponts vers l'humain ──────────────────────────────────────────
@@ -704,14 +699,10 @@ export class SessionRunner {
    * autoriser, et le faire arbitrer deux fois demanderait deux gestes pour une
    * seule décision.
    */
-  private async decide(
-    toolName: string,
-    input: Record<string, unknown>,
-    options: Rec,
-  ): Promise<PermissionResult> {
-    if (toolName === ASK_TOOL) return { behavior: 'allow', updatedInput: input };
+  private async decide(toolName: string, input: Record<string, unknown>, options: Rec): Promise<PermissionResult> {
+    if (toolName === ASK_TOOL) return { behavior: 'allow', updatedInput: input }
 
-    const id = randomUUID();
+    const id = randomUUID()
     const request: PermissionRequest = {
       id,
       toolName,
@@ -725,90 +716,86 @@ export class SessionRunner {
       blockedPath: str(options.blockedPath) || undefined,
       decisionReason: str(options.decisionReason) || undefined,
       askedAt: Date.now(),
-    };
+    }
 
-    this.permissionInputs.set(id, input);
-    const suggestions = Array.isArray(options.suggestions)
-      ? (options.suggestions as PermissionUpdate[])
-      : [];
-    if (suggestions.length) this.suggestions.set(id, suggestions);
+    this.permissionInputs.set(id, input)
+    const suggestions = Array.isArray(options.suggestions) ? (options.suggestions as PermissionUpdate[]) : []
+    if (suggestions.length) this.suggestions.set(id, suggestions)
 
     const pending = new PendingAnswer<PermissionResult>(ANSWER_TIMEOUT_MS, () => {
-      this.emit([{ kind: 'permission-settled', id, answer: 'deny' }]);
-      return { behavior: 'deny', message: t('agent.permissionTimeout') };
-    });
-    this.permissions.set(id, pending);
-    this.emit([{ kind: 'permission-request', request }]);
+      this.emit([{ kind: 'permission-settled', id, answer: 'deny' }])
+      return { behavior: 'deny', message: t('agent.permissionTimeout') }
+    })
+    this.permissions.set(id, pending)
+    this.emit([{ kind: 'permission-request', request }])
 
     // Une interruption pendant l'attente doit libérer le tour, pas le figer.
-    const signal = options.signal;
+    const signal = options.signal
     if (signal instanceof AbortSignal) {
       signal.addEventListener(
         'abort',
         () => {
           if (pending.settle({ behavior: 'deny', message: 'Tour interrompu.' })) {
-            this.emit([{ kind: 'permission-settled', id, answer: 'deny' }]);
+            this.emit([{ kind: 'permission-settled', id, answer: 'deny' }])
           }
         },
         { once: true },
-      );
+      )
     }
 
     try {
-      return await pending.promise;
+      return await pending.promise
     } finally {
-      this.permissions.delete(id);
-      this.suggestions.delete(id);
-      this.permissionInputs.delete(id);
+      this.permissions.delete(id)
+      this.suggestions.delete(id)
+      this.permissionInputs.delete(id)
     }
   }
 
   /** Répond à une demande de permission. Rend `false` si elle n'est plus en vol. */
   answerPermission(id: string, answer: PermissionAnswer, reason?: string): boolean {
-    const pending = this.permissions.get(id);
-    if (!pending?.pending) return false;
-    this.touchedAt = Date.now();
+    const pending = this.permissions.get(id)
+    if (!pending?.pending) return false
+    this.touchedAt = Date.now()
 
     // `updatedInput` est obligatoire à l'exécution alors que le type le dit
     // optionnel : sans lui, la validation du CLI rejette la réponse et l'outil
     // ne s'exécute jamais. On repasse l'entrée d'origine, inchangée.
-    const input = this.permissionInputs.get(id) ?? {};
+    const input = this.permissionInputs.get(id) ?? {}
     const result: PermissionResult =
       answer === 'deny'
         ? { behavior: 'deny', message: reason?.trim() || t('agent.deniedFromAtelier') }
         : {
             behavior: 'allow',
             updatedInput: input,
-            ...(answer === 'allow-always' && this.suggestions.has(id)
-              ? { updatedPermissions: this.suggestions.get(id) }
-              : {}),
-          };
+            ...(answer === 'allow-always' && this.suggestions.has(id) ? { updatedPermissions: this.suggestions.get(id) } : {}),
+          }
 
-    if (!pending.settle(result)) return false;
-    this.emit([{ kind: 'permission-settled', id, answer }]);
-    return true;
+    if (!pending.settle(result)) return false
+    this.emit([{ kind: 'permission-settled', id, answer }])
+    return true
   }
 
   /** Suspend l'outil de question jusqu'à ce qu'un formulaire réponde. */
   private askHuman(questions: AskQuestion[]): Promise<string> {
-    const id = randomUUID();
+    const id = randomUUID()
     const pending = new PendingAnswer<string>(ANSWER_TIMEOUT_MS, () => {
-      this.emit([{ kind: 'ask-settled', id }]);
-      return NO_ANSWER;
-    });
-    this.asks.set(id, pending);
-    this.emit([{ kind: 'ask-request', request: { id, questions, askedAt: Date.now() } }]);
-    return pending.promise.finally(() => this.asks.delete(id));
+      this.emit([{ kind: 'ask-settled', id }])
+      return NO_ANSWER
+    })
+    this.asks.set(id, pending)
+    this.emit([{ kind: 'ask-request', request: { id, questions, askedAt: Date.now() } }])
+    return pending.promise.finally(() => this.asks.delete(id))
   }
 
   /** Répond à une question. Rend `false` si elle n'est plus en vol. */
   answerAsk(id: string, answers: Record<string, string>, notes?: string): boolean {
-    const pending = this.asks.get(id);
-    if (!pending?.pending) return false;
-    this.touchedAt = Date.now();
-    if (!pending.settle(harnessSentence(answers, notes))) return false;
-    this.emit([{ kind: 'ask-settled', id }]);
-    return true;
+    const pending = this.asks.get(id)
+    if (!pending?.pending) return false
+    this.touchedAt = Date.now()
+    if (!pending.settle(harnessSentence(answers, notes))) return false
+    this.emit([{ kind: 'ask-settled', id }])
+    return true
   }
 
   // ── La boucle ─────────────────────────────────────────────────────────────
@@ -830,19 +817,19 @@ export class SessionRunner {
         toolAliases: { AskUserQuestion: ASK_TOOL },
         canUseTool: (toolName, input, options) => this.decide(toolName, input, options),
       },
-    });
+    })
 
     try {
       for await (const message of this.query) {
-        this.consume(message);
+        this.consume(message)
       }
-      this.setStatus('ended');
+      this.setStatus('ended')
     } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      this.emit(this.translator.appendSystem(t('agent.sessionEnded', { message }), 'error'));
-      this.setStatus('failed', message);
+      const message = e instanceof Error ? e.message : String(e)
+      this.emit(this.translator.appendSystem(t('agent.sessionEnded', { message }), 'error'))
+      this.setStatus('failed', message)
     } finally {
-      this.query = null;
+      this.query = null
     }
   }
 
@@ -859,13 +846,10 @@ export class SessionRunner {
    * prouve pas que la fenêtre s'est vidée, elle ne dit rien.
    */
   private releveFenetre(usage: Rec): void {
-    const total =
-      num(usage.input_tokens) +
-      num(usage.cache_read_input_tokens) +
-      num(usage.cache_creation_input_tokens);
-    if (total <= 0) return;
-    this.fenetre.tokens = total;
-    if (total > this.fenetre.max) this.fenetre.max = total;
+    const total = num(usage.input_tokens) + num(usage.cache_read_input_tokens) + num(usage.cache_creation_input_tokens)
+    if (total <= 0) return
+    this.fenetre.tokens = total
+    if (total > this.fenetre.max) this.fenetre.max = total
   }
 
   /**
@@ -882,22 +866,22 @@ export class SessionRunner {
    * tirerait de toute façon rien, n'y cherchant que des résultats d'outils.
    */
   private capteResume(message: Rec): boolean {
-    const uuid = this.compactionSansResume;
-    if (!uuid || message.isSynthetic !== true) return false;
-    this.compactionSansResume = null;
+    const uuid = this.compactionSansResume
+    if (!uuid || message.isSynthetic !== true) return false
+    this.compactionSansResume = null
 
-    const contenu = rec(message.message).content;
-    if (typeof contenu !== 'string') return false;
-    this.emit(this.translator.attachSummary(uuid, contenu));
-    return true;
+    const contenu = rec(message.message).content
+    if (typeof contenu !== 'string') return false
+    this.emit(this.translator.attachSummary(uuid, contenu))
+    return true
   }
 
   private consume(message: Rec): void {
     // Avant tout dispatch : la plupart des messages qui disent où en est l'agent
     // ne produisent aucun événement de timeline, et sortaient donc par le
     // `default` sans laisser de trace.
-    this.pushActivity(this.activity.consume(message));
-    if (this.shells.consume(message)) this.pushShells();
+    this.pushActivity(this.activity.consume(message))
+    if (this.shells.consume(message)) this.pushShells()
 
     switch (str(message.type)) {
       case 'system':
@@ -905,12 +889,12 @@ export class SessionRunner {
           // `init` n'arrive qu'après lecture du premier prompt : c'est ici, et
           // pas à la création, qu'on apprend l'identifiant du SDK — donc où le
           // lien vers le rejeu devient possible.
-          this.session.sessionId = str(message.session_id);
+          this.session.sessionId = str(message.session_id)
           // `resolvedModel` et non `model` : le choix de l'utilisateur reste ce
           // qu'il a choisi, l'identifiant employé se dit à côté.
-          this.session.resolvedModel = str(message.model) || undefined;
-          this.emit([{ kind: 'session', session: this.session }]);
-          return;
+          this.session.resolvedModel = str(message.model) || undefined
+          this.emit([{ kind: 'session', session: this.session }])
+          return
         }
         // Une compaction est le seul autre message `system` qui change ce que le
         // lecteur voit : la fenêtre se vide, et sans cette ligne le fil n'en
@@ -924,43 +908,43 @@ export class SessionRunner {
           // cette session ait porté, et souvent le premier à dépasser 200 k :
           // c'est ici, plus tôt que partout ailleurs, que la grande fenêtre se
           // prouve.
-          const meta = rec(message.compact_metadata);
-          const avant = num(meta.pre_tokens);
-          if (avant > this.fenetre.max) this.fenetre.max = avant;
-          this.fenetre.tokens = num(meta.post_tokens);
-          const upserts = this.translator.appendCompaction(message);
-          const premier = upserts[0];
-          this.compactionSansResume = premier?.kind === 'append-event' ? premier.event.uuid : null;
-          this.emit(upserts);
-          return;
+          const meta = rec(message.compact_metadata)
+          const avant = num(meta.pre_tokens)
+          if (avant > this.fenetre.max) this.fenetre.max = avant
+          this.fenetre.tokens = num(meta.post_tokens)
+          const upserts = this.translator.appendCompaction(message)
+          const premier = upserts[0]
+          this.compactionSansResume = premier?.kind === 'append-event' ? premier.event.uuid : null
+          this.emit(upserts)
+          return
         }
         // Le CLI pousse la liste entière dès qu'elle bouge — un Skill découvert
         // en cours de route, par exemple. On la relaie telle quelle : le client
         // remplace la sienne, il n'a rien à réconcilier.
         if (str(message.subtype) === 'commands_changed') {
-          this.emit([{ kind: 'commands', commands: toCommands(message.commands) }]);
+          this.emit([{ kind: 'commands', commands: toCommands(message.commands) }])
         }
-        return;
+        return
       case 'conversation_reset':
-        this.resetConversation();
-        return;
+        this.resetConversation()
+        return
       case 'stream_event':
-        this.emit(this.translator.onStreamEvent(message));
-        return;
+        this.emit(this.translator.onStreamEvent(message))
+        return
       case 'assistant':
-        this.releveFenetre(rec(rec(message.message).usage));
-        this.emit(this.translator.onAssistant(message));
-        return;
+        this.releveFenetre(rec(rec(message.message).usage))
+        this.emit(this.translator.onAssistant(message))
+        return
       case 'user':
-        if (this.capteResume(message)) return;
-        this.emit(this.translator.onUser(message));
-        return;
+        if (this.capteResume(message)) return
+        this.emit(this.translator.onUser(message))
+        return
       case 'result':
         // Le tour est fini ; la session, elle, reste ouverte pour le suivant.
-        this.setStatus('waiting');
-        return;
+        this.setStatus('waiting')
+        return
       default:
-        return;
+        return
     }
   }
 }

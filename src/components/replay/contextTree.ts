@@ -11,41 +11,41 @@
 
 /** Le strict nécessaire pour ranger une ligne dans l'arbre. */
 export interface TreeLeaf {
-  label: string;
-  tokens: number;
+  label: string
+  tokens: number
 }
 
 export interface TreeNode<T extends TreeLeaf = TreeLeaf> {
   /** Le segment de chemin : un nom de dossier, ou de fichier sur une feuille. */
-  name: string;
+  name: string
   /** Le chemin cumulé depuis la racine — clé stable pour le rendu. */
-  key: string;
+  key: string
   /** Somme des tokens de la feuille ou de tout le sous-arbre. */
-  tokens: number;
+  tokens: number
   /** La ligne, sur une feuille seulement ; absente sur un dossier. */
-  row?: T;
-  children: TreeNode<T>[];
+  row?: T
+  children: TreeNode<T>[]
 }
 
 interface Building<T extends TreeLeaf> {
-  name: string;
-  key: string;
-  tokens: number;
-  row?: T;
-  children: Map<string, Building<T>>;
+  name: string
+  key: string
+  tokens: number
+  row?: T
+  children: Map<string, Building<T>>
 }
 
 function child<T extends TreeLeaf>(parent: Building<T>, name: string): Building<T> {
-  const found = parent.children.get(name);
-  if (found) return found;
+  const found = parent.children.get(name)
+  if (found) return found
   const node: Building<T> = {
     name,
     key: parent.key ? `${parent.key}/${name}` : name,
     tokens: 0,
     children: new Map(),
-  };
-  parent.children.set(name, node);
-  return node;
+  }
+  parent.children.set(name, node)
+  return node
 }
 
 function freeze<T extends TreeLeaf>(node: Building<T>): TreeNode<T> {
@@ -53,14 +53,14 @@ function freeze<T extends TreeLeaf>(node: Building<T>): TreeNode<T> {
     .map(freeze)
     // Le plus lourd d'abord, comme partout ailleurs dans le panneau : la règle ou
     // le dossier qui pèse le plus remonte.
-    .sort((a, b) => b.tokens - a.tokens);
+    .sort((a, b) => b.tokens - a.tokens)
   return {
     name: node.name,
     key: node.key,
     tokens: node.tokens,
     ...(node.row ? { row: node.row } : {}),
     children,
-  };
+  }
 }
 
 /**
@@ -71,20 +71,20 @@ function freeze<T extends TreeLeaf>(node: Building<T>): TreeNode<T> {
  * `/` reste une feuille à la racine.
  */
 export function buildTree<T extends TreeLeaf>(rows: T[]): TreeNode<T>[] {
-  const root: Building<T> = { name: '', key: '', tokens: 0, children: new Map() };
+  const root: Building<T> = { name: '', key: '', tokens: 0, children: new Map() }
   for (const row of rows) {
-    const parts = row.label.split('/').filter(Boolean);
-    let node = root;
+    const parts = row.label.split('/').filter(Boolean)
+    let node = root
     for (const part of parts) {
-      node = child(node, part);
-      node.tokens += row.tokens;
+      node = child(node, part)
+      node.tokens += row.tokens
     }
-    node.row = row;
+    node.row = row
   }
-  return freeze(root).children;
+  return freeze(root).children
 }
 
 /** Un arbre vaut la peine d'être dessiné dès qu'il a au moins un dossier. */
 export function hasFolders<T extends TreeLeaf>(nodes: TreeNode<T>[]): boolean {
-  return nodes.some((n) => n.children.length > 0);
+  return nodes.some((n) => n.children.length > 0)
 }

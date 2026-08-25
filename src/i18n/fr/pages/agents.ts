@@ -6,4 +6,4 @@ export default {
   noDescription: 'Pas de description : Claude ne saura pas quand déléguer à cet agent.',
   deleteTitle: 'Supprimer cet agent ?',
   deleteNote: 'Une sauvegarde horodatée est prise avant la suppression.',
-};
+}

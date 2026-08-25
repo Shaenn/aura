@@ -11,10 +11,10 @@
 
 /** The value if it is a string, else `fallback` (default `''`). */
 export function str(v: unknown, fallback = ''): string {
-  return typeof v === 'string' ? v : fallback;
+  return typeof v === 'string' ? v : fallback
 }
 
 /** The value if it is a finite number, else `fallback` (default `0`). */
 export function num(v: unknown, fallback = 0): number {
-  return typeof v === 'number' && Number.isFinite(v) ? v : fallback;
+  return typeof v === 'number' && Number.isFinite(v) ? v : fallback
 }

@@ -27,76 +27,75 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { Block } from '@/services/projects';
-import { asRecord, str } from '../values';
-import OutputPane from '../OutputPane.vue';
+  import type { Block } from '@/services/projects'
+  import { computed } from 'vue'
+  import { useI18n } from 'vue-i18n'
+  import OutputPane from '../OutputPane.vue'
+  import { asRecord, str } from '../values'
 
-import { useI18n } from 'vue-i18n';
+  const { t } = useI18n()
 
-const { t } = useI18n();
+  const props = defineProps<{ block: Block }>()
 
-const props = defineProps<{ block: Block }>();
+  const input = computed(() => asRecord(props.block.input))
+  const args = computed(() => str(input.value.args).trim())
 
-const input = computed(() => asRecord(props.block.input));
-const args = computed(() => str(input.value.args).trim());
+  /** La restriction que le skill impose à la session — le sidecar seul la porte. */
+  const allowed = computed(() => {
+    const a = props.block.result?.meta?.allowedTools
+    return Array.isArray(a) ? a.filter((x): x is string => typeof x === 'string' && Boolean(x)) : []
+  })
 
-/** La restriction que le skill impose à la session — le sidecar seul la porte. */
-const allowed = computed(() => {
-  const a = props.block.result?.meta?.allowedTools;
-  return Array.isArray(a) ? a.filter((x): x is string => typeof x === 'string' && Boolean(x)) : [];
-});
+  /**
+   * Le lancement réussi ne se dit pas : la carte est là, c'est qu'il a eu lieu.
+   *
+   * Reste ce qui n'est pas ce cas-là — deux appels du parc, où le modèle a écrit
+   * `name` au lieu de `skill` et où le harness a répondu une erreur de schéma.
+   * Le nom demandé n'est alors nulle part ailleurs que dans le pavé.
+   */
+  const LAUNCH = /^Launching skill: /
 
-/**
- * Le lancement réussi ne se dit pas : la carte est là, c'est qu'il a eu lieu.
- *
- * Reste ce qui n'est pas ce cas-là — deux appels du parc, où le modèle a écrit
- * `name` au lieu de `skill` et où le harness a répondu une erreur de schéma.
- * Le nom demandé n'est alors nulle part ailleurs que dans le pavé.
- */
-const LAUNCH = /^Launching skill: /;
-
-const showOutput = computed(() => {
-  const t = props.block.result?.content ?? '';
-  if (props.block.result?.isError) return true;
-  return Boolean(t.trim()) && !LAUNCH.test(t.trim());
-});
+  const showOutput = computed(() => {
+    const t = props.block.result?.content ?? ''
+    if (props.block.result?.isError) return true
+    return Boolean(t.trim()) && !LAUNCH.test(t.trim())
+  })
 </script>
 
 <style scoped lang="scss">
-.tv {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-.skv-args {
-  margin: 0;
-  font-size: var(--fs-sm);
-  line-height: 1.5;
-  color: var(--text);
-  white-space: pre-wrap;
-}
-.skv-block {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-.skv-block > h4 {
-  margin: 0;
-}
-.skv-tools {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-}
-.skv-tool {
-  color: var(--brand);
-  font-size: var(--fs-2xs);
-  border: 1px solid var(--brand-line);
-  border-radius: 999px;
-  padding: 1px 8px;
-}
+  .tv {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  .skv-args {
+    margin: 0;
+    font-size: var(--fs-sm);
+    line-height: 1.5;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+  .skv-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+  .skv-block > h4 {
+    margin: 0;
+  }
+  .skv-tools {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+  .skv-tool {
+    color: var(--brand);
+    font-size: var(--fs-2xs);
+    border: 1px solid var(--brand-line);
+    border-radius: 999px;
+    padding: 1px 8px;
+  }
 </style>

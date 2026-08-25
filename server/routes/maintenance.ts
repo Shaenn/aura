@@ -1,39 +1,31 @@
 // Observability & maintenance endpoints (`/api/system/*`): storage sizes + purge,
 // sessions, plans (list/read/delete), and the orderly shutdown.
 
-import type { FastifyInstance } from 'fastify';
-import { t } from '../i18n/index.ts';
-import {
-  getStorage,
-  purgeArea,
-  listSessions,
-  listPlans,
-  readPlan,
-  deletePlan,
-} from '../maintenance';
-import { listSessions as listRunners } from '../agent/registry.ts';
-import { killTree, listClaudeProcesses } from '../processes.ts';
-import type { KillProcessBody } from '../../shared/processes.ts';
-import { isLoopback } from '../net.ts';
-import { str } from '../json.ts';
-import { publicMessage } from '../errors.ts';
+import type { FastifyInstance } from 'fastify'
+import type { KillProcessBody } from '../../shared/processes.ts'
+import { listSessions as listRunners } from '../agent/registry.ts'
+import { publicMessage } from '../errors.ts'
+import { t } from '../i18n/index.ts'
+import { str } from '../json.ts'
+import { getStorage, purgeArea, listSessions, listPlans, readPlan, deletePlan } from '../maintenance'
+import { isLoopback } from '../net.ts'
+import { killTree, listClaudeProcesses } from '../processes.ts'
 
 export function registerMaintenance(app: FastifyInstance): void {
-  app.get('/api/system/storage', () => getStorage());
+  app.get('/api/system/storage', () => getStorage())
 
   app.post('/api/system/purge', async (req, reply) => {
-    const body = (req.body ?? {}) as { area?: string };
-    if (!body.area)
-      return reply.code(400).send({ error: t('errors.paramRequired', { name: 'area' }) });
+    const body = (req.body ?? {}) as { area?: string }
+    if (!body.area) return reply.code(400).send({ error: t('errors.paramRequired', { name: 'area' }) })
     try {
-      await purgeArea(body.area);
-      return { ok: true };
+      await purgeArea(body.area)
+      return { ok: true }
     } catch (e) {
-      return reply.code(400).send({ error: publicMessage(e) });
+      return reply.code(400).send({ error: publicMessage(e) })
     }
-  });
+  })
 
-  app.get('/api/system/sessions', async () => ({ sessions: await listSessions() }));
+  app.get('/api/system/sessions', async () => ({ sessions: await listSessions() }))
 
   // ── Processus ──────────────────────────────────────────────────────────────
   //
@@ -41,7 +33,7 @@ export function registerMaintenance(app: FastifyInstance): void {
   // disque ne dit pas tout : un daemon et un hôte de pseudo-terminal n'écrivent
   // aucun fichier de session, et ce sont eux qui survivent aux sessions.
 
-  app.get('/api/system/processes', () => listClaudeProcesses());
+  app.get('/api/system/processes', () => listClaudeProcesses())
 
   /**
    * Terminer un processus Claude, et sa descendance si on le demande.
@@ -61,45 +53,44 @@ export function registerMaintenance(app: FastifyInstance): void {
    * 4. L'ordre de coupe appartient à `killOrder`, pas à l'appelant.
    */
   app.post('/api/system/processes/kill', async (req, reply) => {
-    if (!isLoopback(req.ip)) return reply.code(403).send({ error: t('errors.accessDenied') });
+    if (!isLoopback(req.ip)) return reply.code(403).send({ error: t('errors.accessDenied') })
 
-    const body = (req.body ?? {}) as KillProcessBody;
-    const pid = Number(body.pid);
+    const body = (req.body ?? {}) as KillProcessBody
+    const pid = Number(body.pid)
     if (!Number.isInteger(pid) || pid <= 0) {
-      return reply.code(400).send({ error: t('errors.paramRequired', { name: 'pid' }) });
+      return reply.code(400).send({ error: t('errors.paramRequired', { name: 'pid' }) })
     }
-    if (pid === process.pid) return reply.code(400).send({ error: t('errors.cannotKillSelf') });
+    if (pid === process.pid) return reply.code(400).send({ error: t('errors.cannotKillSelf') })
 
-    const { processes } = await listClaudeProcesses();
-    const target = processes.find((p) => p.pid === pid);
-    if (!target) return reply.code(404).send({ error: t('errors.processNotFound') });
+    const { processes } = await listClaudeProcesses()
+    const target = processes.find((p) => p.pid === pid)
+    if (!target) return reply.code(404).send({ error: t('errors.processNotFound') })
 
-    return { killed: killTree(pid, body.descendants === true, processes) };
-  });
+    return { killed: killTree(pid, body.descendants === true, processes) }
+  })
 
-  app.get('/api/system/plans', async () => ({ plans: await listPlans() }));
+  app.get('/api/system/plans', async () => ({ plans: await listPlans() }))
 
   app.get('/api/system/plan', async (req, reply) => {
-    const name = str((req.query as Record<string, unknown>).name);
-    if (!name) return reply.code(400).send({ error: t('errors.paramRequired', { name: 'name' }) });
+    const name = str((req.query as Record<string, unknown>).name)
+    if (!name) return reply.code(400).send({ error: t('errors.paramRequired', { name: 'name' }) })
     try {
-      return { name, content: await readPlan(name) };
+      return { name, content: await readPlan(name) }
     } catch {
-      return reply.code(404).send({ error: t('errors.planNotFound') });
+      return reply.code(404).send({ error: t('errors.planNotFound') })
     }
-  });
+  })
 
   app.post('/api/system/plan/delete', async (req, reply) => {
-    const body = (req.body ?? {}) as { name?: string };
-    if (!body.name)
-      return reply.code(400).send({ error: t('errors.paramRequired', { name: 'name' }) });
+    const body = (req.body ?? {}) as { name?: string }
+    if (!body.name) return reply.code(400).send({ error: t('errors.paramRequired', { name: 'name' }) })
     try {
-      await deletePlan(body.name);
-      return { ok: true };
+      await deletePlan(body.name)
+      return { ok: true }
     } catch (e) {
-      return reply.code(400).send({ error: publicMessage(e) });
+      return reply.code(400).send({ error: publicMessage(e) })
     }
-  });
+  })
 
   // L'extinction ordonnée, pour les scripts d'arrêt.
   //
@@ -116,14 +107,14 @@ export function registerMaintenance(app: FastifyInstance): void {
     // filet si l'écoute venait à s'ouvrir. Ce qui protège vraiment cette route,
     // c'est `guard.ts` : un `POST` sans corps depuis un onglet ouvert arrivait
     // bien de `127.0.0.1`, et `isLoopback` le laissait passer.
-    if (!isLoopback(req.ip)) return reply.code(403).send({ error: t('errors.accessDenied') });
+    if (!isLoopback(req.ip)) return reply.code(403).send({ error: t('errors.accessDenied') })
 
     // Fermer coupe les sockets ouvertes, celle-ci comprise : on n'entame
     // l'extinction qu'une fois la réponse effectivement partie, sinon
     // l'appelant ne saurait jamais si sa demande a été entendue.
     reply.raw.once('finish', () => {
-      void app.close().finally(() => process.exit(0));
-    });
-    return reply.send({ ok: true, sessions: listRunners().length });
-  });
+      void app.close().finally(() => process.exit(0))
+    })
+    return reply.send({ ok: true, sessions: listRunners().length })
+  })
 }

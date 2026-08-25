@@ -11,13 +11,13 @@
 // C'est la raison pour laquelle il vit à côté du `Translator` et non dedans —
 // l'un écrit une histoire, l'autre tient un instant.
 
-import type { ActiveTool, AgentActivity, AgentPhase } from '../../shared/agent.ts';
-import { num, str } from '../json.ts';
+import type { ActiveTool, AgentActivity, AgentPhase } from '../../shared/agent.ts'
+import { num, str } from '../json.ts'
 
-type Rec = Record<string, unknown>;
+type Rec = Record<string, unknown>
 
-const rec = (v: unknown): Rec => (v && typeof v === 'object' ? (v as Rec) : {});
-const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+const rec = (v: unknown): Rec => (v && typeof v === 'object' ? (v as Rec) : {})
+const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : [])
 
 /**
  * L'ampleur d'un changement, qui décide s'il part tout de suite.
@@ -27,17 +27,17 @@ const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
  * de trames par seconde s'y pressent, et les diffuser toutes remplirait le canal
  * SSE pour un chiffre que l'œil ne suit pas à cette vitesse.
  */
-export type Change = 'major' | 'minor' | null;
+export type Change = 'major' | 'minor' | null
 
 export class ActivityTracker {
-  private phase: AgentPhase | null = null;
-  private since = 0;
-  private turnStartedAt = 0;
-  private thinkingTokens = 0;
-  private outputTokens = 0;
-  private retry: AgentActivity['retry'];
+  private phase: AgentPhase | null = null
+  private since = 0
+  private turnStartedAt = 0
+  private thinkingTokens = 0
+  private outputTokens = 0
+  private retry: AgentActivity['retry']
   /** Les outils en vol, dans l'ordre de départ. */
-  private readonly tools = new Map<string, ActiveTool>();
+  private readonly tools = new Map<string, ActiveTool>()
 
   snapshot(): AgentActivity {
     return {
@@ -48,7 +48,7 @@ export class ActivityTracker {
       ...(this.outputTokens ? { outputTokens: this.outputTokens } : {}),
       tools: [...this.tools.values()],
       ...(this.retry ? { retry: this.retry } : {}),
-    };
+    }
   }
 
   /**
@@ -60,31 +60,31 @@ export class ActivityTracker {
    * attendre qu'un message vienne la confirmer.
    */
   beginTurn(): Change {
-    return this.setPhase('requesting');
+    return this.setPhase('requesting')
   }
 
   /** Tout s'arrête : fin de tour, ou fin de session. */
   reset(): Change {
-    if (!this.phase && !this.tools.size) return null;
-    this.phase = null;
-    this.since = Date.now();
-    this.turnStartedAt = 0;
-    this.thinkingTokens = 0;
-    this.outputTokens = 0;
-    this.retry = undefined;
-    this.tools.clear();
-    return 'major';
+    if (!this.phase && !this.tools.size) return null
+    this.phase = null
+    this.since = Date.now()
+    this.turnStartedAt = 0
+    this.thinkingTokens = 0
+    this.outputTokens = 0
+    this.retry = undefined
+    this.tools.clear()
+    return 'major'
   }
 
   private setPhase(phase: AgentPhase | null): Change {
-    if (this.phase === phase) return null;
+    if (this.phase === phase) return null
     // Le tour commence à la première phase et ne se rouvre pas ensuite : c'est
     // ce qui distingue son chrono de celui de la phase.
-    if (phase && !this.turnStartedAt) this.turnStartedAt = Date.now();
-    this.phase = phase;
-    this.since = Date.now();
-    if (phase !== 'retrying') this.retry = undefined;
-    return 'major';
+    if (phase && !this.turnStartedAt) this.turnStartedAt = Date.now()
+    this.phase = phase
+    this.since = Date.now()
+    if (phase !== 'retrying') this.retry = undefined
+    return 'major'
   }
 
   /**
@@ -97,19 +97,19 @@ export class ActivityTracker {
   consume(message: Rec): Change {
     switch (str(message.type)) {
       case 'system':
-        return this.onSystem(message);
+        return this.onSystem(message)
       case 'stream_event':
-        return this.onStreamEvent(rec(message.event));
+        return this.onStreamEvent(rec(message.event))
       case 'assistant':
-        return this.onAssistant(rec(message.message));
+        return this.onAssistant(rec(message.message))
       case 'user':
-        return this.onUser(rec(message.message));
+        return this.onUser(rec(message.message))
       case 'tool_progress':
-        return this.onToolProgress(message);
+        return this.onToolProgress(message)
       case 'result':
-        return this.reset();
+        return this.reset()
       default:
-        return null;
+        return null
     }
   }
 
@@ -121,22 +121,20 @@ export class ActivityTracker {
         // qui n'est pas ce qu'on regarde. L'outil en vol prime.
         switch (str(message.status)) {
           case 'requesting':
-            return this.tools.size ? null : this.setPhase('requesting');
+            return this.tools.size ? null : this.setPhase('requesting')
           case 'compacting':
-            return this.setPhase('compacting');
+            return this.setPhase('compacting')
           default:
             // Un statut vide clôt ce qu'il avait ouvert, et rien d'autre : le
             // texte qui s'écrit, lui, n'est pas fini pour autant.
-            return this.phase === 'requesting' || this.phase === 'compacting'
-              ? this.setPhase(null)
-              : null;
+            return this.phase === 'requesting' || this.phase === 'compacting' ? this.setPhase(null) : null
         }
 
       case 'thinking_tokens': {
         // Le seul signe de vie d'un raisonnement masqué : l'API n'y envoie que
         // des pings, et le SDK en tire cette estimation.
-        this.thinkingTokens = num(message.estimated_tokens);
-        return this.setPhase('thinking') ?? 'minor';
+        this.thinkingTokens = num(message.estimated_tokens)
+        return this.setPhase('thinking') ?? 'minor'
       }
 
       case 'api_retry':
@@ -144,98 +142,98 @@ export class ActivityTracker {
           attempt: num(message.attempt),
           maxRetries: num(message.max_retries),
           delayMs: num(message.retry_delay_ms),
-        };
+        }
         // La phase peut déjà valoir `retrying` d'une tentative précédente : on
         // force l'envoi, sinon le compteur de tentatives resterait au premier.
-        this.setPhase('retrying');
-        return 'major';
+        this.setPhase('retrying')
+        return 'major'
 
       default:
-        return null;
+        return null
     }
   }
 
   private onStreamEvent(event: Rec): Change {
-    if (str(event.type) !== 'content_block_start') return null;
-    const block = rec(event.content_block);
+    if (str(event.type) !== 'content_block_start') return null
+    const block = rec(event.content_block)
     switch (str(block.type)) {
       case 'thinking':
       case 'redacted_thinking':
         // Le compteur repart : l'estimation du SDK porte sur le bloc en cours.
-        this.thinkingTokens = 0;
-        return this.setPhase('thinking');
+        this.thinkingTokens = 0
+        return this.setPhase('thinking')
       case 'text':
-        return this.setPhase('writing');
+        return this.setPhase('writing')
       case 'tool_use':
         // L'appel s'écrit encore, il ne s'exécute pas : la phase reste
         // `writing`. Mais sa carte est déjà à l'écran, et sans cette
         // inscription-là elle s'annoncerait « sans résultat » pendant la
         // seconde où l'appel se compose — soit exactement le mot qu'on
         // cherchait à faire disparaître.
-        return this.track(str(block.id), str(block.name));
+        return this.track(str(block.id), str(block.name))
       default:
-        return null;
+        return null
     }
   }
 
   /** Inscrit un outil dans les partants, s'il n'y est pas déjà. */
   private track(id: string, name: string): Change {
-    if (!id || this.tools.has(id)) return null;
-    this.tools.set(id, { id, name, startedAt: Date.now() });
-    return 'major';
+    if (!id || this.tools.has(id)) return null
+    this.tools.set(id, { id, name, startedAt: Date.now() })
+    return 'major'
   }
 
   private onAssistant(payload: Rec): Change {
     // Le `↓` du CLI : ce que le tour a fait écrire au modèle jusqu'ici. On
     // cumule, parce qu'un tour qui appelle six outils est six réponses.
-    const output = num(rec(payload.usage).output_tokens);
-    const counted = output > 0;
-    if (counted) this.outputTokens += output;
+    const output = num(rec(payload.usage).output_tokens)
+    const counted = output > 0
+    if (counted) this.outputTokens += output
 
-    let calls = 0;
+    let calls = 0
     for (const raw of arr(payload.content)) {
-      const block = rec(raw);
-      if (str(block.type) !== 'tool_use') continue;
-      calls++;
+      const block = rec(raw)
+      if (str(block.type) !== 'tool_use') continue
+      calls++
       // Le plus souvent déjà inscrit par le flux ; ce passage-ci rattrape le
       // cas où les événements partiels n'ont pas précédé la réponse complète.
-      this.track(str(block.id), str(block.name));
+      this.track(str(block.id), str(block.name))
     }
     // La réponse est close : ce qui n'était qu'écrit part maintenant s'exécuter.
     if (calls) {
-      this.setPhase('tool');
-      return 'major';
+      this.setPhase('tool')
+      return 'major'
     }
-    return counted ? 'minor' : null;
+    return counted ? 'minor' : null
   }
 
   private onUser(payload: Rec): Change {
-    let ended = false;
+    let ended = false
     for (const raw of arr(payload.content)) {
-      const block = rec(raw);
-      if (str(block.type) !== 'tool_result') continue;
-      if (this.tools.delete(str(block.tool_use_id))) ended = true;
+      const block = rec(raw)
+      if (str(block.type) !== 'tool_result') continue
+      if (this.tools.delete(str(block.tool_use_id))) ended = true
     }
-    if (!ended) return null;
+    if (!ended) return null
     // Le dernier résultat rendu, le tour repart vers l'API. Le dire évite le
     // trou noir entre « l'outil a fini » et « le texte reprend ».
-    if (!this.tools.size) this.setPhase('requesting');
-    return 'major';
+    if (!this.tools.size) this.setPhase('requesting')
+    return 'major'
   }
 
   private onToolProgress(message: Rec): Change {
     // Les outils d'un sous-agent ne sont pas montrés ici : l'appel `Agent` qui
     // les a lancés figure déjà dans la liste, et l'empiler avec sa descendance
     // ferait défiler une ligne qui ne parle plus du tour qu'on regarde.
-    if (str(message.parent_tool_use_id)) return null;
-    const id = str(message.tool_use_id);
-    const elapsed = num(message.elapsed_time_seconds);
-    const known = this.tools.get(id);
+    if (str(message.parent_tool_use_id)) return null
+    const id = str(message.tool_use_id)
+    const elapsed = num(message.elapsed_time_seconds)
+    const known = this.tools.get(id)
     if (known) {
-      known.elapsedSeconds = elapsed;
-      return 'minor';
+      known.elapsedSeconds = elapsed
+      return 'minor'
     }
-    if (!id) return null;
+    if (!id) return null
     // Inconnu : un outil dont la réponse complète n'est pas encore passée. On
     // l'ajoute plutôt que d'attendre — c'est justement le long à s'exécuter.
     this.tools.set(id, {
@@ -243,8 +241,8 @@ export class ActivityTracker {
       name: str(message.tool_name),
       startedAt: Date.now() - elapsed * 1000,
       elapsedSeconds: elapsed,
-    });
-    this.setPhase('tool');
-    return 'major';
+    })
+    this.setPhase('tool')
+    return 'major'
   }
 }

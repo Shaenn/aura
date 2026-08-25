@@ -184,4 +184,4 @@ export default {
       fallback: 'aucun chemin déclaré',
     },
   },
-};
+}

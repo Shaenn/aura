@@ -31,8 +31,7 @@ export default {
     idle: 'idle',
   },
 
-  emptyMain:
-    'Le fil principal ne porte aucun message — tout le travail est dans les pistes ci-dessus.',
+  emptyMain: 'Le fil principal ne porte aucun message — tout le travail est dans les pistes ci-dessus.',
   emptyTrack: "Je n'ai encore rien reçu de cette session.",
   error: 'Transcript illisible.',
 
@@ -62,4 +61,4 @@ export default {
     added: 'Règle ajoutée à settings.json.',
     addedNote: 'Elle vaut pour les prochaines demandes, pas pour celle-ci.',
   },
-};
+}

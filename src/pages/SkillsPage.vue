@@ -16,13 +16,13 @@
 </template>
 
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n';
-import ResourceViewer from '@/components/resources/ResourceViewer.vue';
-import { listSkills } from '@/services/claude';
-import { SKILL_KEYS } from '@/utils/resourceFrontmatter';
+  import ResourceViewer from '@/components/resources/ResourceViewer.vue'
+  import { listSkills } from '@/services/claude'
+  import { SKILL_KEYS } from '@/utils/resourceFrontmatter'
+  import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n();
+  const { t } = useI18n()
 
-/** A skill is a folder: `skills/foo/SKILL.md` → `skills/foo`. */
-const skillDir = (rel: string): string => rel.replace(/\/SKILL\.md$/i, '');
+  /** A skill is a folder: `skills/foo/SKILL.md` → `skills/foo`. */
+  const skillDir = (rel: string): string => rel.replace(/\/SKILL\.md$/i, '')
 </script>

@@ -29,7 +29,7 @@
  * sizes the per-tool badges with it.
  */
 export function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4);
+  return Math.ceil(text.length / 4)
 }
 
 /**
@@ -42,50 +42,41 @@ export function estimateTokens(text: string): number {
  * theme forbids reusing one. The panel draws `harness` in grey, beside the
  * baseline and the remainder, which is what it is.
  */
-export type ContextCategory =
-  'memory' | 'skills' | 'files' | 'tools' | 'thinking' | 'userMessage' | 'harness';
+export type ContextCategory = 'memory' | 'skills' | 'files' | 'tools' | 'thinking' | 'userMessage' | 'harness'
 
 /** Fixed order. It drives colour assignment, so never sort or cycle it. */
-export const CONTEXT_CATEGORIES: readonly ContextCategory[] = [
-  'memory',
-  'skills',
-  'files',
-  'tools',
-  'thinking',
-  'userMessage',
-  'harness',
-];
+export const CONTEXT_CATEGORIES: readonly ContextCategory[] = ['memory', 'skills', 'files', 'tools', 'thinking', 'userMessage', 'harness']
 
 /**
  * One tool, as it weighed on a turn. `count` folds repeated calls of the same
  * tool: three `Read`s read as one line, not three.
  */
 export interface ToolBreakdown {
-  name: string;
-  tokens: number;
-  count: number;
+  name: string
+  tokens: number
+  count: number
   /** At least one of those calls came back an error. */
-  isError: boolean;
+  isError: boolean
 }
 
 /** One named line of a catalogue injection: a skill, an agent, an MCP server. */
 export interface ContextEntry {
-  label: string;
-  tokens: number;
+  label: string
+  tokens: number
 }
 
 /** One thing that entered the context window. `tokens` is an estimate. */
 export interface ContextInjection {
-  category: ContextCategory;
+  category: ContextCategory
   /** What to show the user, e.g. a file's base name. */
-  label: string;
+  label: string
   /** Absolute path, when the injection came from one. */
-  path?: string;
-  tokens: number;
+  path?: string
+  tokens: number
   /** The turn at which it entered the window. */
-  turnIndex: number;
+  turnIndex: number
   /** Which compaction segment it belongs to — a compaction empties the window. */
-  phase: number;
+  phase: number
   /**
    * When set, the same thing entering the window twice within a phase is counted
    * once. A CLAUDE.md layer or an @-mentioned file is re-*referenced* far more
@@ -95,29 +86,29 @@ export interface ContextInjection {
    * A compaction empties the window, so the key set resets with it: re-injection
    * into the next phase is a real cost and is counted again.
    */
-  dedupeKey?: string;
+  dedupeKey?: string
   /** `tools` only: how many tool calls were folded into this row. */
-  toolCount?: number;
+  toolCount?: number
   /**
    * `tools` only: the split of `tokens` between what was sent to the tool and
    * what it sent back. An `Edit` weighs almost nothing on the way out and a great
    * deal on the way in, and the reverse is true of a `Read` — one figure hides
    * which of the two a session is paying for.
    */
-  inputTokens?: number;
-  outputTokens?: number;
+  inputTokens?: number
+  outputTokens?: number
   /**
    * `tools` only: which tools, largest first. "12 appels d'outil au tour 7" names
    * nothing — the reader cannot tell one 5 k `Read` from twelve cheap `Bash`.
    */
-  tools?: ToolBreakdown[];
+  tools?: ToolBreakdown[]
   /**
    * `thinking` only: the two halves of what a response produced. Claude's
    * reasoning and its answer both fall into the next turn's window, but only one
    * of them is shortened by asking for less thinking.
    */
-  thinkingTokens?: number;
-  textTokens?: number;
+  thinkingTokens?: number
+  textTokens?: number
   /**
    * A catalogue's named lines — the skills, agents or MCP servers it lists.
    *
@@ -126,25 +117,25 @@ export interface ContextInjection {
    * only question the count raises — "18 skills, but which?" — and shows which
    * descriptions are the expensive ones.
    */
-  entries?: ContextEntry[];
+  entries?: ContextEntry[]
 }
 
 /** The context window as it stood when one assistant response was produced. */
 export interface TurnContext {
   /** 0-based index among the session's assistant responses. */
-  turnIndex: number;
+  turnIndex: number
   /** Which compaction segment this turn lived in. */
-  phase: number;
+  phase: number
   /** UUID of the assistant event this describes. */
-  uuid: string;
-  timestamp: number;
+  uuid: string
+  timestamp: number
   /**
    * Exact size of the context sent to the model:
    * `usage.input + usage.cacheRead + usage.cacheCreate`.
    */
-  total: number;
+  total: number
   /** Estimated share per category, cumulative since the last compaction. */
-  byCategory: Record<ContextCategory, number>;
+  byCategory: Record<ContextCategory, number>
   /**
    * `total` minus the categories. Never negative.
    *
@@ -154,28 +145,28 @@ export interface TurnContext {
    * error of a chars/4 estimator on source code. Do not present this as one
    * thing to the reader — it is not.
    */
-  unattributed: number;
+  unattributed: number
 }
 
 /** Exact window growth at one anchored turn — no estimate involved. */
 export interface TurnDelta {
-  turnIndex: number;
-  uuid: string;
+  turnIndex: number
+  uuid: string
   /** Exact size of the window at this turn. */
-  total: number;
+  total: number
   /** Exact growth since the previous anchored turn of the phase. */
-  delta: number;
+  delta: number
 }
 
 /** A compaction event. Every field is recorded by the harness — none is estimated. */
 export interface Compaction {
-  uuid: string;
-  timestamp: number;
+  uuid: string
+  timestamp: number
   /** `manual` — the user ran /compact; `auto` — the window filled up. */
-  trigger: 'manual' | 'auto';
-  preTokens: number;
-  postTokens: number;
-  durationMs: number;
+  trigger: 'manual' | 'auto'
+  preTokens: number
+  postTokens: number
+  durationMs: number
 }
 
 /**
@@ -187,19 +178,19 @@ export interface Compaction {
  * figure here is exact — it is the difference of two sizes the harness recorded.
  */
 export function turnDeltas(ctx: SessionContext, phase: number): TurnDelta[] {
-  const anchored = ctx.turns.filter((t) => t.total > 0 && t.phase === phase);
-  const start = phase === 0 ? ctx.baseline : (ctx.compactions[phase - 1]?.postTokens ?? 0);
+  const anchored = ctx.turns.filter((t) => t.total > 0 && t.phase === phase)
+  const start = phase === 0 ? ctx.baseline : (ctx.compactions[phase - 1]?.postTokens ?? 0)
   return anchored.map((t, i) => ({
     turnIndex: t.turnIndex,
     uuid: t.uuid,
     total: t.total,
     delta: t.total - (i === 0 ? start : (anchored[i - 1]?.total ?? 0)),
-  }));
+  }))
 }
 
 export interface SessionContext {
   /** Size of the model's window. See `contextLimitFor` — it is not the model id. */
-  limit: number;
+  limit: number
   /**
    * What the session cost before anyone said anything: the system prompt and the
    * tool schemas. Neither is ever written to the transcript.
@@ -213,12 +204,12 @@ export interface SessionContext {
    * `0` when the first turn carries no usage: the subtraction has no anchor, and
    * a plausible constant would be a lie. Callers must render nothing, not zero.
    */
-  baseline: number;
-  turns: TurnContext[];
-  compactions: Compaction[];
+  baseline: number
+  turns: TurnContext[]
+  compactions: Compaction[]
   /**
    * Everything that entered the window, across every phase, in arrival order.
    * The panel ranks these by size to answer "what is eating my context?".
    */
-  injections: ContextInjection[];
+  injections: ContextInjection[]
 }

@@ -1,7 +1,7 @@
-import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vitest/config';
+import { fileURLToPath } from 'node:url'
+import { defineConfig } from 'vitest/config'
 
-const root = fileURLToPath(new URL('.', import.meta.url));
+const root = fileURLToPath(new URL('.', import.meta.url))
 
 // Le parseur et l'accumulateur de contexte sont du Node pur : ils lisent des
 // fichiers et rendent des objets. Rien à monter, aucun DOM. Les composants Vue
@@ -24,4 +24,4 @@ export default defineConfig({
     environment: 'node',
     include: ['test/**/*.test.ts'],
   },
-});
+})

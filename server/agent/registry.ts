@@ -10,8 +10,8 @@
 // de faire vivre en même temps, et combien de temps a-t-elle le droit d'en
 // garder un que plus personne ne regarde.
 
-import { SessionRunner, type RunnerOptions } from './runner.ts';
-import type { AgentSession } from '../../shared/agent.ts';
+import type { AgentSession } from '../../shared/agent.ts'
+import { SessionRunner, type RunnerOptions } from './runner.ts'
 
 /**
  * Combien de sessions peuvent tourner de front.
@@ -24,7 +24,7 @@ import type { AgentSession } from '../../shared/agent.ts';
  * Six : au-delà, ce n'est plus un atelier qu'on pilote, c'est un parc qu'on
  * subit. Le refus est franc et réversible — fermer une session en libère une.
  */
-export const MAX_SESSIONS = 6;
+export const MAX_SESSIONS = 6
 
 /**
  * Au bout de combien de temps sans personne une session est ramassée.
@@ -39,7 +39,7 @@ export const MAX_SESSIONS = 6;
  * l'oubli. Ce qui est ramassé n'est jamais perdu pour autant — le transcript est
  * sur le disque, et l'Atelier sait rouvrir dessus par `resume`.
  */
-export const IDLE_TTL_MS = 30 * 60_000;
+export const IDLE_TTL_MS = 30 * 60_000
 
 /**
  * Le pas du balayeur.
@@ -48,11 +48,11 @@ export const IDLE_TTL_MS = 30 * 60_000;
  * d'entrées et demande à chacune si son délai est passé. La minute est un
  * arrondi de confort — l'échéance qu'elle sert se compte en dizaines de minutes.
  */
-const SWEEP_MS = 60_000;
+const SWEEP_MS = 60_000
 
-const runners = new Map<string, SessionRunner>();
+const runners = new Map<string, SessionRunner>()
 
-let sweeper: ReturnType<typeof setInterval> | null = null;
+let sweeper: ReturnType<typeof setInterval> | null = null
 
 /**
  * Le balayeur ne tourne que s'il y a quelque chose à balayer.
@@ -65,15 +65,15 @@ let sweeper: ReturnType<typeof setInterval> | null = null;
  * en vie.
  */
 function armSweeper(): void {
-  if (sweeper) return;
-  sweeper = setInterval(sweep, SWEEP_MS);
-  sweeper.unref();
+  if (sweeper) return
+  sweeper = setInterval(sweep, SWEEP_MS)
+  sweeper.unref()
 }
 
 function disarmSweeper(): void {
-  if (!sweeper || runners.size > 0) return;
-  clearInterval(sweeper);
-  sweeper = null;
+  if (!sweeper || runners.size > 0) return
+  clearInterval(sweeper)
+  sweeper = null
 }
 
 /**
@@ -84,38 +84,38 @@ function disarmSweeper(): void {
  * le test lit, et de quoi tracer si le besoin s'en présentait.
  */
 export function sweep(ttlMs = IDLE_TTL_MS): string[] {
-  const collected: string[] = [];
+  const collected: string[] = []
   for (const [runId, runner] of runners) {
-    if (!runner.expired(ttlMs)) continue;
-    collected.push(runId);
-    removeRunner(runId);
+    if (!runner.expired(ttlMs)) continue
+    collected.push(runId)
+    removeRunner(runId)
   }
-  return collected;
+  return collected
 }
 
 /** Combien de sessions vivent en ce moment. */
 export function countSessions(): number {
-  return runners.size;
+  return runners.size
 }
 
 /** Le parc est-il plein ? La route s'en sert pour refuser avant de créer. */
 export function atCapacity(): boolean {
-  return runners.size >= MAX_SESSIONS;
+  return runners.size >= MAX_SESSIONS
 }
 
 export function createRunner(options: RunnerOptions): SessionRunner {
-  const runner = new SessionRunner(options);
-  runners.set(runner.session.runId, runner);
-  armSweeper();
-  return runner;
+  const runner = new SessionRunner(options)
+  runners.set(runner.session.runId, runner)
+  armSweeper()
+  return runner
 }
 
 export function getRunner(runId: string): SessionRunner | undefined {
-  return runners.get(runId);
+  return runners.get(runId)
 }
 
 export function listSessions(): AgentSession[] {
-  return [...runners.values()].map((r) => r.session).sort((a, b) => b.startedAt - a.startedAt);
+  return [...runners.values()].map((r) => r.session).sort((a, b) => b.startedAt - a.startedAt)
 }
 
 /**
@@ -126,12 +126,12 @@ export function listSessions(): AgentSession[] {
  * fois retiré d'ici, plus personne ne peut le lui demander.
  */
 export function removeRunner(runId: string, grace?: number): boolean {
-  const runner = runners.get(runId);
-  if (!runner) return false;
-  runner.stop(grace);
-  runners.delete(runId);
-  disarmSweeper();
-  return true;
+  const runner = runners.get(runId)
+  if (!runner) return false
+  runner.stop(grace)
+  runners.delete(runId)
+  disarmSweeper()
+  return true
 }
 
 /**
@@ -144,5 +144,5 @@ export function stopAll(): void {
   // Sans délai de grâce : le serveur n'a plus les quelques secondes qu'il
   // faudrait pour laisser chaque CLI sortir de lui-même, et un processus qu'on
   // n'a pas coupé avant de disparaître ne sera plus coupé par personne.
-  for (const runId of [...runners.keys()]) removeRunner(runId, 0);
+  for (const runId of [...runners.keys()]) removeRunner(runId, 0)
 }

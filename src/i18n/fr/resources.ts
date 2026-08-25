@@ -48,4 +48,4 @@ export default {
     read: 'Lecture impossible.',
     unreadable: 'Inventaire illisible.',
   },
-};
+}

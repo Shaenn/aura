@@ -13,12 +13,7 @@
       Le chemin complet, tel qu'il était sur le disque de la session. `@click.stop`
       dans `CopyButton` empêche le pli de s'ouvrir sous le doigt.
     -->
-    <CopyButton
-      v-if="row.path"
-      :text="row.path"
-      :label="t('replay.context.copyPath', { path: row.path })"
-      class="crb-copy"
-    />
+    <CopyButton v-if="row.path" :text="row.path" :label="t('replay.context.copyPath', { path: row.path })" class="crb-copy" />
 
     <!--
       Le tour où cette injection est entrée dans la fenêtre. Cliquer y emmène :
@@ -51,87 +46,87 @@
 </template>
 
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n';
-import { fmtNum } from '@/utils/format';
-import CopyButton from '@/components/ui/CopyButton.vue';
-import type { ContextRowModel } from './contextRows';
+  import CopyButton from '@/components/ui/CopyButton.vue'
+  import { fmtNum } from '@/utils/format'
+  import { useI18n } from 'vue-i18n'
+  import type { ContextRowModel } from './contextRows'
 
-const { t } = useI18n();
+  const { t } = useI18n()
 
-defineProps<{
-  row: ContextRowModel;
-  pill?: string | undefined;
-  color?: string | undefined;
-}>();
+  defineProps<{
+    row: ContextRowModel
+    pill?: string | undefined
+    color?: string | undefined
+  }>()
 
-const emit = defineEmits<{ navigate: [uuid: string] }>();
+  const emit = defineEmits<{ navigate: [uuid: string] }>()
 </script>
 
 <style scoped lang="scss">
-.crb {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  flex-wrap: wrap;
-}
-
-.crb-pill {
-  flex: none;
-  font-size: var(--fs-2xs);
-  line-height: 1.4;
-  padding: 0 4px;
-  border: 1px solid;
-  border-radius: var(--radius-xs);
-  background: transparent;
-}
-
-.crb-label {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--muted);
-}
-
-.crb-copy {
-  flex: none;
-  opacity: 0;
-}
-.crb:hover .crb-copy,
-.crb-copy:focus-visible {
-  opacity: 1;
-}
-
-.crb-turn {
-  flex: none;
-  color: var(--brand-muted);
-  text-decoration: none;
-  border-bottom: 1px dotted currentcolor;
-
-  &:hover {
-    color: var(--brand);
+  .crb {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    flex-wrap: wrap;
   }
-  &:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
+
+  .crb-pill {
+    flex: none;
+    font-size: var(--fs-2xs);
+    line-height: 1.4;
+    padding: 0 4px;
+    border: 1px solid;
+    border-radius: var(--radius-xs);
+    background: transparent;
   }
-}
 
-.crb-tokens {
-  flex: none;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
+  .crb-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--muted);
+  }
 
-/* Sur sa propre ligne : en colonne, il réduisait le libellé à « 1 appel d'ou… ». */
-.crb-split {
-  flex: 1 0 100%;
-  font-size: var(--fs-2xs);
-  color: var(--faint);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.3;
-}
+  .crb-copy {
+    flex: none;
+    opacity: 0;
+  }
+  .crb:hover .crb-copy,
+  .crb-copy:focus-visible {
+    opacity: 1;
+  }
+
+  .crb-turn {
+    flex: none;
+    color: var(--brand-muted);
+    text-decoration: none;
+    border-bottom: 1px dotted currentcolor;
+
+    &:hover {
+      color: var(--brand);
+    }
+    &:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
+  }
+
+  .crb-tokens {
+    flex: none;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Sur sa propre ligne : en colonne, il réduisait le libellé à « 1 appel d'ou… ». */
+  .crb-split {
+    flex: 1 0 100%;
+    font-size: var(--fs-2xs);
+    color: var(--faint);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.3;
+  }
 </style>

@@ -22,29 +22,29 @@
 // l'interface est sans conséquence — elle ne porte aucune donnée, et n'obtient
 // rien sans franchir ce qui précède.
 
-import type { FastifyInstance } from 'fastify';
-import { t } from './i18n/index.ts';
+import type { FastifyInstance } from 'fastify'
+import { t } from './i18n/index.ts'
 
 /** Les noms sous lesquels cette machine accepte d'être appelée. */
-const LOCAL_NAMES = new Set(['127.0.0.1', 'localhost', '[::1]']);
+const LOCAL_NAMES = new Set(['127.0.0.1', 'localhost', '[::1]'])
 
 /** Le nom d'hôte d'un en-tête `Host`, sans le port. */
 function hostname(header: string | undefined): string {
-  if (!header) return '';
+  if (!header) return ''
   // `[::1]:8800` — les crochets tiennent l'adresse IPv6 d'un seul tenant.
-  if (header.startsWith('[')) return header.slice(0, header.indexOf(']') + 1).toLowerCase();
-  const i = header.lastIndexOf(':');
-  return (i === -1 ? header : header.slice(0, i)).toLowerCase();
+  if (header.startsWith('[')) return header.slice(0, header.indexOf(']') + 1).toLowerCase()
+  const i = header.lastIndexOf(':')
+  return (i === -1 ? header : header.slice(0, i)).toLowerCase()
 }
 
 /** Branche la garde sur toutes les requêtes `/api/*`. */
 export function registerGuard(app: FastifyInstance): void {
   app.addHook('onRequest', (req, reply, done) => {
-    if (!req.url.startsWith('/api/')) return done();
+    if (!req.url.startsWith('/api/')) return done()
 
     if (!LOCAL_NAMES.has(hostname(req.headers.host))) {
-      void reply.code(403).send({ error: t('guard.badHost') });
-      return;
+      void reply.code(403).send({ error: t('guard.badHost') })
+      return
     }
 
     // `none` est le cas d'une requête qui ne vient d'aucune page : la barre
@@ -52,13 +52,13 @@ export function registerGuard(app: FastifyInstance): void {
     // des clients qui ne sont pas des navigateurs — ils ne portent pas de
     // cookie d'une autre origine, et n'ont donc rien à usurper.
     if (req.method !== 'GET' && req.method !== 'HEAD') {
-      const site = req.headers['sec-fetch-site'];
+      const site = req.headers['sec-fetch-site']
       if (typeof site === 'string' && site !== 'same-origin' && site !== 'none') {
-        void reply.code(403).send({ error: t('guard.crossSite') });
-        return;
+        void reply.code(403).send({ error: t('guard.crossSite') })
+        return
       }
     }
 
-    done();
-  });
+    done()
+  })
 }

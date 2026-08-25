@@ -16,26 +16,26 @@
 </template>
 
 <script setup lang="ts">
-// Design-system primitive: a labelled form section. Pairs a mono uppercase
-// caption (.section-label) with a control, either stacked (default, with an
-// optional hint) or inline.
-import { computed, useSlots } from 'vue';
+  // Design-system primitive: a labelled form section. Pairs a mono uppercase
+  // caption (.section-label) with a control, either stacked (default, with an
+  // optional hint) or inline.
+  import { computed, useSlots } from 'vue'
 
-const props = defineProps<{
-  /** Caption text (rendered as .section-label). */
-  label: string;
-  /** Inline layout: caption beside the control instead of above it. */
-  inline?: boolean;
-  /** Optional hint text below the control (block layout). The #hint slot wins. */
-  hint?: string;
-}>();
+  const props = defineProps<{
+    /** Caption text (rendered as .section-label). */
+    label: string
+    /** Inline layout: caption beside the control instead of above it. */
+    inline?: boolean
+    /** Optional hint text below the control (block layout). The #hint slot wins. */
+    hint?: string
+  }>()
 
-const slots = useSlots();
-const hasHint = computed(() => !!slots.hint || !!props.hint);
+  const slots = useSlots()
+  const hasHint = computed(() => !!slots.hint || !!props.hint)
 </script>
 
 <style scoped lang="scss">
-.form-section__hint {
-  color: var(--muted);
-}
+  .form-section__hint {
+    color: var(--muted);
+  }
 </style>

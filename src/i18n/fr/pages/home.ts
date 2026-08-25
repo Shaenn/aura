@@ -30,4 +30,4 @@ export default {
     maintenance: 'Stockage, purge des caches, plans générés.',
     help: 'Une page par module, et les concepts communs.',
   },
-};
+}

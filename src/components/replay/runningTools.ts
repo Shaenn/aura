@@ -11,6 +11,6 @@
 // `ToolCall` est monté quatre étages sous la page. Absente — c'est le cas du
 // rejeu — la carte retrouve exactement son comportement d'avant.
 
-import type { InjectionKey, Ref } from 'vue';
+import type { InjectionKey, Ref } from 'vue'
 
-export const RUNNING_TOOLS: InjectionKey<Ref<Set<string>>> = Symbol('running-tools');
+export const RUNNING_TOOLS: InjectionKey<Ref<Set<string>>> = Symbol('running-tools')

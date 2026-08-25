@@ -88,8 +88,7 @@ export default {
   fullReplay: 'Rejeu complet',
   stop: 'Arrêter',
 
-  empty:
-    'Session ouverte sur {cwd}. Rien n’a encore été demandé — l’agent ne démarre qu’au premier message.',
+  empty: 'Session ouverte sur {cwd}. Rien n’a encore été demandé — l’agent ne démarre qu’au premier message.',
 
   askMany: '{n} questions attendent',
   askOne: "L'agent attend une réponse",
@@ -103,6 +102,5 @@ export default {
   panelAria: 'Contexte et ressources du projet',
   tabContext: 'Fenêtre de contexte',
   tabResources: 'Ressources',
-  contextPending:
-    'La fenêtre de contexte se lit sur le transcript : elle apparaîtra à la fin du premier tour.',
-};
+  contextPending: 'La fenêtre de contexte se lit sur le transcript : elle apparaîtra à la fin du premier tour.',
+}

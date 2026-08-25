@@ -9,18 +9,18 @@
 // est le rôle d'`apply.ts`. La raison est que des helpers purs traduisent, et
 // que les tests Node les importent : leur chemin doit rester sans DOM.
 
-import { createI18n } from 'vue-i18n';
-import fr from './fr';
-import en from './en';
+import { createI18n } from 'vue-i18n'
+import en from './en'
+import fr from './fr'
 
-export const SUPPORTED_LOCALES = ['fr', 'en'] as const;
-export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
+export const SUPPORTED_LOCALES = ['fr', 'en'] as const
+export type AppLocale = (typeof SUPPORTED_LOCALES)[number]
 
 /** Le français est la langue de référence : celle du repli comme celle du départ. */
-export const DEFAULT_LOCALE: AppLocale = 'fr';
+export const DEFAULT_LOCALE: AppLocale = 'fr'
 
 export function isLocale(v: unknown): v is AppLocale {
-  return typeof v === 'string' && (SUPPORTED_LOCALES as readonly string[]).includes(v);
+  return typeof v === 'string' && (SUPPORTED_LOCALES as readonly string[]).includes(v)
 }
 
 export const i18n = createI18n({
@@ -28,10 +28,10 @@ export const i18n = createI18n({
   locale: DEFAULT_LOCALE,
   fallbackLocale: DEFAULT_LOCALE,
   messages: { fr, en },
-});
+})
 
 /** Traduire hors d'un composant. Dans un template, préférer `useI18n()`. */
-export const t = i18n.global.t;
+export const t = i18n.global.t
 
 /**
  * La clé existe-t-elle ?
@@ -40,10 +40,10 @@ export const t = i18n.global.t;
  * par exemple, qui peut venir d'un plugin qu'AURA ne connaît pas. Sans ce test,
  * `t()` rendrait la clé brute à l'écran.
  */
-export const te = (key: string): boolean => i18n.global.te(key);
+export const te = (key: string): boolean => i18n.global.te(key)
 
 /** La locale en vigueur, pour les formateurs qui passent par `Intl`. */
 export function currentLocale(): AppLocale {
-  const l = i18n.global.locale.value;
-  return isLocale(l) ? l : DEFAULT_LOCALE;
+  const l = i18n.global.locale.value
+  return isLocale(l) ? l : DEFAULT_LOCALE
 }

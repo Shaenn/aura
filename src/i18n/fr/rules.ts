@@ -6,4 +6,4 @@ export default {
   placeholder: 'Ex. Bash(npm run *)',
   removeAria: 'Retirer la règle {rule}',
   addAria: 'Ajouter une règle à {label}',
-};
+}

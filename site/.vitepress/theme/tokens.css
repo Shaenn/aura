@@ -3,10 +3,8 @@
    ressembler, et le vocabulaire visuel d'AURA est fermé. */
 
 :root {
-  --vp-font-family-base:
-    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  --vp-font-family-mono:
-    'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --vp-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --vp-font-family-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 
   --vp-c-brand-1: #e07a5f;
   --vp-c-brand-2: #e68872;
@@ -54,11 +52,7 @@
 /* La page de garde : le halo de la marque, en fond du bloc d'accroche. */
 :root {
   --vp-home-hero-name-color: var(--vp-c-brand-1);
-  --vp-home-hero-image-background-image: radial-gradient(
-    circle at 50% 50%,
-    rgba(224, 122, 95, 0.28),
-    rgba(224, 122, 95, 0) 62%
-  );
+  --vp-home-hero-image-background-image: radial-gradient(circle at 50% 50%, rgba(224, 122, 95, 0.28), rgba(224, 122, 95, 0) 62%);
   --vp-home-hero-image-filter: blur(48px);
 }
 

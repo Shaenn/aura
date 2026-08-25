@@ -20,4 +20,4 @@ export default {
   usage: 'Usage & coûts',
   diagnostic: 'Diagnostic',
   help: 'Manuel',
-};
+}

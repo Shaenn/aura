@@ -25,66 +25,66 @@
 //    qui vont de sa première à sa dernière ligne. Une session laissée ouverte
 //    sans qu'on y touche compte donc comme ouverte : c'est ce qu'elle était.
 
-import { calibrateFrom, type MetricNumbers } from './thresholds.ts';
-import { getSignals, type CostPoint, type SessionSignal } from './signals.ts';
+import { getSignals, type CostPoint, type SessionSignal } from './signals.ts'
+import { calibrateFrom, type MetricNumbers } from './thresholds.ts'
 
 // ── Ce qu'on publie ──────────────────────────────────────────────────────────
 
 /** La fenêtre glissante de la limite d'usage : cinq heures. */
-export const WINDOW_MS = 5 * 60 * 60 * 1000;
+export const WINDOW_MS = 5 * 60 * 60 * 1000
 
-const HOUR_MS = 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000
 
 export interface PaceWindows {
   /** Fenêtres mesurées — une par réponse API. */
-  samples: number;
+  samples: number
   /** Ce que valent ces fenêtres, en dollars. */
-  quantiles: { p50: number; p75: number; p90: number; max: number };
+  quantiles: { p50: number; p75: number; p90: number; max: number }
   /** La plus chère, et quand elle s'est achevée. */
-  peak: { cost: number; at: string };
+  peak: { cost: number; at: string }
   /**
    * Au-delà de quoi la fenêtre courante mérite qu'on en parle :
    * `max(P90 de vos fenêtres, un garde-fou)`. Même règle que partout ailleurs —
    * voir `thresholds.ts`.
    */
-  threshold: number;
+  threshold: number
   /** Faux quand le parc n'offre pas assez de fenêtres pour un percentile. */
-  calibrated: boolean;
+  calibrated: boolean
 }
 
 export interface PaceCurrent {
   /** Dépense des cinq dernières heures, tous projets confondus. */
-  cost: number;
+  cost: number
   /** Bornes ISO de cette fenêtre. */
-  from: string;
-  to: string;
+  from: string
+  to: string
   /** Sessions distinctes qui y ont dépensé. */
-  sessions: number;
+  sessions: number
   /** Place de cette fenêtre parmi les autres, entre 0 et 1. */
-  rank: number;
+  rank: number
 }
 
 export interface PaceConcurrency {
   /** Le plus grand nombre de sessions ouvertes en même temps. */
-  max: number;
+  max: number
   /** Heures passées avec au moins deux sessions ouvertes. */
-  hoursAtLeast2: number;
+  hoursAtLeast2: number
   /** Heures par niveau : `hoursByLevel[0]` = une seule session ouverte. */
-  hoursByLevel: number[];
+  hoursByLevel: number[]
   /** Total des heures pendant lesquelles au moins une session était ouverte. */
-  activeHours: number;
+  activeHours: number
   /**
    * À partir de combien d'heures « de front » on en parle. Garde-fou seul : le
    * parc ne fournit qu'une valeur de ce signal, dont aucun percentile ne sort.
    */
-  threshold: number;
+  threshold: number
 }
 
 export interface Pace {
-  windowHours: number;
-  current: PaceCurrent;
-  windows: PaceWindows;
-  concurrency: PaceConcurrency;
+  windowHours: number
+  current: PaceCurrent
+  windows: PaceWindows
+  concurrency: PaceConcurrency
 }
 
 /**
@@ -96,10 +96,10 @@ export interface Pace {
  * constante ne sert que sur une machine dont l'usage est trop maigre pour se
  * calibrer.
  */
-const WINDOW_GUARD = 30;
+const WINDOW_GUARD = 30
 
 /** Idem pour le temps passé à mener plusieurs sessions de front. */
-const CONCURRENCY_GUARD_HOURS = 10;
+const CONCURRENCY_GUARD_HOURS = 10
 
 // Les mots du signal ne sont pas ici : `calibrateFrom` les lit au catalogue sous
 // son nom, `paceWindow`. Ne reste que ce qui se calibre.
@@ -108,7 +108,7 @@ const WINDOW_METRIC: MetricNumbers = {
   direction: 'high',
   rank: 0.9,
   guard: WINDOW_GUARD,
-};
+}
 
 // ── La somme mobile ──────────────────────────────────────────────────────────
 
@@ -122,35 +122,35 @@ const WINDOW_METRIC: MetricNumbers = {
  * `points` doit être trié par `t` croissant ; `getSignals` s'en charge.
  */
 export function rollingWindows(points: CostPoint[], windowMs = WINDOW_MS): number[] {
-  const out: number[] = [];
-  let sum = 0;
-  let left = 0;
+  const out: number[] = []
+  let sum = 0
+  let left = 0
   for (let i = 0; i < points.length; i++) {
-    sum += points[i]!.cost;
+    sum += points[i]!.cost
     // La fenêtre est ouverte à gauche et fermée à droite : un point vieux d'exactement
     // cinq heures n'y est plus, ce qui est aussi la lecture d'une limite glissante.
     while (points[left]!.t <= points[i]!.t - windowMs) {
-      sum -= points[left]!.cost;
-      left++;
+      sum -= points[left]!.cost
+      left++
     }
-    out.push(sum);
+    out.push(sum)
   }
-  return out;
+  return out
 }
 
 /** La dépense d'une fenêtre qui s'achève à `at`, et les sessions qui y ont part. */
 function windowAt(points: CostPoint[], at: number, windowMs = WINDOW_MS): PaceCurrent {
-  const from = at - windowMs;
-  let cost = 0;
-  const sessions = new Set<string>();
+  const from = at - windowMs
+  let cost = 0
+  const sessions = new Set<string>()
   // À rebours : les points récents sont à la fin, et on s'arrête dès qu'on sort
   // de la fenêtre plutôt que de balayer tout le corpus.
   for (let i = points.length - 1; i >= 0; i--) {
-    const p = points[i]!;
-    if (p.t <= from) break;
-    if (p.t > at) continue;
-    cost += p.cost;
-    sessions.add(p.sessionId);
+    const p = points[i]!
+    if (p.t <= from) break
+    if (p.t > at) continue
+    cost += p.cost
+    sessions.add(p.sessionId)
   }
   return {
     cost,
@@ -158,7 +158,7 @@ function windowAt(points: CostPoint[], at: number, windowMs = WINDOW_MS): PaceCu
     to: new Date(at).toISOString(),
     sessions: sessions.size,
     rank: 0,
-  };
+  }
 }
 
 // ── Le recouvrement des sessions ─────────────────────────────────────────────
@@ -173,40 +173,37 @@ function windowAt(points: CostPoint[], at: number, windowMs = WINDOW_MS): PaceCu
  * Une session sans bornes lisibles, ou dont la fin précède le début, est écartée
  * plutôt que corrigée : une durée négative fausserait tous les niveaux à la fois.
  */
-export function concurrency(
-  spans: { start: number; end: number }[],
-  guardHours = CONCURRENCY_GUARD_HOURS,
-): PaceConcurrency {
-  const events: { t: number; delta: number }[] = [];
+export function concurrency(spans: { start: number; end: number }[], guardHours = CONCURRENCY_GUARD_HOURS): PaceConcurrency {
+  const events: { t: number; delta: number }[] = []
   for (const s of spans) {
-    if (!Number.isFinite(s.start) || !Number.isFinite(s.end) || s.end < s.start) continue;
-    events.push({ t: s.start, delta: 1 });
-    events.push({ t: s.end, delta: -1 });
+    if (!Number.isFinite(s.start) || !Number.isFinite(s.end) || s.end < s.start) continue
+    events.push({ t: s.start, delta: 1 })
+    events.push({ t: s.end, delta: -1 })
   }
   // Les fermetures avant les ouvertures à date égale : deux sessions bord à bord
   // ne se recouvrent pas, et les compter ensemble inventerait du parallélisme.
-  events.sort((a, b) => a.t - b.t || a.delta - b.delta);
+  events.sort((a, b) => a.t - b.t || a.delta - b.delta)
 
-  const hoursByLevel: number[] = [];
-  let level = 0;
-  let max = 0;
-  let previous = 0;
+  const hoursByLevel: number[] = []
+  let level = 0
+  let max = 0
+  let previous = 0
 
   for (const e of events) {
     if (level > 0 && e.t > previous) {
-      const hours = (e.t - previous) / HOUR_MS;
-      hoursByLevel[level - 1] = (hoursByLevel[level - 1] ?? 0) + hours;
+      const hours = (e.t - previous) / HOUR_MS
+      hoursByLevel[level - 1] = (hoursByLevel[level - 1] ?? 0) + hours
     }
-    level += e.delta;
-    if (level > max) max = level;
-    previous = e.t;
+    level += e.delta
+    if (level > max) max = level
+    previous = e.t
   }
 
-  for (let i = 0; i < max; i++) hoursByLevel[i] ??= 0;
-  const activeHours = hoursByLevel.reduce((a, b) => a + b, 0);
-  const hoursAtLeast2 = hoursByLevel.slice(1).reduce((a, b) => a + b, 0);
+  for (let i = 0; i < max; i++) hoursByLevel[i] ??= 0
+  const activeHours = hoursByLevel.reduce((a, b) => a + b, 0)
+  const hoursAtLeast2 = hoursByLevel.slice(1).reduce((a, b) => a + b, 0)
 
-  return { max, hoursAtLeast2, hoursByLevel, activeHours, threshold: guardHours };
+  return { max, hoursAtLeast2, hoursByLevel, activeHours, threshold: guardHours }
 }
 
 // ── Composition ──────────────────────────────────────────────────────────────
@@ -218,24 +215,24 @@ export function concurrency(
  * courante vérifiable sur des points fabriqués.
  */
 export function buildPace(signals: SessionSignal[], points: CostPoint[], now: number): Pace {
-  const sums = rollingWindows(points);
-  const calibration = calibrateFrom('paceWindow', WINDOW_METRIC, sums);
+  const sums = rollingWindows(points)
+  const calibration = calibrateFrom('paceWindow', WINDOW_METRIC, sums)
 
-  let peakCost = 0;
-  let peakAt = 0;
+  let peakCost = 0
+  let peakAt = 0
   for (let i = 0; i < sums.length; i++) {
     if (sums[i]! > peakCost) {
-      peakCost = sums[i]!;
-      peakAt = points[i]!.t;
+      peakCost = sums[i]!
+      peakAt = points[i]!.t
     }
   }
 
-  const current = windowAt(points, now);
+  const current = windowAt(points, now)
   // Le rang de la fenêtre courante parmi les autres — « plus chargée que 80 % de
   // vos fenêtres » se lit, là où un montant nu ne dit rien.
-  let below = 0;
-  for (const v of sums) if (v < current.cost) below++;
-  current.rank = sums.length ? below / sums.length : 0;
+  let below = 0
+  for (const v of sums) if (v < current.cost) below++
+  current.rank = sums.length ? below / sums.length : 0
 
   return {
     windowHours: WINDOW_MS / HOUR_MS,
@@ -252,10 +249,8 @@ export function buildPace(signals: SessionSignal[], points: CostPoint[], now: nu
       threshold: calibration.value,
       calibrated: calibration.calibrated,
     },
-    concurrency: concurrency(
-      signals.map((s) => ({ start: Date.parse(s.firstTs), end: Date.parse(s.lastTs) })),
-    ),
-  };
+    concurrency: concurrency(signals.map((s) => ({ start: Date.parse(s.firstTs), end: Date.parse(s.lastTs) }))),
+  }
 }
 
 // ── Cache court ──────────────────────────────────────────────────────────────
@@ -266,20 +261,20 @@ export function buildPace(signals: SessionSignal[], points: CostPoint[], now: nu
 // suffisent à rendre l'appel gratuit sans qu'un utilisateur voie jamais un
 // chiffre qui traîne : la fenêtre de 5 h ne bouge pas en une demi-minute.
 
-const CACHE_MS = 30_000;
+const CACHE_MS = 30_000
 
-let cached: { at: number; pace: Pace } | null = null;
+let cached: { at: number; pace: Pace } | null = null
 
 /** Vide le cache du rythme. Réservé aux tests. */
 export function resetPaceCache(): void {
-  cached = null;
+  cached = null
 }
 
 export async function getPace(): Promise<Pace> {
-  const now = Date.now();
-  if (cached && now - cached.at < CACHE_MS) return cached.pace;
-  const { signals, points } = await getSignals();
-  const pace = buildPace(signals, points, now);
-  cached = { at: now, pace };
-  return pace;
+  const now = Date.now()
+  if (cached && now - cached.at < CACHE_MS) return cached.pace
+  const { signals, points } = await getSignals()
+  const pace = buildPace(signals, points, now)
+  cached = { at: now, pace }
+  return pace
 }

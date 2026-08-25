@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../fr';
+import type { MessageSchema } from '../fr'
 
 // Noms d'écrans traduits selon la table de `docs/voice.md` : Atelier → Workshop,
 // Rejeu → Replay. Casse de phrase, jamais de capitale de titre.
@@ -21,6 +21,6 @@ const nav: MessageSchema['nav'] = {
   usage: 'Usage & costs',
   diagnostic: 'Diagnostic',
   help: 'Manual',
-};
+}
 
-export default nav;
+export default nav

@@ -6,9 +6,9 @@
 // Les libellés vivent dans `src/i18n/<langue>/nav.ts`, indexés par nom de route. Le nom de
 // route est l'identifiant stable ; ce qui s'affiche dépend de la langue.
 
-import { t, te } from '@/i18n';
+import { t, te } from '@/i18n'
 
-const APP_NAME = 'AURA';
+const APP_NAME = 'AURA'
 
 /**
  * Le nom d'écran d'une route, ou une chaîne vide si la route n'en a pas.
@@ -17,8 +17,8 @@ const APP_NAME = 'AURA';
  * d'entrée : elles ne figurent dans aucun fil d'Ariane.
  */
 export function routeTitle(name: unknown): string {
-  const key = typeof name === 'string' ? name : '';
-  return key && te(`nav.${key}`) ? t(`nav.${key}`) : '';
+  const key = typeof name === 'string' ? name : ''
+  return key && te(`nav.${key}`) ? t(`nav.${key}`) : ''
 }
 
 /**
@@ -29,12 +29,12 @@ export function routeTitle(name: unknown): string {
  * l'ordre du fil d'Ariane n'aurait laissé voir que « Projets… ».
  */
 export function documentTitle(labels: string[]): string {
-  const parts = labels.filter(Boolean).reverse();
-  return [...parts, APP_NAME].join(' · ');
+  const parts = labels.filter(Boolean).reverse()
+  return [...parts, APP_NAME].join(' · ')
 }
 
 /** Titre par défaut d'une route, avant qu'une page ne précise son fil. */
 export function titleForRouteName(name: unknown): string {
-  if (name === 'home') return documentTitle([]);
-  return documentTitle([routeTitle(name)]);
+  if (name === 'home') return documentTitle([])
+  return documentTitle([routeTitle(name)])
 }

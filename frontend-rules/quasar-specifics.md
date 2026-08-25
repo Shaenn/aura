@@ -26,8 +26,8 @@ l'override sous `body.body--light`.
 La bascule appartient au store `settings` :
 
 ```ts
-const settings = useSettingsStore();
-settings.darkMode = !settings.darkMode; // le store fait Dark.set()
+const settings = useSettingsStore()
+settings.darkMode = !settings.darkMode // le store fait Dark.set()
 ```
 
 - **Ne jamais manipuler `body--dark` directement**, ni stocker une copie de l'état.
@@ -68,8 +68,8 @@ Le build est une SPA servie par le BFF. Deux conséquences :
 Toujours via `useNotify`, jamais `$q.notify` en direct :
 
 ```ts
-const { notifyError, notifyDone, notifyWarn } = useNotify();
-notifyError(e, "Je n'ai pas pu supprimer cette version");
+const { notifyError, notifyDone, notifyWarn } = useNotify()
+notifyError(e, "Je n'ai pas pu supprimer cette version")
 ```
 
 Le composable applique la charte de voix — ce qu'AURA tentait dans le message, le détail

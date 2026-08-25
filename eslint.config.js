@@ -1,11 +1,11 @@
-import js from '@eslint/js';
-import vitestConfig from '@lehoczky/eslint-config-vitest';
-import pluginQuasar from '@quasar/app-vite/eslint';
-import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript';
-import pluginPrettier from 'eslint-plugin-prettier/recommended';
-import pluginVue from 'eslint-plugin-vue';
-import globals from 'globals';
-import importOrder from './eslint-rules/import-order.js';
+import js from '@eslint/js'
+import vitestConfig from '@lehoczky/eslint-config-vitest'
+import pluginQuasar from '@quasar/app-vite/eslint'
+import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript'
+import pluginPrettier from 'eslint-plugin-prettier/recommended'
+import pluginVue from 'eslint-plugin-vue'
+import globals from 'globals'
+import importOrder from './eslint-rules/import-order.js'
 
 export default [
   {
@@ -137,4 +137,4 @@ export default [
   // La mise en forme se vérifie donc au même endroit que le reste, et se corrige par
   // le même `--fix`.
   pluginPrettier,
-];
+]

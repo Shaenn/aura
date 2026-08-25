@@ -4,8 +4,7 @@ export default {
   noConnected: 'Je ne vois aucun serveur connecté.',
   fileTitle: 'Configurés · fichier',
   /** `~/.claude.json` en chasse fixe, `globaux` en gras : deux slots. */
-  fileNote:
-    'Serveurs déclarés dans {path}. Les serveurs {global} sont éditables ici ; ceux liés à un projet restent en lecture seule.',
+  fileNote: 'Serveurs déclarés dans {path}. Les serveurs {global} sont éditables ici ; ceux liés à un projet restent en lecture seule.',
   fileNoteGlobal: 'globaux',
   noFileServer: 'Je ne vois aucun serveur déclaré dans le fichier.',
   editAria: 'Éditer {name}',
@@ -35,4 +34,4 @@ export default {
   noPending: "Je n'ai aucune modification en attente.",
   readError: "Je n'ai pas pu lire vos réglages MCP",
   reloadError: "Je n'ai pas pu relire les serveurs MCP",
-};
+}

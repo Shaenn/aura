@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const cost: MessageSchema['replay']['cost'] = {
   error: 'Diagnostics unavailable.',
@@ -16,10 +16,8 @@ const cost: MessageSchema['replay']['cost'] = {
 
   hintHeavy:
     'The {pct} spent re-reading is the price of length: at every turn, the whole conversation goes through again. It is the only item you cut by stopping earlier.',
-  hintGrowing:
-    'Re-reading is starting to weigh. It grows with the number of turns, not with the work done.',
-  hintLight:
-    'Re-reading stays marginal: this session mostly pays for what it read and produced once.',
+  hintGrowing: 'Re-reading is starting to weigh. It grows with the number of turns, not with the work done.',
+  hintLight: 'Re-reading stays marginal: this session mostly pays for what it read and produced once.',
 
   unpriced: '{models} has no known rate: its tokens are counted, its cost is not.',
 
@@ -42,6 +40,6 @@ const cost: MessageSchema['replay']['cost'] = {
   findingPrefix: 'Session {id}… : ',
   more: 'See the fleet diagnostics',
   calm: 'Nothing to report: no rule points at this session.',
-};
+}
 
-export default cost;
+export default cost

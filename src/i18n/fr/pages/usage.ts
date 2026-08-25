@@ -37,4 +37,4 @@ export default {
   agents: 'Sous-agents',
   agentShare: '{pct} % du coût',
   noAgent: 'Je ne vois aucun sous-agent lancé sur cette période.',
-};
+}

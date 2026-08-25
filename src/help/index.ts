@@ -23,15 +23,15 @@
 // manuel reste complet pendant qu'on le traduit, et un trou se voit à la langue
 // de la page, pas à son absence.
 
-import { parseDoc, entryTokens, type FmEntry } from '@/utils/resourceFrontmatter';
-import { currentLocale, DEFAULT_LOCALE, isLocale, type AppLocale } from '@/i18n';
-import type { HelpSection } from './types';
+import { currentLocale, DEFAULT_LOCALE, isLocale, type AppLocale } from '@/i18n'
+import { parseDoc, entryTokens, type FmEntry } from '@/utils/resourceFrontmatter'
+import type { HelpSection } from './types'
 
 const files = import.meta.glob<string>('./sections/*/*.md', {
   query: '?raw',
   import: 'default',
   eager: true,
-});
+})
 
 /**
  * Lowercase and drop the combining marks left by NFD, so "mémoire" is found by
@@ -39,19 +39,19 @@ const files = import.meta.glob<string>('./sections/*/*.md', {
  * is exactly the accents split off from their base letter.
  */
 export function fold(s: string): string {
-  return s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+  return s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 }
 
 function scalar(entries: FmEntry[], key: string): string {
-  return entries.find((e) => e.key === key)?.value ?? '';
+  return entries.find((e) => e.key === key)?.value ?? ''
 }
 
 function toSection(path: string, raw: string): HelpSection {
-  const { entries, body } = parseDoc(raw);
-  const fallbackId = path.replace(/^.*\//, '').replace(/\.md$/, '');
-  const routesEntry = entries.find((e) => e.key === 'routes');
+  const { entries, body } = parseDoc(raw)
+  const fallbackId = path.replace(/^.*\//, '').replace(/\.md$/, '')
+  const routesEntry = entries.find((e) => e.key === 'routes')
 
-  const title = scalar(entries, 'title') || fallbackId;
+  const title = scalar(entries, 'title') || fallbackId
   return {
     id: scalar(entries, 'id') || fallbackId,
     title,
@@ -60,23 +60,23 @@ function toSection(path: string, raw: string): HelpSection {
     routes: routesEntry ? entryTokens(routesEntry) : [],
     body: body.trim(),
     haystack: fold(`${title}\n${body}`),
-  };
+  }
 }
 
 /** `./sections/en/hooks.md` → `en`. */
 function localeOf(path: string): AppLocale {
-  const seg = path.split('/')[2] ?? '';
-  return isLocale(seg) ? seg : DEFAULT_LOCALE;
+  const seg = path.split('/')[2] ?? ''
+  return isLocale(seg) ? seg : DEFAULT_LOCALE
 }
 
-const byLocale = new Map<AppLocale, HelpSection[]>();
+const byLocale = new Map<AppLocale, HelpSection[]>()
 for (const [path, raw] of Object.entries(files)) {
-  const l = localeOf(path);
-  const list = byLocale.get(l) ?? [];
-  list.push(toSection(path, raw));
-  byLocale.set(l, list);
+  const l = localeOf(path)
+  const list = byLocale.get(l) ?? []
+  list.push(toSection(path, raw))
+  byLocale.set(l, list)
 }
-for (const list of byLocale.values()) list.sort((a, b) => a.order - b.order);
+for (const list of byLocale.values()) list.sort((a, b) => a.order - b.order)
 
 /**
  * Les pages du manuel dans la langue courante, complétées par le français.
@@ -85,34 +85,34 @@ for (const list of byLocale.values()) list.sort((a, b) => a.order - b.order);
  * pas retomber tout le manuel.
  */
 export function helpSections(): HelpSection[] {
-  const base = byLocale.get(DEFAULT_LOCALE) ?? [];
-  const locale = currentLocale();
-  if (locale === DEFAULT_LOCALE) return base;
+  const base = byLocale.get(DEFAULT_LOCALE) ?? []
+  const locale = currentLocale()
+  if (locale === DEFAULT_LOCALE) return base
 
-  const translated = new Map((byLocale.get(locale) ?? []).map((s) => [s.id, s]));
-  return base.map((s) => translated.get(s.id) ?? s);
+  const translated = new Map((byLocale.get(locale) ?? []).map((s) => [s.id, s]))
+  return base.map((s) => translated.get(s.id) ?? s)
 }
 
 /** Route name → section id. A section may document several routes. */
-const byRoute = new Map<string, string>();
+const byRoute = new Map<string, string>()
 for (const s of byLocale.get(DEFAULT_LOCALE) ?? []) {
-  for (const r of s.routes) byRoute.set(r, s.id);
+  for (const r of s.routes) byRoute.set(r, s.id)
 }
 
 export function findSection(id: string | null | undefined): HelpSection | undefined {
-  return id ? helpSections().find((s) => s.id === id) : undefined;
+  return id ? helpSections().find((s) => s.id === id) : undefined
 }
 
 /** The section documenting a route, if any — the drawer's default content. */
 export function sectionForRoute(routeName: unknown): HelpSection | undefined {
-  return typeof routeName === 'string' ? findSection(byRoute.get(routeName)) : undefined;
+  return typeof routeName === 'string' ? findSection(byRoute.get(routeName)) : undefined
 }
 
 /** Sections matching a free-text query, in manual order. Blank query → all. */
 export function searchSections(query: string): HelpSection[] {
-  const sections = helpSections();
-  const q = fold(query.trim());
-  if (!q) return sections;
-  const terms = q.split(/\s+/);
-  return sections.filter((s) => terms.every((t) => s.haystack.includes(t)));
+  const sections = helpSections()
+  const q = fold(query.trim())
+  if (!q) return sections
+  const terms = q.split(/\s+/)
+  return sections.filter((s) => terms.every((t) => s.haystack.includes(t)))
 }

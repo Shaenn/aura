@@ -39,8 +39,7 @@ export default {
     PreToolUse: "Avant l'exécution d'un appel d'outil.",
     PostToolUse: "Après le succès d'un appel d'outil.",
     PostToolUseFailure: "Après l'échec d'un appel d'outil.",
-    PostToolBatch:
-      "Après la résolution d'un lot d'appels d'outils parallèles, avant l'appel modèle suivant.",
+    PostToolBatch: "Après la résolution d'un lot d'appels d'outils parallèles, avant l'appel modèle suivant.",
     PermissionRequest: "À l'affichage d'un dialogue de permission.",
     PermissionDenied: "Quand un appel d'outil est refusé par le classifieur du mode auto.",
     Notification: 'Quand Claude Code envoie une notification.',
@@ -61,7 +60,6 @@ export default {
     PreCompact: 'Avant la compaction du contexte.',
     PostCompact: 'Après la compaction du contexte.',
     Elicitation: "Quand un serveur MCP demande une saisie utilisateur pendant un appel d'outil.",
-    ElicitationResult:
-      "Après la réponse de l'utilisateur à une élicitation MCP, avant renvoi au serveur.",
+    ElicitationResult: "Après la réponse de l'utilisateur à une élicitation MCP, avant renvoi au serveur.",
   },
-};
+}

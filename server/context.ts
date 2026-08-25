@@ -16,9 +16,7 @@
 //   not record) is surfaced as `unattributed` rather than smeared over the
 //   categories to make the chart look tidy.
 
-import { basename } from 'node:path';
-import { t } from './i18n/index.ts';
-import { str, num } from './json.ts';
+import { basename } from 'node:path'
 import {
   CONTEXT_CATEGORIES,
   estimateTokens,
@@ -28,13 +26,15 @@ import {
   type ContextInjection,
   type SessionContext,
   type TurnContext,
-} from '../shared/context.ts';
+} from '../shared/context.ts'
+import { t } from './i18n/index.ts'
+import { str, num } from './json.ts'
 
-export type { Compaction, SessionContext };
-export { estimateTokens };
+export type { Compaction, SessionContext }
+export { estimateTokens }
 
 /** An injection before the accumulator stamps it with its turn and phase. */
-type AttachmentInjection = Omit<ContextInjection, 'turnIndex' | 'phase'>;
+type AttachmentInjection = Omit<ContextInjection, 'turnIndex' | 'phase'>
 
 /**
  * What one (turn, category) accumulated before it becomes a row.
@@ -44,21 +44,21 @@ type AttachmentInjection = Omit<ContextInjection, 'turnIndex' | 'phase'>;
  * line — the count is kept, the twelve rows are not.
  */
 interface Cell {
-  tokens: number;
-  count: number;
-  input: number;
-  output: number;
-  thinking: number;
-  text: number;
-  byTool: Map<string, { tokens: number; count: number; isError: boolean }>;
+  tokens: number
+  count: number
+  input: number
+  output: number
+  thinking: number
+  text: number
+  byTool: Map<string, { tokens: number; count: number; isError: boolean }>
 }
 
 function newCell(): Cell {
-  return { tokens: 0, count: 0, input: 0, output: 0, thinking: 0, text: 0, byTool: new Map() };
+  return { tokens: 0, count: 0, input: 0, output: 0, thinking: 0, text: 0, byTool: new Map() }
 }
 
-const DEFAULT_LIMIT = 200_000;
-const LONG_LIMIT = 1_000_000;
+const DEFAULT_LIMIT = 200_000
+const LONG_LIMIT = 1_000_000
 
 /**
  * Window size for a session, deduced from what it actually did.
@@ -78,26 +78,22 @@ const LONG_LIMIT = 1_000_000;
  * against 200k and jump to 1M mid-flight. `configuredLong` closes that gap — the
  * suffix survives in settings, where the model was picked. See `claude/model.ts`.
  */
-export function contextLimitFor(
-  models: Iterable<string>,
-  observedMax = 0,
-  configuredLong = false,
-): number {
-  if (observedMax > DEFAULT_LIMIT) return LONG_LIMIT;
-  if (configuredLong) return LONG_LIMIT;
-  for (const m of models) if (m.includes('[1m]')) return LONG_LIMIT;
-  return DEFAULT_LIMIT;
+export function contextLimitFor(models: Iterable<string>, observedMax = 0, configuredLong = false): number {
+  if (observedMax > DEFAULT_LIMIT) return LONG_LIMIT
+  if (configuredLong) return LONG_LIMIT
+  for (const m of models) if (m.includes('[1m]')) return LONG_LIMIT
+  return DEFAULT_LIMIT
 }
 
 function zeroed(): Record<ContextCategory, number> {
-  const out = {} as Record<ContextCategory, number>;
-  for (const c of CONTEXT_CATEGORIES) out[c] = 0;
-  return out;
+  const out = {} as Record<ContextCategory, number>
+  for (const c of CONTEXT_CATEGORIES) out[c] = 0
+  return out
 }
 
 /** A short, human label for a path — the full path lives in `injection.path`. */
 function label(path: string): string {
-  return basename(path.replace(/[\\/]+$/, '')) || path;
+  return basename(path.replace(/[\\/]+$/, '')) || path
 }
 
 /**
@@ -110,11 +106,11 @@ function label(path: string): string {
  * rule, and the parent directory for everything else.
  */
 function memoryLabel(path: string): string {
-  const norm = path.replace(/\\/g, '/');
-  const rule = /(?:^|\/)\.claude\/rules\/(.+)$/i.exec(norm);
-  if (rule?.[1]) return `rules/${rule[1]}`;
-  const parts = norm.split('/').filter(Boolean);
-  return parts.slice(-2).join('/') || path;
+  const norm = path.replace(/\\/g, '/')
+  const rule = /(?:^|\/)\.claude\/rules\/(.+)$/i.exec(norm)
+  if (rule?.[1]) return `rules/${rule[1]}`
+  const parts = norm.split('/').filter(Boolean)
+  return parts.slice(-2).join('/') || path
 }
 
 /**
@@ -125,16 +121,16 @@ function memoryLabel(path: string): string {
  * negative remainder carries no information while rendering as an inverted bar.
  */
 export function settleTurn(turn: TurnContext, total: number): void {
-  let attributed = 0;
-  for (const c of CONTEXT_CATEGORIES) attributed += turn.byCategory[c];
-  turn.total = total;
-  turn.unattributed = Math.max(0, total - attributed);
+  let attributed = 0
+  for (const c of CONTEXT_CATEGORIES) attributed += turn.byCategory[c]
+  turn.total = total
+  turn.unattributed = Math.max(0, total - attributed)
 }
 
 /** The text of a `string[]` field, as it was concatenated into the window. */
 function joinStrings(value: unknown): string {
-  if (!Array.isArray(value)) return '';
-  return value.filter((v): v is string => typeof v === 'string').join('\n');
+  if (!Array.isArray(value)) return ''
+  return value.filter((v): v is string => typeof v === 'string').join('\n')
 }
 
 /**
@@ -149,34 +145,34 @@ function joinStrings(value: unknown): string {
  * tokens are still accounted for.
  */
 function catalogueEntries(lines: string[]): { entries: ContextEntry[]; count: number } {
-  const entries: ContextEntry[] = [];
-  let named = 0;
-  let current: ContextEntry | null = null;
+  const entries: ContextEntry[] = []
+  let named = 0
+  let current: ContextEntry | null = null
 
   for (const line of lines) {
-    const tokens = estimateTokens(line);
-    if (!tokens) continue;
-    const m = /^\s*-\s*([^:]+):/.exec(line);
+    const tokens = estimateTokens(line)
+    if (!tokens) continue
+    const m = /^\s*-\s*([^:]+):/.exec(line)
     if (m?.[1]) {
-      named++;
-      current = { label: m[1].trim(), tokens };
-      entries.push(current);
+      named++
+      current = { label: m[1].trim(), tokens }
+      entries.push(current)
     } else if (current) {
-      current.tokens += tokens; // continuation of the entry above
+      current.tokens += tokens // continuation of the entry above
     } else {
-      current = { label: t('context.preamble'), tokens };
-      entries.push(current);
+      current = { label: t('context.preamble'), tokens }
+      entries.push(current)
     }
   }
-  return { entries, count: named };
+  return { entries, count: named }
 }
 
 /** The file body an attachment carries under `content.file.content`. */
 function nestedFileText(value: unknown): { text: string; path: string } {
-  const a = value as Record<string, unknown>;
-  const content = a.content as Record<string, unknown> | undefined;
-  const file = content?.file as Record<string, unknown> | undefined;
-  return { text: str(file?.content), path: str(a.filename, str(file?.filePath)) };
+  const a = value as Record<string, unknown>
+  const content = a.content as Record<string, unknown> | undefined
+  const file = content?.file as Record<string, unknown> | undefined
+  return { text: str(file?.content), path: str(a.filename, str(file?.filePath)) }
 }
 
 /**
@@ -197,16 +193,16 @@ function nestedFileText(value: unknown): { text: string; path: string } {
  * The two always come together. Counting both would double the same text.
  */
 export function classifyAttachment(value: unknown): AttachmentInjection | null {
-  if (!value || typeof value !== 'object') return null;
-  const a = value as Record<string, unknown>;
+  if (!value || typeof value !== 'object') return null
+  const a = value as Record<string, unknown>
 
   switch (str(a.type)) {
     // ── Contenu de la session ────────────────────────────────────────────────
     case 'nested_memory': {
-      const content = a.content as Record<string, unknown> | undefined;
-      const text = str(content?.content);
-      if (!text) return null;
-      const path = str(a.path);
+      const content = a.content as Record<string, unknown> | undefined
+      const text = str(content?.content)
+      if (!text) return null
+      const path = str(a.path)
       return {
         category: 'memory',
         // Une règle chargée par glob (`.claude/rules/…`) arrive ici comme une
@@ -215,211 +211,208 @@ export function classifyAttachment(value: unknown): AttachmentInjection | null {
         path,
         tokens: estimateTokens(text),
         dedupeKey: `memory:${path}`,
-      };
+      }
     }
     // Le *catalogue* des skills, injecté une fois au démarrage : le menu de ce que
     // le modèle peut invoquer, pas une invocation. `invoked_skills` porte, lui, le
     // corps d'un skill réellement lancé.
     case 'skill_listing': {
-      const text = str(a.content);
-      if (!text) return null;
-      const { entries } = catalogueEntries(text.split('\n'));
+      const text = str(a.content)
+      if (!text) return null
+      const { entries } = catalogueEntries(text.split('\n'))
       // La comparaison porte sur le libellé traduit, pas sur le mot français :
       // ce `label` sort de `catalogueEntries`, qui le pose déjà dans la langue
       // de la requête. Le figer ici ferait compter le préambule comme un skill
       // dès que l'interface n'est plus en français.
-      const count =
-        num(a.skillCount) || entries.filter((e) => e.label !== t('context.preamble')).length;
+      const count = num(a.skillCount) || entries.filter((e) => e.label !== t('context.preamble')).length
       return {
         category: 'skills',
         label: count ? `Catalogue — ${count} skills disponibles` : 'Catalogue de skills',
         tokens: estimateTokens(text),
         entries,
-      };
+      }
     }
     // Le corps du skill, pas seulement son nom dans la liste.
     case 'invoked_skills': {
-      const skills = Array.isArray(a.skills) ? (a.skills as Record<string, unknown>[]) : [];
-      const text = skills.map((s) => str(s.content)).join('\n');
-      if (!text) return null;
-      const names = skills.map((s) => str(s.name)).filter(Boolean);
+      const skills = Array.isArray(a.skills) ? (a.skills as Record<string, unknown>[]) : []
+      const text = skills.map((s) => str(s.content)).join('\n')
+      if (!text) return null
+      const names = skills.map((s) => str(s.name)).filter(Boolean)
       return {
         category: 'skills',
-        label: names.length
-          ? t('context.skillNamed', { names: names.join(', ') })
-          : t('context.skillInvoked'),
+        label: names.length ? t('context.skillNamed', { names: names.join(', ') }) : t('context.skillInvoked'),
         tokens: estimateTokens(text),
         dedupeKey: `skill:${names.join(',')}`,
-      };
+      }
     }
     case 'file': {
-      const { text, path } = nestedFileText(a);
-      if (!text) return null;
+      const { text, path } = nestedFileText(a)
+      if (!text) return null
       return {
         category: 'files',
         label: label(path),
         path,
         tokens: estimateTokens(text),
         dedupeKey: `file:${path}`,
-      };
+      }
     }
     // Le harness redit qu'un fichier est déjà lu — et en rejoint le contenu. La
     // clé de dédoublonnage est celle de `file` : si ce chemin est déjà entré dans
     // la fenêtre, il n'y entre pas deux fois.
     case 'already_read_file': {
-      const { text, path } = nestedFileText(a);
-      if (!text) return null;
+      const { text, path } = nestedFileText(a)
+      if (!text) return null
       return {
         category: 'files',
         label: label(path),
         path,
         tokens: estimateTokens(text),
         dedupeKey: `file:${path}`,
-      };
+      }
     }
     // Un extrait neuf à chaque édition : aucune clé, ou l'on perdrait les suivants.
     case 'edited_text_file': {
-      const text = str(a.snippet);
-      if (!text) return null;
-      const path = str(a.filename);
-      return { category: 'files', label: label(path), path, tokens: estimateTokens(text) };
+      const text = str(a.snippet)
+      if (!text) return null
+      const path = str(a.filename)
+      return { category: 'files', label: label(path), path, tokens: estimateTokens(text) }
     }
     case 'plan_file_reference': {
-      const text = str(a.planContent);
-      if (!text) return null;
-      const path = str(a.planFilePath);
+      const text = str(a.planContent)
+      if (!text) return null
+      const path = str(a.planFilePath)
       return {
         category: 'files',
         label: label(path),
         path,
         tokens: estimateTokens(text),
         dedupeKey: `file:${path}`,
-      };
+      }
     }
     case 'directory': {
-      const text = str(a.content);
-      if (!text) return null;
-      const path = str(a.path);
+      const text = str(a.content)
+      if (!text) return null
+      const path = str(a.path)
       return {
         category: 'files',
         label: str(a.displayPath, label(path)),
         path,
         tokens: estimateTokens(text),
-      };
+      }
     }
 
     // ── Machinerie du harness ────────────────────────────────────────────────
     // Le catalogue des sous-agents disponibles — un menu, chargé au démarrage.
     case 'agent_listing_delta': {
-      const lines = Array.isArray(a.addedLines) ? (a.addedLines as string[]) : [];
-      const text = joinStrings(a.addedLines);
-      if (!text) return null;
-      const { entries, count } = catalogueEntries(lines);
-      const n = (Array.isArray(a.addedTypes) ? a.addedTypes.length : 0) || count;
+      const lines = Array.isArray(a.addedLines) ? (a.addedLines as string[]) : []
+      const text = joinStrings(a.addedLines)
+      if (!text) return null
+      const { entries, count } = catalogueEntries(lines)
+      const n = (Array.isArray(a.addedTypes) ? a.addedTypes.length : 0) || count
       return {
         category: 'harness',
         label: `Catalogue — ${n} agents disponibles`,
         tokens: estimateTokens(text),
         entries,
-      };
+      }
     }
     // Les schémas des outils différés ne sont pas ici — seulement leurs noms, qui
     // sont bien dans la fenêtre. Les schémas, eux, restent dans le socle.
     case 'deferred_tools_delta': {
-      const text = joinStrings(a.addedLines);
-      if (!text) return null;
-      const n = Array.isArray(a.addedNames) ? a.addedNames.length : 0;
+      const text = joinStrings(a.addedLines)
+      if (!text) return null
+      const n = Array.isArray(a.addedNames) ? a.addedNames.length : 0
       return {
         category: 'harness',
         label: t('context.deferredTools', { count: n }),
         tokens: estimateTokens(text),
-      };
+      }
     }
     case 'mcp_instructions_delta': {
-      const text = joinStrings(a.addedBlocks);
-      if (!text) return null;
-      const names = Array.isArray(a.addedNames) ? (a.addedNames as string[]) : [];
+      const text = joinStrings(a.addedBlocks)
+      if (!text) return null
+      const names = Array.isArray(a.addedNames) ? (a.addedNames as string[]) : []
       return {
         category: 'harness',
         label: names.length ? `MCP : ${names.join(', ')}` : 'Instructions MCP',
         tokens: estimateTokens(text),
-      };
+      }
     }
     case 'hook_additional_context': {
-      const text = joinStrings(a.content);
-      if (!text) return null;
+      const text = joinStrings(a.content)
+      if (!text) return null
       return {
         category: 'harness',
         label: `Hook ${str(a.hookName, '?')}`,
         tokens: estimateTokens(text),
-      };
+      }
     }
     case 'hook_non_blocking_error': {
-      const text = str(a.stderr);
-      if (!text) return null;
+      const text = str(a.stderr)
+      if (!text) return null
       return {
         category: 'harness',
         label: `Hook ${str(a.hookName, '?')} — erreur`,
         tokens: estimateTokens(text),
-      };
+      }
     }
     case 'hook_blocking_error': {
-      const err = a.blockingError as Record<string, unknown> | undefined;
-      const text = str(err?.blockingError);
-      if (!text) return null;
+      const err = a.blockingError as Record<string, unknown> | undefined
+      const text = str(err?.blockingError)
+      if (!text) return null
       return {
         category: 'harness',
         label: t('context.hookBlocked', { name: str(a.hookName, '?') }),
         tokens: estimateTokens(text),
-      };
+      }
     }
     // La notification qu'une tâche ou un sous-agent renvoie au fil principal.
     case 'queued_command': {
-      const text = str(a.prompt);
-      if (!text) return null;
+      const text = str(a.prompt)
+      if (!text) return null
       return {
         category: 'harness',
         label: str(a.commandMode, 'Commande en file'),
         tokens: estimateTokens(text),
-      };
+      }
     }
     case 'context_tip': {
-      const tip = a.tip as Record<string, unknown> | undefined;
-      const text = str(tip?.tip);
-      if (!text) return null;
-      return { category: 'harness', label: 'Conseil', tokens: estimateTokens(text) };
+      const tip = a.tip as Record<string, unknown> | undefined
+      const text = str(tip?.tip)
+      if (!text) return null
+      return { category: 'harness', label: 'Conseil', tokens: estimateTokens(text) }
     }
     // Ces deux-là ne gardent que des champs structurés ; le harness en compose un
     // texte que le transcript n'écrit pas. Le JSON des champs en est le plus
     // proche relevé — un ordre de grandeur, comme tout ce qui porte un « ~ ».
     case 'task_reminder': {
-      const items = Array.isArray(a.content) ? a.content : [];
-      if (!items.length) return null;
+      const items = Array.isArray(a.content) ? a.content : []
+      if (!items.length) return null
       return {
         category: 'harness',
         label: t('context.todoReminder', { count: items.length }),
         tokens: estimateTokens(JSON.stringify(items)),
-      };
+      }
     }
     case 'diagnostics': {
-      const files = Array.isArray(a.files) ? a.files : [];
-      if (!files.length) return null;
+      const files = Array.isArray(a.files) ? a.files : []
+      if (!files.length) return null
       return {
         category: 'harness',
         label: `Diagnostics (${files.length})`,
         tokens: estimateTokens(JSON.stringify(files)),
-      };
+      }
     }
 
     default:
-      return null;
+      return null
   }
 }
 
 /** The `compactMetadata` of a `compact_boundary` row, or `null` if unusable. */
 export function readCompaction(row: Record<string, unknown>, timestamp: number): Compaction | null {
-  const meta = row.compactMetadata as Record<string, unknown> | undefined;
-  if (!meta) return null;
+  const meta = row.compactMetadata as Record<string, unknown> | undefined
+  if (!meta) return null
   return {
     uuid: str(row.uuid),
     timestamp,
@@ -427,7 +420,7 @@ export function readCompaction(row: Record<string, unknown>, timestamp: number):
     preTokens: num(meta.preTokens),
     postTokens: num(meta.postTokens),
     durationMs: num(meta.durationMs),
-  };
+  }
 }
 
 /**
@@ -439,14 +432,14 @@ export function readCompaction(row: Record<string, unknown>, timestamp: number):
  */
 export class ContextAccumulator {
   /** Cumulative estimates since the last compaction. */
-  private running = zeroed();
-  private readonly turns: TurnContext[] = [];
-  private readonly compactions: Compaction[] = [];
-  private readonly injections: ContextInjection[] = [];
+  private running = zeroed()
+  private readonly turns: TurnContext[] = []
+  private readonly compactions: Compaction[] = []
+  private readonly injections: ContextInjection[] = []
   /** Compaction segment we are in; a compaction empties the window. */
-  private phase = 0;
+  private phase = 0
   /** `dedupeKey`s already admitted into the current phase's window. */
-  private seenKeys = new Set<string>();
+  private seenKeys = new Set<string>()
   /**
    * Text produced *during* a turn, gathered per (turn, category) so the panel can
    * show one row — "3 outils au tour 12" — instead of a hundred fragments.
@@ -454,18 +447,18 @@ export class ContextAccumulator {
    * `input` / `output` are filled for the `tools` category only, and are two
    * slices of `tokens`, not additions to it.
    */
-  private readonly perTurn = new Map<string, Cell>();
+  private readonly perTurn = new Map<string, Cell>()
 
   private cell(category: ContextCategory, turnIndex: number): Cell {
-    const key = `${this.phase}\0${turnIndex}\0${category}`;
-    const found = this.perTurn.get(key) ?? newCell();
-    this.perTurn.set(key, found);
-    return found;
+    const key = `${this.phase}\0${turnIndex}\0${category}`
+    const found = this.perTurn.get(key) ?? newCell()
+    this.perTurn.set(key, found)
+    return found
   }
 
   /** The turn a not-yet-begun injection will first weigh on. */
   private get nextTurnIndex(): number {
-    return this.turns.length;
+    return this.turns.length
   }
 
   /**
@@ -478,11 +471,11 @@ export class ContextAccumulator {
    */
   add(injection: Omit<ContextInjection, 'turnIndex' | 'phase'>): void {
     if (injection.dedupeKey) {
-      if (this.seenKeys.has(injection.dedupeKey)) return;
-      this.seenKeys.add(injection.dedupeKey);
+      if (this.seenKeys.has(injection.dedupeKey)) return
+      this.seenKeys.add(injection.dedupeKey)
     }
-    this.running[injection.category] += injection.tokens;
-    this.injections.push({ ...injection, turnIndex: this.nextTurnIndex, phase: this.phase });
+    this.running[injection.category] += injection.tokens
+    this.injections.push({ ...injection, turnIndex: this.nextTurnIndex, phase: this.phase })
   }
 
   /**
@@ -491,12 +484,12 @@ export class ContextAccumulator {
    * a time: a turn with forty tool calls should read as one line, not forty.
    */
   addText(category: ContextCategory, text: string, turnIndex: number): void {
-    if (!text) return;
-    this.running[category] += estimateTokens(text);
+    if (!text) return
+    this.running[category] += estimateTokens(text)
 
-    const cell = this.cell(category, turnIndex);
-    cell.tokens += estimateTokens(text);
-    cell.count++;
+    const cell = this.cell(category, turnIndex)
+    cell.tokens += estimateTokens(text)
+    cell.count++
   }
 
   /**
@@ -524,24 +517,24 @@ export class ContextAccumulator {
      */
     imageTokens = 0,
   ): void {
-    const inTokens = estimateTokens(input);
-    const outTokens = estimateTokens(output) + imageTokens;
-    if (!inTokens && !outTokens) return;
+    const inTokens = estimateTokens(input)
+    const outTokens = estimateTokens(output) + imageTokens
+    if (!inTokens && !outTokens) return
 
-    this.running.tools += inTokens + outTokens;
-    const cell = this.cell('tools', turnIndex);
-    cell.tokens += inTokens + outTokens;
-    cell.input += inTokens;
-    cell.output += outTokens;
-    cell.count++;
+    this.running.tools += inTokens + outTokens
+    const cell = this.cell('tools', turnIndex)
+    cell.tokens += inTokens + outTokens
+    cell.input += inTokens
+    cell.output += outTokens
+    cell.count++
 
-    const key = name || 'Outil';
-    const tool = cell.byTool.get(key) ?? { tokens: 0, count: 0, isError: false };
-    tool.tokens += inTokens + outTokens;
-    tool.count++;
+    const key = name || 'Outil'
+    const tool = cell.byTool.get(key) ?? { tokens: 0, count: 0, isError: false }
+    tool.tokens += inTokens + outTokens
+    tool.count++
     // One failed call among ten marks the row: the reader should look.
-    tool.isError ||= isError;
-    cell.byTool.set(key, tool);
+    tool.isError ||= isError
+    cell.byTool.set(key, tool)
   }
 
   /**
@@ -551,19 +544,19 @@ export class ContextAccumulator {
    * kept apart because only one of them shrinks when you ask for less thinking.
    */
   addThinking(turnIndex: number, kind: 'thinking' | 'text', text: string): void {
-    const tokens = estimateTokens(text);
-    if (!tokens) return;
+    const tokens = estimateTokens(text)
+    if (!tokens) return
 
-    this.running.thinking += tokens;
-    const cell = this.cell('thinking', turnIndex);
-    cell.tokens += tokens;
-    cell.count++;
-    cell[kind] += tokens;
+    this.running.thinking += tokens
+    const cell = this.cell('thinking', turnIndex)
+    cell.tokens += tokens
+    cell.count++
+    cell[kind] += tokens
   }
 
   /** Index of the turn currently being produced, for `addText`. */
   currentTurnIndex(): number {
-    return Math.max(0, this.turns.length - 1);
+    return Math.max(0, this.turns.length - 1)
   }
 
   /**
@@ -584,9 +577,9 @@ export class ContextAccumulator {
       total: 0,
       byCategory: { ...this.running },
       unattributed: 0,
-    };
-    this.turns.push(turn);
-    return turn;
+    }
+    this.turns.push(turn)
+    return turn
   }
 
   /**
@@ -596,26 +589,26 @@ export class ContextAccumulator {
    * paid for a second time, and must be counted a second time.
    */
   compact(compaction: Compaction): void {
-    this.compactions.push(compaction);
-    this.running = zeroed();
-    this.seenKeys = new Set();
-    this.phase++;
+    this.compactions.push(compaction)
+    this.running = zeroed()
+    this.seenKeys = new Set()
+    this.phase++
   }
 
   /** One row per (turn, category) of message-borne text, largest first downstream. */
   private flushPerTurn(): void {
     for (const [key, cell] of this.perTurn) {
-      const [rawPhase, rawTurn, category] = key.split('\0') as [string, string, ContextCategory];
-      const turnIndex = Number(rawTurn);
-      const human = turnIndex + 1; // Turns are 1-based for the reader.
+      const [rawPhase, rawTurn, category] = key.split('\0') as [string, string, ContextCategory]
+      const turnIndex = Number(rawTurn)
+      const human = turnIndex + 1 // Turns are 1-based for the reader.
 
-      let text: string;
+      let text: string
       if (category === 'tools') {
-        text = `${cell.count} ${cell.count > 1 ? 'appels d’outil' : 'appel d’outil'} au tour ${human}`;
+        text = `${cell.count} ${cell.count > 1 ? 'appels d’outil' : 'appel d’outil'} au tour ${human}`
       } else if (category === 'thinking') {
-        text = t('context.turnReasoning', { turn: human });
+        text = t('context.turnReasoning', { turn: human })
       } else {
-        text = `Tour ${human} — votre message`;
+        text = `Tour ${human} — votre message`
       }
 
       this.injections.push({
@@ -629,17 +622,13 @@ export class ContextAccumulator {
               toolCount: cell.count,
               inputTokens: cell.input,
               outputTokens: cell.output,
-              tools: [...cell.byTool]
-                .map(([name, t]) => ({ name, ...t }))
-                .sort((a, b) => b.tokens - a.tokens),
+              tools: [...cell.byTool].map(([name, t]) => ({ name, ...t })).sort((a, b) => b.tokens - a.tokens),
             }
           : {}),
-        ...(category === 'thinking'
-          ? { thinkingTokens: cell.thinking, textTokens: cell.text }
-          : {}),
-      });
+        ...(category === 'thinking' ? { thinkingTokens: cell.thinking, textTokens: cell.text } : {}),
+      })
     }
-    this.perTurn.clear();
+    this.perTurn.clear()
   }
 
   /**
@@ -655,21 +644,21 @@ export class ContextAccumulator {
    * "unknown" and does not draw.
    */
   private measureBaseline(): number {
-    const first = this.turns[0];
-    if (!first || first.total <= 0) return 0;
-    let injected = 0;
-    for (const c of CONTEXT_CATEGORIES) injected += first.byCategory[c];
-    return Math.max(0, first.total - injected);
+    const first = this.turns[0]
+    if (!first || first.total <= 0) return 0
+    let injected = 0
+    for (const c of CONTEXT_CATEGORIES) injected += first.byCategory[c]
+    return Math.max(0, first.total - injected)
   }
 
   result(models: Iterable<string>, configuredLong = false): SessionContext {
-    this.flushPerTurn();
+    this.flushPerTurn()
 
-    let observedMax = 0;
-    for (const t of this.turns) if (t.total > observedMax) observedMax = t.total;
+    let observedMax = 0
+    for (const t of this.turns) if (t.total > observedMax) observedMax = t.total
     // A compaction proves the window reached `preTokens`, even if no single turn
     // we anchored did — the harness saw a fuller window than any row records.
-    for (const c of this.compactions) if (c.preTokens > observedMax) observedMax = c.preTokens;
+    for (const c of this.compactions) if (c.preTokens > observedMax) observedMax = c.preTokens
 
     return {
       limit: contextLimitFor(models, observedMax, configuredLong),
@@ -677,6 +666,6 @@ export class ContextAccumulator {
       turns: this.turns,
       compactions: this.compactions,
       injections: this.injections,
-    };
+    }
   }
 }

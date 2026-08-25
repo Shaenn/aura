@@ -47,9 +47,9 @@ Pure, sans effet de bord, et elle rend les lignes telles quelles quand le terme 
 
 ```ts
 function filterProjects(rows: readonly ProjectSummary[], term: string): ProjectSummary[] {
-  const q = term.trim().toLowerCase();
-  if (!q) return rows as ProjectSummary[];
-  return rows.filter((p) => p.name.toLowerCase().includes(q) || p.path.toLowerCase().includes(q));
+  const q = term.trim().toLowerCase()
+  if (!q) return rows as ProjectSummary[]
+  return rows.filter((p) => p.name.toLowerCase().includes(q) || p.path.toLowerCase().includes(q))
 }
 ```
 
