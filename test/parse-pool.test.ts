@@ -45,7 +45,7 @@ describe('lecture de transcript hors boucle', () => {
   })
 
   it('remonte l’échec d’un transcript absent, sans le confondre avec une panne de thread', async () => {
-    await expect(serialiseInPool(join(fixtures, 'nexistepas.jsonl'), 'nexistepas')).rejects.toThrow()
+    await expect(serialiseInPool(join(fixtures, 'nexistepas.jsonl'), 'nexistepas')).rejects.toThrow(/ENOENT/)
     // Un fichier manquant ne condamne pas le pool : c'est le transcript qui a
     // échoué, pas le mécanisme.
     expect(poolState().size).toBeGreaterThan(0)

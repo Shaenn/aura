@@ -58,7 +58,7 @@ describe('purgeBackup', () => {
     // `''` compte parmi eux : il valait « tout effacer » par omission, et c'est
     // ainsi que les sauvegardes de ce poste ont disparu en écrivant ce fichier.
     for (const nom of ['..', '.', 'backups', '2026-08-13', '..\\..\\autre', 'a.b', '']) {
-      await expect(purgeBackup(nom)).rejects.toThrow()
+      await expect(purgeBackup(nom)).rejects.toThrow('Instantané inconnu.')
     }
     // Rien n'a bougé : ni les instantanés, ni ce qui vit à côté d'eux.
     await expect(readdir(BACKUPS_DIR)).resolves.toEqual(avant)
@@ -75,8 +75,8 @@ describe('purgeBackup', () => {
 
 describe('readBackup', () => {
   it('refuse de lire hors du dossier des instantanés', async () => {
-    await expect(readBackup('..', 'preferences.json')).rejects.toThrow()
-    await expect(readBackup(STAMP, '../../preferences.json')).rejects.toThrow()
+    await expect(readBackup('..', 'preferences.json')).rejects.toThrow('Instantané inconnu.')
+    await expect(readBackup(STAMP, '../../preferences.json')).rejects.toThrow('Chemin de backup invalide.')
   })
 
   it('lit le fichier sauvegardé', async () => {

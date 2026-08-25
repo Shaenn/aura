@@ -46,6 +46,6 @@ describe('schéma des questions de l’Atelier', () => {
   })
 
   it('refuse toujours une option sans libellé', () => {
-    expect(() => schema.parse(question([{ description: 'sans label' }]))).toThrow()
+    expect(() => schema.parse(question([{ description: 'sans label' }]))).toThrow(z.ZodError)
   })
 })

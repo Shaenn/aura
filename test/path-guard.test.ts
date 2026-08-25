@@ -73,7 +73,7 @@ describe('isWritable', () => {
 
 describe('resolveForRead', () => {
   it('refuse le secret écrit dans une autre casse', () => {
-    expect(() => paths.resolveForRead('.Credentials.json')).toThrow()
+    expect(() => paths.resolveForRead('.Credentials.json')).toThrow(paths.PathError)
   })
 
   it('rend le nom que le disque emploie, pas celui qu’on a demandé', () => {
@@ -82,7 +82,7 @@ describe('resolveForRead', () => {
   })
 
   it('refuse un chemin qui remonte hors de la racine', () => {
-    expect(() => paths.resolveForRead('../hors.txt')).toThrow()
+    expect(() => paths.resolveForRead('../hors.txt')).toThrow(paths.PathError)
   })
 
   // Des jonctions, et non des liens de fichier : Windows n'accorde ces derniers
@@ -94,7 +94,7 @@ describe('resolveForRead', () => {
     } catch {
       return // même les jonctions sont refusées ici : le reste des cas suffit.
     }
-    expect(() => paths.resolveForRead('evasion/butin.txt')).toThrow()
+    expect(() => paths.resolveForRead('evasion/butin.txt')).toThrow(paths.PathError)
   })
 
   it('refuse une zone privée atteinte par une jonction interne', async () => {
