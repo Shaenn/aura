@@ -480,8 +480,8 @@ accessibility and the write contract, and they are documented. Issues and PRs ar
 either language.
 
 ```bash
-pnpm lint
-pnpm typecheck      # server/ and test/
+pnpm verifie        # lint + typecheck + test
+pnpm typecheck      # src/, server/ and test/
 pnpm test           # vitest
 ```
 

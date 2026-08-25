@@ -527,8 +527,8 @@ Les issues et les pull requests sont bienvenues. Avant d'ouvrir une PR, lisez
 design, l'accessibilité et le contrat d'écriture, et elles sont documentées.
 
 ```bash
-pnpm lint
-pnpm typecheck      # server/ et test/
+pnpm verifie        # lint + typecheck + test
+pnpm typecheck      # src/, server/ et test/
 pnpm test           # vitest
 ```
 

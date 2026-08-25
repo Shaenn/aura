@@ -174,14 +174,15 @@ plutôt que de recopier leur markup/CSS.
 ## Qualité
 
 ```bash
-pnpm lint        # ESLint
-pnpm format      # Prettier
-pnpm typecheck   # tsc sur server/ et test/
+pnpm verifie     # lint + typecheck + test — le geste avant de pousser
+pnpm lint        # ESLint, mise en forme comprise
+pnpm format      # Prettier puis ESLint --fix
+pnpm typecheck   # vue-tsc sur src/, puis tsc sur server/ et test/
 pnpm test        # vitest
 ```
 
-`src/` n'est **pas** couvert par `pnpm typecheck` : le front est typé par `vue-tsc` via
-`vite-plugin-checker`, donc pendant `pnpm dev` ou `pnpm build`.
+`pnpm typecheck` couvre le front, le BFF et les tests. Prettier est lancé comme une règle
+ESLint : la mise en forme se relève par `pnpm lint` et se corrige par le même `--fix`.
 
 `server/` et `test/` ont leur propre `tsconfig.json` (Node, `lib: esnext` sans DOM, extensions `.ts`
 autorisées à l'import) ; le tsconfig racine les exclut. `exactOptionalPropertyTypes` est actif côté

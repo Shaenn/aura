@@ -5,9 +5,10 @@
 # système de fichiers, les noms courts 8.3, l'énumération des processus. Les faire tourner
 # ailleurs vérifierait autre chose que ce qui est livré.
 #
-# `build` en plus de `typecheck` : `pnpm typecheck` ne couvre que `server/` et `test/`. Le
-# front n'est typé que par `vue-tsc`, que seul le build déclenche. Sans cette étape, une
-# rupture de types dans `src/` passerait la CI.
+# `build` en plus de `typecheck` : depuis la mise au socle, `pnpm typecheck` ouvre la marche
+# par `vue-tsc` et couvre donc le front, ce qu'il ne faisait pas — le build ne rattrape plus
+# une rupture de types. Il reste parce qu'il vérifie autre chose : que Quasar sait produire
+# le bundle, résoudre les alias et les imports dynamiques du manuel.
 
 name: CI
 
