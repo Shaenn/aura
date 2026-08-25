@@ -378,8 +378,8 @@ pnpm install
 pnpm dev:all
 ```
 
-L'application s'ouvre sur <http://127.0.0.1:9100> — le serveur de développement ouvre le
-navigateur lui-même — et le BFF écoute sur `:8800`. `dev.bat` lance exactement la même
+L'application s'ouvre sur <http://127.0.0.1:9788> — le serveur de développement ouvre le
+navigateur lui-même — et le BFF écoute sur `:8788`. `dev.bat` lance exactement la même
 commande, pour qui préfère un double-clic à un terminal.
 
 ### L'arrêt compte autant que le lancement
@@ -407,7 +407,7 @@ un lancement précédent mal refermé reprend la main sur le nouveau.
 
 ```bash
 pnpm build
-pnpm start          # http://127.0.0.1:8800
+pnpm start          # http://127.0.0.1:8788
 ```
 
 La fenêtre de console reste ouverte : **c'est le serveur**. La fermer arrête AURA.
@@ -419,7 +419,7 @@ Aucune. Quelques variables facultatives, à poser dans l'environnement ou dans `
 
 | Variable          | Défaut      | Rôle                                                          |
 | ----------------- | ----------- | ------------------------------------------------------------- |
-| `PORT`            | `8800`      | Port d'écoute du serveur — cible du proxy dev de Quasar.      |
+| `PORT`            | `8788`      | Port d'écoute du serveur — cible du proxy dev de Quasar.      |
 | `AURA_CLAUDE_DIR` | `~/.claude` | Dossier géré. Pratique pour travailler sur une copie sandbox. |
 
 Les trois suivantes n'existent que pour la
@@ -441,7 +441,7 @@ Une nouvelle variable demande un redémarrage complet : le rechargement à chaud
 
 ```
 Navigateur (SPA Quasar)  ──/api/*──►  BFF Fastify (server/)  ──►  ~/.claude
-        :9100 (dev)                        :8800                  lecture / écriture gardée
+        :9788 (dev)                        :8788                  lecture / écriture gardée
 ```
 
 Le front ne touche jamais le disque : il appelle `/api/*` en même origine — pas de CORS, aucun

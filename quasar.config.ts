@@ -110,9 +110,6 @@ export default defineConfig((ctx) => {
       // affiche. `127.0.0.1` et non `localhost` pour la raison décrite sous
       // `proxy` : ce nom coûte ~300 ms par requête au navigateur.
       host: '127.0.0.1',
-      // 9100/8800 rather than the usual 9000/8788: a sibling app on this
-      // machine is packaged around those and must keep them. La valeur vit dans
-      // `ports.json`.
       port: PORTS.web,
       // Fail loudly instead of sliding to the next free port: a silent shift
       // would leave the browser pointing at a different app.

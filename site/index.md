@@ -113,7 +113,7 @@ pnpm install
 pnpm dev:all
 ```
 
-L'application s'ouvre sur `http://127.0.0.1:9100`. Pour l'arrêter : `Ctrl+C`, ou `pnpm stop`
+L'application s'ouvre sur `http://127.0.0.1:9788`. Pour l'arrêter : `Ctrl+C`, ou `pnpm stop`
 depuis une autre fenêtre — une session de l'Atelier fait tourner un processus `claude`, et
 c'est le seul geste qui, sous Windows, déclenche un arrêt ordonné.
 

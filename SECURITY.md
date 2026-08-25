@@ -75,7 +75,7 @@ s'exécute.
 ## Ce qui n'est pas couvert
 
 - **Les autres processus de votre session.** Tout ce qui tourne sous votre compte peut
-  atteindre `127.0.0.1:8800`, comme tout ce qui tourne sous votre compte peut lire
+  atteindre `127.0.0.1:8788`, comme tout ce qui tourne sous votre compte peut lire
   `~/.claude` directement. AURA ne prétend pas s'en défendre.
 - **Ce que Claude Code fait.** AURA observe et configure ; les permissions d'outil, les
   hooks et les serveurs MCP sont exécutés par Claude Code, selon ses propres règles.

@@ -22,7 +22,7 @@ et [SECURITY.md](SECURITY.md) dit comment signaler une faille sans l'exposer.
 
 ```
 Navigateur (SPA Quasar)  ──/api/*──►  BFF Fastify (server/)  ──►  ~/.claude  (lecture / écriture gardée)
-        :9100 (dev)                        :8800                   (dossier local de l'utilisateur)
+        :9788 (dev)                        :8788                   (dossier local de l'utilisateur)
 ```
 
 Le BFF a deux rôles :
@@ -32,7 +32,7 @@ Le BFF a deux rôles :
    **cloisonnée** (garde anti-`..`, allowlist d'écriture, denylist de lecture — `server/claude/paths.ts`,
    `server/claude/fs.ts`). Toute écriture passe par un flux **propose → apply** avec **backup** préalable.
 2. En **production**, il sert aussi le build statique de la SPA depuis le même process (un seul
-   déployable). En dev, Quasar sert le front sur `:9100` et proxifie `/api` vers `:8800`
+   déployable). En dev, Quasar sert le front sur `:9788` et proxifie `/api` vers `:8788`
    (`quasar.config.ts` → `devServer.proxy`).
 
 Le front n'appelle donc que `/api/...` — même origine, pas de CORS, aucun secret côté navigateur.
@@ -111,7 +111,7 @@ src/
 test/                   vitest, environnement node — parseurs, agrégats, diagnostics
 
 scripts/                outillage hors application
-  free-ports.mjs        libère 8800/9100 : extinction ordonnée du BFF d'abord, force ensuite
+  free-ports.mjs        libère 8788/9788 : extinction ordonnée du BFF d'abord, force ensuite
   i18n-scan.mjs         relevé des chaînes à traduire
 
 dev.bat                 lancement (délègue à `pnpm dev:all`)
@@ -224,7 +224,7 @@ su avant de faire échouer volontairement l'un d'eux : un échec affiche les che
   ne relit pas `--env-file`).
 - Le dossier géré se surcharge par `AURA_CLAUDE_DIR` — pratique pour travailler sur une copie du
   dossier plutôt que sur le vrai.
-- Le port est `8800` et non `8788` : ce dernier est celui d'une autre application locale. Le dev
+- Les deux ports viennent de `ports.json`, à la racine, et de nulle part ailleurs. Le dev
   server échoue bruyamment plutôt que de glisser vers le port libre suivant.
 - Le service statique de prod s'active **sur présence du build** (`dist/spa/index.html`), pas via
   `NODE_ENV` inline (incompatible PowerShell).

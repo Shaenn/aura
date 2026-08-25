@@ -162,7 +162,7 @@ voix (`docs/voix.md`, déjà chargée). Trois choses, dans cet ordre — ce qu'A
   pas : une nouvelle variable demande un redémarrage complet.
 - Le service statique de prod s'active **sur présence du build** (`dist/spa/index.html`), pas
   via `NODE_ENV` inline — incompatible PowerShell.
-- Port `8800` et non `8788` : ce dernier est celui d'une autre application locale.
+- Le port d'écoute vient de `ports.json`, à la racine ; `PORT` le surcharge.
 - `AURA_CLAUDE_DIR` surcharge le dossier géré.
 - `CLAUDE_CODE_PROJECT_DIR_NAME` **casse la résolution des transcripts, en silence**. Le
   nom du dossier d'un projet est dérivé du `cwd` (`agent/slug.ts`, et sa lecture inverse

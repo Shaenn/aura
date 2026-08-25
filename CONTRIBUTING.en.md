@@ -23,7 +23,7 @@ it.
 
 ```
 Browser (Quasar SPA)  ──/api/*──►  Fastify BFF (server/)  ──►  ~/.claude  (guarded read / write)
-      :9100 (dev)                       :8800                   (the user's local folder)
+      :9788 (dev)                       :8788                   (the user's local folder)
 ```
 
 The BFF has two jobs:
@@ -34,7 +34,7 @@ The BFF has two jobs:
    `server/claude/fs.ts`). Every write goes through a **propose → apply** flow with a **backup**
    taken first.
 2. In **production** it also serves the built SPA from the same process (one deployable). In dev,
-   Quasar serves the front on `:9100` and proxies `/api` to `:8800` (`quasar.config.ts` →
+   Quasar serves the front on `:9788` and proxies `/api` to `:8788` (`quasar.config.ts` →
    `devServer.proxy`).
 
 So the front only ever calls `/api/...` — same origin, no CORS, no secret on the browser side.
@@ -112,7 +112,7 @@ src/
 test/                   vitest, node environment — parsers, aggregates, diagnostics
 
 scripts/                tooling outside the application
-  free-ports.mjs        frees 8800/9100: orderly BFF shutdown first, force second
+  free-ports.mjs        frees 8788/9788: orderly BFF shutdown first, force second
   i18n-scan.mjs         survey of the strings to translate
 
 dev.bat                 launch (delegates to `pnpm dev:all`)
@@ -225,7 +225,7 @@ worth knowing before deliberately failing one of them: a failure prints the path
   `--env-file`).
 - The managed folder is overridden by `AURA_CLAUDE_DIR` — handy to work on a copy of the folder
   rather than the real one.
-- The port is `8800`, not `8788`: the latter belongs to another local application. The dev server
+- Both ports come from `ports.json`, at the root, and from nowhere else. The dev server
   fails loudly rather than sliding to the next free port.
 - Production static serving switches on **by the presence of the build** (`dist/spa/index.html`),
   not through an inline `NODE_ENV` (incompatible with PowerShell).

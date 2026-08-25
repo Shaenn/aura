@@ -31,7 +31,7 @@ const LOCAL_NAMES = new Set(['127.0.0.1', 'localhost', '[::1]'])
 /** Le nom d'hôte d'un en-tête `Host`, sans le port. */
 function hostname(header: string | undefined): string {
   if (!header) return ''
-  // `[::1]:8800` — les crochets tiennent l'adresse IPv6 d'un seul tenant.
+  // `[::1]:8788` — les crochets tiennent l'adresse IPv6 d'un seul tenant.
   if (header.startsWith('[')) return header.slice(0, header.indexOf(']') + 1).toLowerCase()
   const i = header.lastIndexOf(':')
   return (i === -1 ? header : header.slice(0, i)).toLowerCase()

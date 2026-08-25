@@ -33,8 +33,8 @@ supposent ce système.
 pnpm dev:all
 ```
 
-- Application : <http://127.0.0.1:9100> (ouverte automatiquement)
-- Serveur (BFF) : <http://127.0.0.1:8800>
+- Application : <http://127.0.0.1:9788> (ouverte automatiquement)
+- Serveur (BFF) : <http://127.0.0.1:8788>
 
 La fenêtre console reste ouverte : **c'est le serveur**. La fermer arrête AURA.
 
@@ -42,14 +42,14 @@ La fenêtre console reste ouverte : **c'est le serveur**. La fermer arrête AURA
 
 ```bash
 pnpm build      # génère le build statique de la SPA
-pnpm start      # sert l'app + l'API sur http://127.0.0.1:8800
+pnpm start      # sert l'app + l'API sur http://127.0.0.1:8788
 ```
 
 ## Configuration (optionnelle)
 
 Aucun secret n'est requis. Deux variables d'environnement facultatives :
 
-- `PORT` — port d'écoute du serveur (défaut `8800`).
+- `PORT` — port d'écoute du serveur (défaut `8788`).
 - `AURA_CLAUDE_DIR` — surcharge du dossier `.claude` géré (défaut `~/.claude` ; pratique pour tester sur
   une copie sandbox).
 
@@ -57,8 +57,8 @@ On peut les poser dans l'environnement ou dans `server/.env` (ignoré par git), 
 
 ## Dépannage
 
-- **Le navigateur ne s'ouvre pas** : allez manuellement sur <http://127.0.0.1:9100> (dev) ou
-  <http://127.0.0.1:8800> (prod).
+- **Le navigateur ne s'ouvre pas** : allez manuellement sur <http://127.0.0.1:9788> (dev) ou
+  <http://127.0.0.1:8788> (prod).
 - **L'interface répond lentement** : vérifiez que l'adresse est bien `127.0.0.1` et non `localhost`.
   Ce nom se résout d'abord en `::1`, que rien n'écoute ici, et le navigateur attend environ 300 ms
   avant de se rabattre sur IPv4 — sur chaque requête, soit bien plus que le temps de réponse du
