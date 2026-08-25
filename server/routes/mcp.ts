@@ -22,7 +22,7 @@ interface WriteBody {
 function parseBody(body: unknown): { name: string; server: McpServerConfig | null } | { error: string } {
   const b = (body ?? {}) as WriteBody
   if (typeof b.name !== 'string' || !b.name.trim()) return { error: t('errors.serverNameRequired') }
-  const server = b.server == null ? null : b.server
+  const server = b.server ?? null
   if (server !== null) {
     const err = validateServer(server)
     if (err) return { error: err }

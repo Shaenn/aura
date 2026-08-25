@@ -46,7 +46,7 @@
     })
 
     for (const n of nodes) {
-      if (n.dataset.src == null) n.dataset.src = n.textContent ?? ''
+      if (n.dataset.src === undefined) n.dataset.src = n.textContent ?? ''
       else n.textContent = n.dataset.src
       n.removeAttribute('data-processed')
     }
