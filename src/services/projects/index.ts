@@ -4,8 +4,8 @@
 // keep importing them from `src/services/projects` while the BFF and the SPA
 // typecheck against the same declarations.
 
-import type { PlanInfo } from '@/services/system'
 import { apiHeaders } from '@/services/http'
+import type { PlanInfo } from '@/services/system'
 
 export type {
   FolderCandidate,

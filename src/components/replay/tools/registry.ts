@@ -39,8 +39,8 @@ export interface ToolDescriptor {
   summary: (input: Record<string, unknown>) => string
 }
 
-import { asRecord, arr, bool, num, str, type ToolInput as Input } from './values'
 import { basename as short } from './language'
+import { asRecord, arr, bool, num, str, type ToolInput as Input } from './values'
 
 /** Collapse whitespace and cut, so a summary never wraps the header. */
 function oneLine(s: string, max = 80): string {

@@ -17,10 +17,10 @@
 //     `.meta.json` naming the agent type. Their tokens are invisible to anyone
 //     who only walks `<slug>/*.jsonl`.
 
-import { readFile, readdir, stat } from 'node:fs/promises'
 import { createReadStream } from 'node:fs'
-import { createInterface } from 'node:readline'
+import { readFile, readdir, stat } from 'node:fs/promises'
 import { join } from 'node:path'
+import { createInterface } from 'node:readline'
 import { CLAUDE_DIR } from './claude/paths.ts'
 import { str, num } from './json.ts'
 import { costOf, isPriced, type TokenCounts } from './pricing.ts'

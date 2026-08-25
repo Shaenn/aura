@@ -8,22 +8,10 @@
 // pairing every `tool_use` with its matching `tool_result` so the UI can render
 // a tool call and its output as a single unit.
 
-import { readFile, stat, readdir } from 'node:fs/promises'
-import { t } from './i18n/index.ts'
 import { existsSync } from 'node:fs'
-import { str, num } from './json.ts'
-import { costOf } from './pricing.ts'
-import { growth } from './tokens.ts'
+import { readFile, stat, readdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { ContextAccumulator, classifyAttachment, readCompaction, settleTurn } from './context.ts'
 import type { TurnContext } from '../shared/context.ts'
-import { configuredLongWindow } from './claude/model.ts'
-
-// ── Normalised model ─────────────────────────────────────────────────────────
-//
-// Defined once in `shared/` and re-exported here: the SPA renders exactly these
-// shapes, so a change must break both typechecks, not just one.
-
 import type {
   Block,
   HookRun,
@@ -41,6 +29,17 @@ import type {
   TranscriptSummary,
   Usage,
 } from '../shared/transcript.ts'
+import { configuredLongWindow } from './claude/model.ts'
+import { ContextAccumulator, classifyAttachment, readCompaction, settleTurn } from './context.ts'
+import { t } from './i18n/index.ts'
+import { str, num } from './json.ts'
+import { costOf } from './pricing.ts'
+import { growth } from './tokens.ts'
+
+// ── Normalised model ─────────────────────────────────────────────────────────
+//
+// Defined once in `shared/` and re-exported here: the SPA renders exactly these
+// shapes, so a change must break both typechecks, not just one.
 
 export type {
   Block,
