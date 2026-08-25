@@ -14,6 +14,15 @@ Navigateur (SPA Quasar)  ──/api/*──►  BFF Fastify (server/)  ──►
         :9100 (dev)                        :8800                  (lecture / écriture gardée)
 ```
 
+Ces deux numéros sont déclarés dans **`ports.json`**, à la racine, et nulle part ailleurs :
+`quasar.config.ts` (l'écoute et la cible du proxy), `server/env.ts` et `scripts/free-ports.mjs`
+le lisent. Du JSON plutôt qu'un module TypeScript pour rester lisible hors du monde TypeScript
+— PowerShell par `ConvertFrom-Json`, un back C# par `AddJsonFile`. Le schéma ci-dessus est la
+seule recopie qui subsiste : elle se lit, elle ne s'exécute pas.
+
+`dev.bat` et `stop.bat` sont les deux seuls lanceurs, et ils ne font que déléguer à `pnpm
+dev:all` et `pnpm stop` : une commande de lancement qui vit à deux endroits finit par diverger.
+
 AURA est un outil **local, mono-utilisateur** : aucun service externe, aucun secret, aucune
 authentification. Le front n'appelle que `/api/*` en même origine — pas de CORS.
 
@@ -40,7 +49,11 @@ un téléphone, ce qui supposerait de l'adapter à cet écran.
 ## Commandes
 
 ```bash
-pnpm dev:all     # front :9100 + BFF :8800 (proxy /api → :8800)
+pnpm dev         # front seul, HMR — le back doit tourner à côté
+pnpm server      # BFF seul, relancé à chaque fichier (node --watch)
+pnpm preview     # comme en production : build, puis le BFF sert dist/spa
+pnpm dev:all     # front + BFF ensemble, en développement
+pnpm stop        # libère les deux ports de ports.json
 pnpm test        # vitest, environnement node, test/**/*.test.ts
 pnpm typecheck   # vue-tsc sur src/, puis tsc sur server/ et test/
 pnpm lint        # eslint . — 384 fichiers, mise en forme comprise
