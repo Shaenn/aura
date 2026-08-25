@@ -15,38 +15,38 @@
 //    a hint to refresh, never as the sole source of truth — the SPA keeps a slow
 //    fallback poll for exactly this reason.
 
-import { watch, existsSync, realpathSync, type FSWatcher } from 'node:fs';
-import { join, sep } from 'node:path';
-import { CLAUDE_DIR } from './claude/paths.ts';
+import { watch, existsSync, realpathSync, type FSWatcher } from 'node:fs'
+import { join, sep } from 'node:path'
+import { CLAUDE_DIR } from './claude/paths.ts'
 
 /** Something changed under `~/.claude`. */
 export type ClaudeEvent =
   /** A file in `sessions/` moved — a session started, went busy, or ended. */
   | { kind: 'sessions' }
   /** A transcript grew. `id` is the session it belongs to, sub-agents included. */
-  | { kind: 'transcript'; slug: string; id: string };
+  | { kind: 'transcript'; slug: string; id: string }
 
-type Listener = (event: ClaudeEvent) => void;
+type Listener = (event: ClaudeEvent) => void
 
-const listeners = new Set<Listener>();
+const listeners = new Set<Listener>()
 
 /** Collapse the burst of events one append produces. */
-const WINDOW_MS = 150;
+const WINDOW_MS = 150
 /** How long to wait before re-arming a watcher that died or found no directory. */
-const RETRY_MS = 2000;
+const RETRY_MS = 2000
 
 /** One open coalescing window per key: the timer, and what arrived during it. */
 interface Window {
-  timer: NodeJS.Timeout;
-  trailing: ClaudeEvent | null;
+  timer: NodeJS.Timeout
+  trailing: ClaudeEvent | null
 }
 
-const windows = new Map<string, Window>();
+const windows = new Map<string, Window>()
 
 function deliver(event: ClaudeEvent): void {
   for (const l of listeners) {
     try {
-      l(event);
+      l(event)
     } catch {
       /* a broken subscriber must not take the watcher down */
     }
@@ -69,23 +69,23 @@ function deliver(event: ClaudeEvent): void {
  * says the turn is over, would be the one lost.
  */
 function emit(event: ClaudeEvent, key: string): void {
-  const open = windows.get(key);
+  const open = windows.get(key)
   if (open) {
-    open.trailing = event;
-    return;
+    open.trailing = event
+    return
   }
 
-  deliver(event);
+  deliver(event)
   windows.set(key, {
     timer: setTimeout(() => {
-      const closing = windows.get(key);
-      windows.delete(key);
+      const closing = windows.get(key)
+      windows.delete(key)
       // A trailing event re-opens a window of its own: it is being delivered
       // now, so what follows it deserves the same protection.
-      if (closing?.trailing) emit(closing.trailing, key);
+      if (closing?.trailing) emit(closing.trailing, key)
     }, WINDOW_MS),
     trailing: null,
-  });
+  })
 }
 
 /**
@@ -98,19 +98,19 @@ function emit(event: ClaudeEvent, key: string): void {
  * folds sub-agent turns into the session that spawned them.
  */
 function locate(relative: string): Extract<ClaudeEvent, { kind: 'transcript' }> | null {
-  if (!relative.endsWith('.jsonl')) return null;
-  const parts = relative.split(sep).filter(Boolean);
-  const slug = parts[0];
-  if (!slug || parts.length < 2) return null;
+  if (!relative.endsWith('.jsonl')) return null
+  const parts = relative.split(sep).filter(Boolean)
+  const slug = parts[0]
+  if (!slug || parts.length < 2) return null
 
   if (parts.length === 2) {
-    const file = parts[1];
-    if (!file) return null;
-    return { kind: 'transcript', slug, id: file.slice(0, -'.jsonl'.length) };
+    const file = parts[1]
+    if (!file) return null
+    return { kind: 'transcript', slug, id: file.slice(0, -'.jsonl'.length) }
   }
-  const id = parts[1];
-  if (!id) return null;
-  return { kind: 'transcript', slug, id };
+  const id = parts[1]
+  if (!id) return null
+  return { kind: 'transcript', slug, id }
 }
 
 /**
@@ -124,51 +124,51 @@ function locate(relative: string): Extract<ClaudeEvent, { kind: 'transcript' }> 
  */
 function canonical(dir: string): string {
   try {
-    return realpathSync.native(dir);
+    return realpathSync.native(dir)
   } catch {
-    return dir;
+    return dir
   }
 }
 
 /** Arm one watcher, re-arming it whenever the directory or the watch goes away. */
 function arm(dir: string, recursive: boolean, onChange: (relative: string) => void): () => void {
-  let watcher: FSWatcher | null = null;
-  let retry: NodeJS.Timeout | null = null;
-  let stopped = false;
+  let watcher: FSWatcher | null = null
+  let retry: NodeJS.Timeout | null = null
+  let stopped = false
 
-  const start = (): void => {
-    if (stopped) return;
+  function start(): void {
+    if (stopped) return
     if (!existsSync(dir)) {
-      retry = setTimeout(start, RETRY_MS);
-      return;
+      retry = setTimeout(start, RETRY_MS)
+      return
     }
     try {
       watcher = watch(canonical(dir), { recursive, persistent: false }, (_type, filename) => {
-        if (filename) onChange(filename.toString());
-      });
+        if (filename) onChange(filename.toString())
+      })
       watcher.on('error', () => {
-        watcher?.close();
-        watcher = null;
-        if (!stopped) retry = setTimeout(start, RETRY_MS);
-      });
+        watcher?.close()
+        watcher = null
+        if (!stopped) retry = setTimeout(start, RETRY_MS)
+      })
     } catch {
-      retry = setTimeout(start, RETRY_MS);
+      retry = setTimeout(start, RETRY_MS)
     }
-  };
+  }
 
-  start();
+  start()
   return () => {
-    stopped = true;
-    if (retry) clearTimeout(retry);
-    watcher?.close();
-  };
+    stopped = true
+    if (retry) clearTimeout(retry)
+    watcher?.close()
+  }
 }
 
-let stopAll: (() => void) | null = null;
+let stopAll: (() => void) | null = null
 
 /** Start watching on the first subscriber; keep watching until the last leaves. */
 export function subscribe(listener: Listener): () => void {
-  listeners.add(listener);
+  listeners.add(listener)
   if (!stopAll) {
     const stopSessions = arm(join(CLAUDE_DIR, 'sessions'), false, (name) => {
       // Keyed by file, not by the `sessions` kind they all share. Each live CLI
@@ -177,25 +177,25 @@ export function subscribe(listener: Listener): () => void {
       // list stopped moving at exactly the moment it had the most to say. The
       // event carries no payload, so this key is only a coalescing bucket — one
       // notification per session, which is what makes them independent.
-      if (name.endsWith('.json')) emit({ kind: 'sessions' }, `sessions/${name}`);
-    });
+      if (name.endsWith('.json')) emit({ kind: 'sessions' }, `sessions/${name}`)
+    })
     const stopProjects = arm(join(CLAUDE_DIR, 'projects'), true, (name) => {
-      const event = locate(name);
-      if (event) emit(event, `${event.slug}/${event.id}`);
-    });
+      const event = locate(name)
+      if (event) emit(event, `${event.slug}/${event.id}`)
+    })
     stopAll = () => {
-      stopSessions();
-      stopProjects();
-    };
+      stopSessions()
+      stopProjects()
+    }
   }
 
   return () => {
-    listeners.delete(listener);
+    listeners.delete(listener)
     if (listeners.size === 0) {
-      stopAll?.();
-      stopAll = null;
-      for (const w of windows.values()) clearTimeout(w.timer);
-      windows.clear();
+      stopAll?.()
+      stopAll = null
+      for (const w of windows.values()) clearTimeout(w.timer)
+      windows.clear()
     }
-  };
+  }
 }

@@ -26,8 +26,8 @@ l'override sous `body.body--light`.
 La bascule appartient au store `settings` :
 
 ```ts
-const settings = useSettingsStore();
-settings.darkMode = !settings.darkMode; // le store fait Dark.set()
+const settings = useSettingsStore()
+settings.darkMode = !settings.darkMode // le store fait Dark.set()
 ```
 
 - **Ne jamais manipuler `body--dark` directement**, ni stocker une copie de l'état.
@@ -68,8 +68,8 @@ Le build est une SPA servie par le BFF. Deux conséquences :
 Toujours via `useNotify`, jamais `$q.notify` en direct :
 
 ```ts
-const { notifyError, notifyDone, notifyWarn } = useNotify();
-notifyError(e, "Je n'ai pas pu supprimer cette version");
+const { notifyError, notifyDone, notifyWarn } = useNotify()
+notifyError(e, "Je n'ai pas pu supprimer cette version")
 ```
 
 Le composable applique la charte de voix — ce qu'AURA tentait dans le message, le détail
@@ -102,6 +102,11 @@ page ; un composable (`useLiveSession`, `useExpandAll`) porte la logique réutil
 
 ## Vérification des types
 
-`vue-tsc` tourne via `vite-plugin-checker`, donc pendant `pnpm dev` et `pnpm build`
-uniquement. **`pnpm typecheck` ne couvre pas `src/`** — il ne voit que `server/` et `test/`.
-Une modification du front qui casse les types ne se voit qu'en lançant le dev ou le build.
+`pnpm typecheck` ouvre la marche par `vue-tsc` : **il couvre `src/`**, puis `server/` et
+`test/` par `tsc`. `vite-plugin-checker` continue de typer le front pendant `pnpm dev`,
+pour le retour immédiat, mais la ligne de commande ne laisse plus rien dehors.
+
+Un point demeure, et il ne se voit pas au lint : ESLint n'obtient pas de types complets sur
+les `.vue`. Une règle typée qui retirerait une assertion `as` sur un composant monofichier
+ne serait rattrapée par rien — ni par le lint, ni par `tsc`, qui ne lit pas les `.vue`.
+D'où la règle : sur un `--fix` de masse, relever `vue-tsc --noEmit` avant ET après.

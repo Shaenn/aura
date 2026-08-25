@@ -16,16 +16,16 @@
 </template>
 
 <script setup lang="ts">
-// An agent is a single file (agents/<name>.md), so no `refs-dir`: there is no
-// folder of reference files to browse, unlike a skill.
-//
-// The dot is keyed on the agent's name, which is what a transcript records as
-// `subagent_type` — so an agent wears the same colour here and in a replay.
-import { useI18n } from 'vue-i18n';
-import ResourceViewer from '@/components/resources/ResourceViewer.vue';
-import { listAgents } from '@/services/claude';
-import { agentColor } from '@/utils/agentColors';
-import { AGENT_KEYS } from '@/utils/resourceFrontmatter';
+  // An agent is a single file (agents/<name>.md), so no `refs-dir`: there is no
+  // folder of reference files to browse, unlike a skill.
+  //
+  // The dot is keyed on the agent's name, which is what a transcript records as
+  // `subagent_type` — so an agent wears the same colour here and in a replay.
+  import ResourceViewer from '@/components/resources/ResourceViewer.vue'
+  import { listAgents } from '@/services/claude'
+  import { agentColor } from '@/utils/agentColors'
+  import { AGENT_KEYS } from '@/utils/resourceFrontmatter'
+  import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n();
+  const { t } = useI18n()
 </script>

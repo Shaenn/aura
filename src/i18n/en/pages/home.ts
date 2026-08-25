@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const home: MessageSchema['pages']['home'] = {
   kicker: 'AGENTIC UNIFIED RESOURCE ASSISTANT',
@@ -28,6 +28,6 @@ const home: MessageSchema['pages']['home'] = {
     maintenance: 'Storage, cache purge, generated plans.',
     help: 'One page per module, and the shared concepts.',
   },
-};
+}
 
-export default home;
+export default home

@@ -10,8 +10,7 @@ export default {
       running: 'en cours',
       none: 'sans résultat',
     },
-    tokensTip:
-      'Environ {n} tokens ajoutés au contexte (estimation à partir du nombre de caractères).',
+    tokensTip: 'Environ {n} tokens ajoutés au contexte (estimation à partir du nombre de caractères).',
     tokensTipImages:
       'Environ {n} tokens ajoutés au contexte (estimation à partir du nombre de caractères, et des dimensions pour l’image). | Environ {n} tokens ajoutés au contexte (estimation à partir du nombre de caractères, et des dimensions pour les images).',
   },
@@ -55,14 +54,12 @@ export default {
 
   paths: {
     count: '{n} fichier | {n} fichiers',
-    overflow:
-      '{n} fichier supplémentaire non affiché. | {n} fichiers supplémentaires non affichés.',
+    overflow: '{n} fichier supplémentaire non affiché. | {n} fichiers supplémentaires non affichés.',
   },
 
   /** Les lignes que le CLI adresse au modèle, ramenées à ce qu'elles apprennent. */
   service: {
-    identicalTo:
-      'Résultat identique à un appel `{tool}` précédent — le CLI ne l’a pas renvoyé une seconde fois.',
+    identicalTo: 'Résultat identique à un appel `{tool}` précédent — le CLI ne l’a pas renvoyé une seconde fois.',
     dontAsk: 'la session tournait sans demander de confirmation',
   },
 
@@ -117,8 +114,7 @@ export default {
       open: 'Ouvrir la piste de l’agent',
       prompt: "Consigne envoyée à l'agent",
       report: "Rapport de l'agent",
-      async:
-        "Agent lancé en arrière-plan. Sa réponse n'arrive pas ici : elle revient plus tard, dans un tour à part.",
+      async: "Agent lancé en arrière-plan. Sa réponse n'arrive pas ici : elle revient plus tard, dans un tour à part.",
     },
 
     enterPlan: {
@@ -129,10 +125,8 @@ export default {
       sameAsBefore: 'Même résultat qu’un appel {tool} précédent.',
       empty: 'Aucun fichier ne correspond.',
       order: 'du plus ancien au plus récent',
-      cutSome:
-        '{rest} autres ne sont pas listés, sur {total} en tout : la liste garde les plus anciens, les modifications récentes manquent.',
-      cutAll:
-        'La liste est tronquée : elle garde les plus anciens, les modifications récentes manquent.',
+      cutSome: '{rest} autres ne sont pas listés, sur {total} en tout : la liste garde les plus anciens, les modifications récentes manquent.',
+      cutAll: 'La liste est tronquée : elle garde les plus anciens, les modifications récentes manquent.',
     },
 
     grep: {
@@ -141,8 +135,7 @@ export default {
         files_with_matches: 'fichiers seulement',
         count: 'comptage',
       },
-      overflow:
-        '{n} correspondance supplémentaire non affichée. | {n} correspondances supplémentaires non affichées.',
+      overflow: '{n} correspondance supplémentaire non affichée. | {n} correspondances supplémentaires non affichées.',
       paged: 'Recherche paginée : {parts} — il y en a peut-être d’autres.',
       pagedOffset: 'les {n} premiers sont passés',
       pagedLimit: 'au plus {n} sont affichés',
@@ -152,8 +145,7 @@ export default {
       failed: "Le serveur de langage n'a pas répondu.",
       refused: "Appel refusé par l'utilisateur.",
       noResult: 'Aucun résultat.',
-      indexing:
-        'Un serveur de langage qui n’a pas fini d’indexer le projet répond de la même façon.',
+      indexing: 'Un serveur de langage qui n’a pas fini d’indexer le projet répond de la même façon.',
       line: 'l.',
       callAt: 'appel en {at}',
       countIn: '{n} {what} dans {files} fichiers',
@@ -219,8 +211,7 @@ export default {
       found: 'Outils trouvés',
       loaded: 'Outils chargés',
       noMatch: 'Aucun outil différé ne correspond à cette recherche.',
-      noSuchName:
-        'Aucun outil différé ne porte ce nom — rien n’a été chargé. | Aucun outil différé ne porte ces noms — rien n’a été chargé.',
+      noSuchName: 'Aucun outil différé ne porte ce nom — rien n’a été chargé. | Aucun outil différé ne porte ces noms — rien n’a été chargé.',
       asked: 'Chargement demandé',
       notKept: "Le transcript n'a pas gardé le résultat de cette recherche.",
       reserve: '{n} outil encore en réserve. | {n} outils encore en réserve.',
@@ -248,10 +239,8 @@ export default {
     shell: {
       unsandboxed: 'hors bac à sable',
       silent: "La commande n'a rien écrit.",
-      launched:
-        'Lancée en arrière-plan, identifiant {id}. Sa sortie s’écrit dans un fichier, hors du transcript.',
-      touched:
-        '{n} fichier déjà lu que la commande a modifié : | {n} fichiers déjà lus que la commande a modifiés :',
+      launched: 'Lancée en arrière-plan, identifiant {id}. Sa sortie s’écrit dans un fichier, hors du transcript.',
+      touched: '{n} fichier déjà lu que la commande a modifié : | {n} fichiers déjà lus que la commande a modifiés :',
       exit: 'code de sortie {code}',
       exitMeaning: 'code de sortie {code} · {meaning}',
       meaning: {
@@ -286,4 +275,4 @@ export default {
       results: '{n} résultat | {n} résultats',
     },
   },
-};
+}

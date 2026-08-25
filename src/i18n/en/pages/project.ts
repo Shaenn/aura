@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const project: MessageSchema['pages']['project'] = {
   title: 'Project {name}',
@@ -40,6 +40,6 @@ const project: MessageSchema['pages']['project'] = {
   planDeleted: 'Plan deleted.',
   planDeleteError: "I couldn't delete this plan",
   loadError: "I couldn't load this project.",
-};
+}
 
-export default project;
+export default project

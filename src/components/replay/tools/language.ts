@@ -60,7 +60,7 @@ const BY_EXTENSION: Record<string, string> = {
   cfg: 'ini',
   diff: 'diff',
   patch: 'diff',
-};
+}
 
 /** Files whose whole name — not extension — decides the language. */
 const BY_NAME: Record<string, string> = {
@@ -68,35 +68,35 @@ const BY_NAME: Record<string, string> = {
   makefile: 'makefile',
   gemfile: 'ruby',
   rakefile: 'ruby',
-};
+}
 
 /** Split on both separators: transcripts carry Windows and POSIX paths alike. */
 function segments(path: string): string[] {
-  return path.replace(/[\\/]+$/, '').split(/[\\/]/);
+  return path.replace(/[\\/]+$/, '').split(/[\\/]/)
 }
 
 /** Last path segment, e.g. `server/usage.ts` → `usage.ts`. */
 export function basename(path: string): string {
-  const parts = segments(path);
-  return parts[parts.length - 1] ?? path;
+  const parts = segments(path)
+  return parts[parts.length - 1] ?? path
 }
 
 /** Everything before the last segment, e.g. `server/usage.ts` → `server`. */
 export function dirname(path: string): string {
-  const parts = segments(path);
-  return parts.slice(0, -1).join('/');
+  const parts = segments(path)
+  return parts.slice(0, -1).join('/')
 }
 
 /** highlight.js language for a path, or `''` when we cannot tell. */
 export function langOf(path: string): string {
-  const name = basename(path).toLowerCase();
-  const byName = BY_NAME[name];
-  if (byName) return byName;
-  if (name.startsWith('.env')) return 'bash';
+  const name = basename(path).toLowerCase()
+  const byName = BY_NAME[name]
+  if (byName) return byName
+  if (name.startsWith('.env')) return 'bash'
 
-  const dot = name.lastIndexOf('.');
-  if (dot <= 0) return '';
-  return BY_EXTENSION[name.slice(dot + 1)] ?? '';
+  const dot = name.lastIndexOf('.')
+  if (dot <= 0) return ''
+  return BY_EXTENSION[name.slice(dot + 1)] ?? ''
 }
 
 /**
@@ -124,16 +124,16 @@ const LABEL_BY_EXTENSION: Record<string, string> = {
   mdx: 'mdx',
   pl: 'perl',
   patch: 'diff',
-};
+}
 
 export function langLabel(path: string): string {
-  const name = basename(path).toLowerCase();
-  const dot = name.lastIndexOf('.');
-  const ext = dot > 0 ? name.slice(dot + 1) : '';
-  return LABEL_BY_EXTENSION[ext] ?? langOf(path);
+  const name = basename(path).toLowerCase()
+  const dot = name.lastIndexOf('.')
+  const ext = dot > 0 ? name.slice(dot + 1) : ''
+  return LABEL_BY_EXTENSION[ext] ?? langOf(path)
 }
 
 /** True when the file renders better as prose than as code. */
 export function isMarkdown(path: string): boolean {
-  return langOf(path) === 'markdown';
+  return langOf(path) === 'markdown'
 }

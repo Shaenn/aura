@@ -23,4 +23,4 @@ export default {
   readOnly: 'lecture seule',
   /** Quand l'exception n'a rien à dire d'elle-même. */
   noDetail: "Je n'ai pas pu aller au bout.",
-};
+}

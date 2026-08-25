@@ -9,12 +9,11 @@
 // Injecting `null` is a supported state: it means "we cannot fetch", and the
 // pane degrades to showing the preview the transcript already carries.
 
-import type { InjectionKey, Ref } from 'vue';
+import type { InjectionKey, Ref } from 'vue'
 
 export interface TranscriptSource {
-  slug: string;
-  sessionId: string;
+  slug: string
+  sessionId: string
 }
 
-export const TRANSCRIPT_SOURCE: InjectionKey<Ref<TranscriptSource | null>> =
-  Symbol('transcript-source');
+export const TRANSCRIPT_SOURCE: InjectionKey<Ref<TranscriptSource | null>> = Symbol('transcript-source')

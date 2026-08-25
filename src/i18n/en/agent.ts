@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../fr';
+import type { MessageSchema } from '../fr'
 
 const agent: MessageSchema['agent'] = {
   activity: {
@@ -62,6 +62,6 @@ const agent: MessageSchema['agent'] = {
       truncated: 'The folder is too large: I am showing only part of it.',
     },
   },
-};
+}
 
-export default agent;
+export default agent

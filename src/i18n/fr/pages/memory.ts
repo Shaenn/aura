@@ -24,10 +24,8 @@ export default {
   // libellés : la clé `user` reste `user` dans le fichier.
   types: {
     user: "Qui est l'utilisateur : rôle, expertise, préférences durables.",
-    feedback:
-      'Consignes sur la façon de travailler — corrections comme approches validées. Explique le pourquoi.',
-    project:
-      "Travail en cours, objectifs ou contraintes non déductibles du code ni de l'historique git. Dates en absolu.",
+    feedback: 'Consignes sur la façon de travailler — corrections comme approches validées. Explique le pourquoi.',
+    project: "Travail en cours, objectifs ou contraintes non déductibles du code ni de l'historique git. Dates en absolu.",
     reference: 'Pointeurs vers des ressources externes : URLs, dashboards, tickets.',
   },
   discard: 'Abandonner les modifications non appliquées ?',
@@ -46,6 +44,5 @@ export default {
   openError: "Je n'ai pas pu ouvrir ce fichier",
   deleteError: "Je n'ai pas pu supprimer cette mémoire",
   /** Consigne affichée dans le corps d'une mémoire neuve, jamais écrite au fichier. */
-  bodyPlaceholder:
-    'Le fait, en clair. Liez les mémoires voisines avec [[leur-nom]]. Les dates en absolu.',
-};
+  bodyPlaceholder: 'Le fait, en clair. Liez les mémoires voisines avec [[leur-nom]]. Les dates en absolu.',
+}

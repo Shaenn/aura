@@ -7,7 +7,6 @@ export default {
   noChange: 'Je ne vois rien à changer : le fichier est déjà dans cet état.',
   apply: 'Appliquer',
   applied: 'Modification appliquée.',
-  conflict:
-    "Le fichier a changé sur le disque depuis que je vous l'ai montré. Rechargez avant de réappliquer.",
+  conflict: "Le fichier a changé sur le disque depuis que je vous l'ai montré. Rechargez avant de réappliquer.",
   failed: "Je n'ai pas pu écrire le fichier.",
-};
+}

@@ -11,40 +11,40 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ items: { k: string; v: string }[] }>();
+  defineProps<{ items: { k: string; v: string }[] }>()
 </script>
 
 <style scoped lang="scss">
-.tch {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-}
-.tch-item {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-xs);
-  padding: 2px var(--space-sm);
-  background: var(--surface);
-  border: 1px solid var(--line-2);
-  border-radius: 999px;
-  max-width: 100%;
-}
-.tch-k {
-  font-size: var(--fs-2xs);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--faint);
-  flex-shrink: 0;
-}
-.tch-v {
-  font-size: var(--fs-xs);
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+  .tch {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+  .tch-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-xs);
+    padding: 2px var(--space-sm);
+    background: var(--surface);
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    max-width: 100%;
+  }
+  .tch-k {
+    font-size: var(--fs-2xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--faint);
+    flex-shrink: 0;
+  }
+  .tch-v {
+    font-size: var(--fs-xs);
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 </style>

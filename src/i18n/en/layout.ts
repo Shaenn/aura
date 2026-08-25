@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../fr';
+import type { MessageSchema } from '../fr'
 
 const layout: MessageSchema['layout'] = {
   skipToContent: 'Skip to content',
@@ -33,6 +33,6 @@ const layout: MessageSchema['layout'] = {
     busy: '{n} working | {n} working',
     waiting: '{n} waiting on you',
   },
-};
+}
 
-export default layout;
+export default layout

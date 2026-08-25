@@ -39,12 +39,11 @@ export default {
   expandAll: 'Tout déplier',
   collapseAll: 'Tout replier',
 
-  emptyMain:
-    'Le fil principal ne porte aucun message — tout le travail est dans les pistes ci-dessus.',
+  emptyMain: 'Le fil principal ne porte aucun message — tout le travail est dans les pistes ci-dessus.',
   emptyTrack: 'Aucun message dans cette piste.',
 
   aside: 'Suivi, contexte et diagnostic de la session',
   tasks: 'Tâches',
   context: 'Fenêtre de contexte',
   diagnostic: 'Diagnostic de la session',
-};
+}

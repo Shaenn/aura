@@ -3,7 +3,7 @@
 // La charte de voix (`docs/voix.md`) vaut ici comme à l'écran : une erreur dit
 // ce qu'AURA voulait faire, ce qui a échoué, et ce qui reste possible.
 
-import diagnostics from './fr-diagnostics.ts';
+import diagnostics from './fr-diagnostics.ts'
 
 export default {
   diagnostics,
@@ -16,10 +16,8 @@ export default {
     planNotFound: 'Plan introuvable.',
     unknownSession: 'Session inconnue.',
     /** Le processus visé n'est plus là, ou n'a jamais été un processus Claude. */
-    processNotFound:
-      "Je ne trouve pas ce processus parmi ceux de Claude. Il vient peut-être de s'arrêter — rechargez la liste.",
-    cannotKillSelf:
-      "Je ne me termine pas moi-même. Utilisez l'extinction : elle coupe d'abord les sessions de l'Atelier.",
+    processNotFound: "Je ne trouve pas ce processus parmi ceux de Claude. Il vient peut-être de s'arrêter — rechargez la liste.",
+    cannotKillSelf: "Je ne me termine pas moi-même. Utilisez l'extinction : elle coupe d'abord les sessions de l'Atelier.",
     paramRequired: 'Paramètre "{name}" requis.',
     paramsRequired: 'Paramètres "{first}" et "{second}" requis.',
     bodyExpected: 'Corps attendu : {shape}.',
@@ -31,15 +29,12 @@ export default {
     serverNameRequired: 'Nom de serveur requis.',
     workdirRequired: 'Dossier de travail requis.',
     /** Le plafond du parc : un refus qu'un geste de l'utilisateur lève aussitôt. */
-    tooManySessions:
-      "Je n'ouvre pas de session de plus : {max} tournent déjà, et chacune tient un processus. Fermez-en une et j'ouvre celle-ci.",
+    tooManySessions: "Je n'ouvre pas de session de plus : {max} tournent déjà, et chacune tient un processus. Fermez-en une et j'ouvre celle-ci.",
     emptyMessage: 'Message vide.',
     /** Les images jointes à un tour : refusées avant l'envoi, jamais après. */
     attachmentsShape: "Je n'ai pas reconnu les images jointes. Le tour n'a pas été envoyé.",
-    attachmentType:
-      "Je ne sais pas joindre une image de type {type}. Le tour n'a pas été envoyé — PNG, JPEG, GIF et WebP passent.",
-    attachmentTooBig:
-      "Cette image dépasse 5 Mo, ce que l'API refuse. Le tour n'a pas été envoyé ; une capture réduite passera.",
+    attachmentType: "Je ne sais pas joindre une image de type {type}. Le tour n'a pas été envoyé — PNG, JPEG, GIF et WebP passent.",
+    attachmentTooBig: "Cette image dépasse 5 Mo, ce que l'API refuse. Le tour n'a pas été envoyé ; une capture réduite passera.",
     unknownAttachment: "Cette image n'est plus en mémoire. Elle reste dans le transcript.",
     /** La sortie d'un shell de fond : le fichier est temporaire, il s'efface. */
     unknownShell: "Je ne retrouve pas la sortie de ce shell. Le fichier temporaire n'est plus là.",
@@ -72,16 +67,13 @@ export default {
 
   /** L'Atelier : ce qu'AURA écrit dans le fil d'une session qu'elle possède. */
   agent: {
-    permissionTimeout:
-      "Personne n'a répondu à cette demande d'autorisation dans le quart d'heure ; je la refuse par défaut.",
+    permissionTimeout: "Personne n'a répondu à cette demande d'autorisation dans le quart d'heure ; je la refuse par défaut.",
     sessionStopped: 'Session arrêtée.',
     deniedFromAtelier: "Refusé depuis l'Atelier.",
     sessionEnded: "La session s'est arrêtée : {message}",
     /** Le fil vient d'être vidé : ces deux lignes sont tout ce qui reste à l'écran. */
-    cleared:
-      "J'ouvre une nouvelle session. Le contexte est vide ; l'échange précédent reste sur disque.",
-    clearedByCommand:
-      "J'ouvre une nouvelle session : /clear a vidé le contexte. L'échange précédent reste sur disque.",
+    cleared: "J'ouvre une nouvelle session. Le contexte est vide ; l'échange précédent reste sur disque.",
+    clearedByCommand: "J'ouvre une nouvelle session : /clear a vidé le contexte. L'échange précédent reste sur disque.",
     pickerUnavailable: 'Sélecteur de dossier indisponible sur {platform}.',
     noPowerShell: 'Aucun hôte PowerShell trouvé.',
   },
@@ -145,8 +137,7 @@ export default {
     projets: 'Les projets que je connais. Le numéro sert à /projet et à /atelier.',
     aucunProjet: 'Claude Code n’a encore travaillé sur aucun projet ici.',
     /** La garde de l'Atelier à distance : on n'ouvre que ce qui est déjà connu. */
-    projetInconnu:
-      'Je ne reconnais pas ce projet. /projets donne ceux que j’ouvre, avec leur numéro.',
+    projetInconnu: 'Je ne reconnais pas ce projet. /projets donne ceux que j’ouvre, avec leur numéro.',
     dossier: '{ou} — {total} fichiers.',
     ouvrirIci: '▶ Ouvrir l’Atelier ici',
     retourProjets: '◀ Projets',
@@ -208,8 +199,7 @@ export default {
      * `docs/voix.md` range la recommandation parmi les surfaces où AURA parle
      * d'elle : elle conseille, elle ne se contente pas de mesurer.
      */
-    fenetrePleine:
-      'Je vous signale que la fenêtre est occupée à {pourcent} % — une compaction approche.',
+    fenetrePleine: 'Je vous signale que la fenêtre est occupée à {pourcent} % — une compaction approche.',
     permission: 'Je voudrais utiliser {outil}.',
     autoriser: 'Autoriser',
     /**
@@ -232,8 +222,7 @@ export default {
     questionMultiple: 'Plusieurs réponses possibles.',
     questionLibre: 'Pressez une option, ou écrivez votre réponse.',
     questionValider: 'Valider',
-    questionExpiree:
-      'Personne n’a répondu à cette question dans le quart d’heure ; je l’ai laissée passer.',
+    questionExpiree: 'Personne n’a répondu à cette question dans le quart d’heure ; je l’ai laissée passer.',
     commandeInconnue: 'Je ne connais pas {commande}. /aide donne ce que je sais faire.',
     /**
      * La bulle éphémère montrée pendant qu'un tour travaille.
@@ -282,4 +271,4 @@ export default {
     'shell-snapshots': 'Snapshots de shell',
     plans: 'Plans générés',
   },
-};
+}

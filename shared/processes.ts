@@ -28,59 +28,59 @@ export type ClaudeProcessKind =
   | 'daemon'
   /** Le pont de messagerie native de l'extension Chrome. */
   | 'native-host'
-  | 'other';
+  | 'other'
 
 export interface ClaudeProcess {
-  pid: number;
+  pid: number
   /** `0` quand le parent n'est pas connu. */
-  ppid: number;
-  kind: ClaudeProcessKind;
+  ppid: number
+  kind: ClaudeProcessKind
   /** La ligne de commande, écourtée : elle sert à reconnaître, pas à rejouer. */
-  command: string;
+  command: string
   /** Début du processus, quand le système le donne. */
-  startedAt?: number;
+  startedAt?: number
   /**
    * Le parent n'existe plus.
    *
    * Le cas qui a motivé cet écran : un daemon dont la session d'origine est morte
    * continue d'accepter des jobs, sans que rien ne le rattache plus à personne.
    */
-  orphan: boolean;
+  orphan: boolean
   /** Le processus d'AURA : jamais tuable depuis ici. */
-  self: boolean;
+  self: boolean
 
   // ── Ce que le fichier de session ajoute, quand il y en a un ───────────────
   /** Vide pour un daemon, un pty-host ou le native host : ils n'en écrivent pas. */
-  sessionId?: string;
-  name?: string;
-  cwd?: string;
+  sessionId?: string
+  name?: string
+  cwd?: string
   /** `busy`, `idle`, `waiting` — tel que le CLI l'écrit. */
-  status?: string;
+  status?: string
 }
 
 export interface ProcessList {
-  processes: ClaudeProcess[];
+  processes: ClaudeProcess[]
   /**
    * La plateforme ne sait pas énumérer ses processus.
    *
    * L'écran le dit franchement plutôt que d'afficher une liste vide, qui se
    * lirait comme « rien ne tourne » — le contraire de ce qu'on sait.
    */
-  unsupported?: boolean;
+  unsupported?: boolean
 }
 
 export interface KillProcessBody {
-  pid: number;
+  pid: number
   /**
    * Couper aussi toute la descendance.
    *
    * Presque toujours ce qu'on veut : un job coupé sans son hôte de
    * pseudo-terminal renaît aussitôt sous un nouveau PID.
    */
-  descendants?: boolean;
+  descendants?: boolean
 }
 
 export interface KillProcessResult {
   /** Les PID effectivement terminés, dans l'ordre où ils l'ont été. */
-  killed: number[];
+  killed: number[]
 }

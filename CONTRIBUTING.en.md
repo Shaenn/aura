@@ -175,14 +175,15 @@ rather than copying their markup/CSS.
 ## Quality
 
 ```bash
-pnpm lint        # ESLint
-pnpm format      # Prettier
-pnpm typecheck   # tsc over server/ and test/
+pnpm verifie     # lint + typecheck + test — run this before pushing
+pnpm lint        # ESLint, formatting included
+pnpm format      # Prettier, then ESLint --fix
+pnpm typecheck   # vue-tsc over src/, then tsc over server/ and test/
 pnpm test        # vitest
 ```
 
-`src/` is **not** covered by `pnpm typecheck`: the front is typed by `vue-tsc` through
-`vite-plugin-checker`, therefore during `pnpm dev` or `pnpm build`.
+`pnpm typecheck` covers the front, the BFF and the tests. Prettier runs as an ESLint rule:
+formatting is reported by `pnpm lint` and fixed by the same `--fix`.
 
 `server/` and `test/` have their own `tsconfig.json` (Node, `lib: esnext` without DOM, `.ts`
 extensions allowed on import); the root tsconfig excludes them. `exactOptionalPropertyTypes` is on

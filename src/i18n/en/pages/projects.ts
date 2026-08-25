@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const projects: MessageSchema['pages']['projects'] = {
   title: 'Projects',
@@ -17,6 +17,6 @@ const projects: MessageSchema['pages']['projects'] = {
     size: 'Size',
     lastActivity: 'Last activity',
   },
-};
+}
 
-export default projects;
+export default projects

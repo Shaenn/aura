@@ -1,29 +1,29 @@
-import { readdirSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vitepress';
+import { readdirSync, readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { defineConfig } from 'vitepress'
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
 
 // La barre latérale se déduit de la source du manuel, jamais d'une liste tenue à la main :
 // une page ajoutée dans `src/help/sections/` apparaît ici au build suivant. `order` est le
 // même champ qui classe les pages dans l'application — un seul ordre, une seule vérité.
 function manualSidebar(locale: 'fr' | 'en', prefix: string) {
-  const dir = join(root, 'src/help/sections', locale);
+  const dir = join(root, 'src/help/sections', locale)
 
   return readdirSync(dir)
     .filter((name) => name.endsWith('.md'))
     .map((name) => {
-      const source = readFileSync(join(dir, name), 'utf8');
-      const title = /^title:\s*(.+)$/m.exec(source)?.[1]?.trim() ?? name.replace(/\.md$/, '');
-      const order = Number(/^order:\s*(\d+)$/m.exec(source)?.[1] ?? 999);
-      return { text: title, link: `${prefix}/${name.replace(/\.md$/, '')}`, order };
+      const source = readFileSync(join(dir, name), 'utf8')
+      const title = /^title:\s*(.+)$/m.exec(source)?.[1]?.trim() ?? name.replace(/\.md$/, '')
+      const order = Number(/^order:\s*(\d+)$/m.exec(source)?.[1] ?? 999)
+      return { text: title, link: `${prefix}/${name.replace(/\.md$/, '')}`, order }
     })
     .sort((a, b) => a.order - b.order)
-    .map(({ text, link }) => ({ text, link }));
+    .map(({ text, link }) => ({ text, link }))
 }
 
-const REPO = 'https://github.com/Shaenn/aura';
+const REPO = 'https://github.com/Shaenn/aura'
 
 export default defineConfig({
   // Le site est servi sous le nom du dépôt sur GitHub Pages.
@@ -91,4 +91,4 @@ export default defineConfig({
     search: { provider: 'local' },
     socialLinks: [{ icon: 'github', link: REPO }],
   },
-});
+})

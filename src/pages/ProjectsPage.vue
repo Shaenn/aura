@@ -5,15 +5,7 @@
     <header class="pj-header">
       <q-icon name="folder" size="15px" class="pj-head-icon" aria-hidden="true" />
       <p class="pj-sub font-mono">{{ t('pages.projects.count', projects.length) }}</p>
-      <q-btn
-        flat
-        dense
-        no-caps
-        :label="t('common.refresh')"
-        class="pj-refresh"
-        :disable="loading"
-        @click="refresh"
-      />
+      <q-btn flat dense no-caps :label="t('common.refresh')" class="pj-refresh" :disable="loading" @click="refresh" />
     </header>
 
     <!-- Error -->
@@ -104,193 +96,193 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useI18n } from 'vue-i18n';
-import type { QTableColumn } from 'quasar';
-import { getProjects, type ProjectSummary } from '@/services/projects';
-import { fmtBytes, relTime } from '@/utils/format';
+  import { getProjects, type ProjectSummary } from '@/services/projects'
+  import { fmtBytes, relTime } from '@/utils/format'
+  import type { QTableColumn } from 'quasar'
+  import { computed, onMounted, ref } from 'vue'
+  import { useI18n } from 'vue-i18n'
+  import { useRouter } from 'vue-router'
 
-const { t } = useI18n();
-const router = useRouter();
-const projects = ref<ProjectSummary[]>([]);
-const loading = ref(true);
-const error = ref('');
-const filter = ref('');
+  const { t } = useI18n()
+  const router = useRouter()
+  const projects = ref<ProjectSummary[]>([])
+  const loading = ref(true)
+  const error = ref('')
+  const filter = ref('')
 
-// Calculées, et non figées à l'import : le tableau reste monté quand la langue
-// bascule, et un libellé posé une fois pour toutes garderait l'ancienne.
-const columns = computed<QTableColumn<ProjectSummary>[]>(() => [
-  {
-    name: 'name',
-    label: t('pages.projects.columns.name'),
-    field: 'name',
-    align: 'left',
-    sortable: true,
-  },
-  {
-    name: 'path',
-    label: t('pages.projects.columns.path'),
-    field: 'path',
-    align: 'left',
-    sortable: true,
-  },
-  {
-    name: 'sessions',
-    label: t('pages.projects.columns.sessions'),
-    field: 'sessions',
-    align: 'right',
-    sortable: true,
-  },
-  {
-    name: 'size',
-    label: t('pages.projects.columns.size'),
-    field: 'size',
-    align: 'right',
-    sortable: true,
-  },
-  {
-    name: 'lastActivity',
-    label: t('pages.projects.columns.lastActivity'),
-    field: 'lastActivity',
-    align: 'right',
-    sortable: true,
-  },
-  { name: 'actions', label: '', field: 'slug', align: 'right' },
-]);
+  // Calculées, et non figées à l'import : le tableau reste monté quand la langue
+  // bascule, et un libellé posé une fois pour toutes garderait l'ancienne.
+  const columns = computed<QTableColumn<ProjectSummary>[]>(() => [
+    {
+      name: 'name',
+      label: t('pages.projects.columns.name'),
+      field: 'name',
+      align: 'left',
+      sortable: true,
+    },
+    {
+      name: 'path',
+      label: t('pages.projects.columns.path'),
+      field: 'path',
+      align: 'left',
+      sortable: true,
+    },
+    {
+      name: 'sessions',
+      label: t('pages.projects.columns.sessions'),
+      field: 'sessions',
+      align: 'right',
+      sortable: true,
+    },
+    {
+      name: 'size',
+      label: t('pages.projects.columns.size'),
+      field: 'size',
+      align: 'right',
+      sortable: true,
+    },
+    {
+      name: 'lastActivity',
+      label: t('pages.projects.columns.lastActivity'),
+      field: 'lastActivity',
+      align: 'right',
+      sortable: true,
+    },
+    { name: 'actions', label: '', field: 'slug', align: 'right' },
+  ])
 
-function filterProjects(rows: readonly ProjectSummary[], term: string): ProjectSummary[] {
-  const q = term.trim().toLowerCase();
-  if (!q) return rows as ProjectSummary[];
-  return rows.filter((p) => p.name.toLowerCase().includes(q) || p.path.toLowerCase().includes(q));
-}
-
-function winPath(p: ProjectSummary): string {
-  return p.path ? p.path.replace(/\//g, '\\') : '';
-}
-
-function open(slug: string): void {
-  void router.push({ name: 'project', params: { slug } });
-}
-
-async function refresh(): Promise<void> {
-  loading.value = true;
-  error.value = '';
-  try {
-    projects.value = (await getProjects()).projects;
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : t('pages.projects.loadError');
-  } finally {
-    loading.value = false;
+  function filterProjects(rows: readonly ProjectSummary[], term: string): ProjectSummary[] {
+    const q = term.trim().toLowerCase()
+    if (!q) return rows as ProjectSummary[]
+    return rows.filter((p) => p.name.toLowerCase().includes(q) || p.path.toLowerCase().includes(q))
   }
-}
 
-onMounted(refresh);
+  function winPath(p: ProjectSummary): string {
+    return p.path ? p.path.replace(/\//g, '\\') : ''
+  }
+
+  function open(slug: string): void {
+    void router.push({ name: 'project', params: { slug } })
+  }
+
+  async function refresh(): Promise<void> {
+    loading.value = true
+    error.value = ''
+    try {
+      projects.value = (await getProjects()).projects
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : t('pages.projects.loadError')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  onMounted(refresh)
 </script>
 
 <style scoped lang="scss">
-.pj {
-  padding: var(--space-md) var(--space-xl) var(--space-xl);
-  width: 100%;
-}
-.pj-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs) var(--space-md);
-  margin-bottom: var(--space-lg);
-  flex-wrap: wrap;
-}
-.pj-head-icon {
-  color: var(--faint);
-  flex: 0 0 auto;
-}
-.pj-sub {
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--dim);
-  font-size: var(--fs-sm);
-  margin: 0;
-}
-.pj-refresh {
-  flex: 0 0 auto;
-  margin-left: auto;
-}
-.pj-card {
-  padding: var(--space-sm);
-}
-.pj-table-top {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  width: 100%;
-  padding: var(--space-xs) var(--space-sm);
-}
-.pj-search {
-  width: 280px;
-  max-width: 100%;
-}
-.pj-table {
-  :deep(thead th) {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: var(--fs-2xs);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+  .pj {
+    padding: var(--space-md) var(--space-xl) var(--space-xl);
+    width: 100%;
+  }
+  .pj-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs) var(--space-md);
+    margin-bottom: var(--space-lg);
+    flex-wrap: wrap;
+  }
+  .pj-head-icon {
+    color: var(--faint);
+    flex: 0 0 auto;
+  }
+  .pj-sub {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--dim);
+    font-size: var(--fs-sm);
+    margin: 0;
+  }
+  .pj-refresh {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+  .pj-card {
+    padding: var(--space-sm);
+  }
+  .pj-table-top {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    width: 100%;
+    padding: var(--space-xs) var(--space-sm);
+  }
+  .pj-search {
+    width: 280px;
+    max-width: 100%;
+  }
+  .pj-table {
+    :deep(thead th) {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: var(--fs-2xs);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--dim);
+    }
+    :deep(tbody tr) {
+      cursor: pointer;
+    }
+    :deep(tbody tr:hover) {
+      background: var(--hover-overlay);
+    }
+    :deep(tbody td) {
+      font-size: var(--fs-sm);
+    }
+  }
+  .pj-name-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+  .pj-name-icon {
+    color: var(--brand);
+  }
+  .pj-name {
+    font-weight: 600;
+  }
+  .pj-badge {
+    color: var(--pulse);
+  }
+  .pj-path {
+    font-size: var(--fs-xs);
+    color: var(--dim);
+    word-break: break-all;
+  }
+  .pj-time {
+    color: var(--muted);
+  }
+  .pj-chevron {
+    color: var(--faint);
+  }
+  .pj-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xl);
+    width: 100%;
     color: var(--dim);
   }
-  :deep(tbody tr) {
-    cursor: pointer;
+  .pj-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-xl);
+    color: var(--muted);
+    text-align: center;
   }
-  :deep(tbody tr:hover) {
-    background: var(--hover-overlay);
+  .pj-state p {
+    margin: 0;
   }
-  :deep(tbody td) {
-    font-size: var(--fs-sm);
-  }
-}
-.pj-name-cell {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-.pj-name-icon {
-  color: var(--brand);
-}
-.pj-name {
-  font-weight: 600;
-}
-.pj-badge {
-  color: var(--pulse);
-}
-.pj-path {
-  font-size: var(--fs-xs);
-  color: var(--dim);
-  word-break: break-all;
-}
-.pj-time {
-  color: var(--muted);
-}
-.pj-chevron {
-  color: var(--faint);
-}
-.pj-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-xl);
-  width: 100%;
-  color: var(--dim);
-}
-.pj-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-xl);
-  color: var(--muted);
-  text-align: center;
-}
-.pj-state p {
-  margin: 0;
-}
 </style>

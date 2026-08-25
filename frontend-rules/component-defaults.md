@@ -12,15 +12,7 @@ Diverger demande une raison tenant au contexte, pas une préférence.
 et le contour est la forme retenue partout.
 
 ```vue
-<q-input
-  v-model="query"
-  outlined
-  dense
-  clearable
-  debounce="120"
-  placeholder="Rechercher…"
-  aria-label="Rechercher dans le manuel"
->
+<q-input v-model="query" outlined dense clearable debounce="120" placeholder="Rechercher…" aria-label="Rechercher dans le manuel">
   <template #prepend><q-icon name="search" /></template>
 </q-input>
 ```
@@ -39,14 +31,7 @@ Pour un `q-select`, ajouter `options-dense` : la liste déroulante doit avoir la
 reste.
 
 ```vue
-<q-select
-  v-model="newEvent"
-  :options="EVENTS"
-  dense
-  outlined
-  options-dense
-  aria-label="Événement"
-/>
+<q-select v-model="newEvent" :options="EVENTS" dense outlined options-dense aria-label="Événement" />
 ```
 
 ## Boutons
@@ -120,15 +105,7 @@ les données arrivent.
 la profondeur. Et `:rows-per-page-options="[15, 30, 50, 0]"`, le `0` valant « tout ».
 
 ```vue
-<q-table
-  :rows="projects"
-  :columns="columns"
-  row-key="slug"
-  :loading="loading"
-  :filter="filter"
-  flat
-  :rows-per-page-options="[15, 30, 50, 0]"
-/>
+<q-table :rows="projects" :columns="columns" row-key="slug" :loading="loading" :filter="filter" flat :rows-per-page-options="[15, 30, 50, 0]" />
 ```
 
 Ajouter `dense` quand la table est un sous-bloc d'une page déjà chargée (liste des sessions

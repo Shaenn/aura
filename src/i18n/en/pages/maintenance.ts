@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const maintenance: MessageSchema['pages']['maintenance'] = {
   title: 'Maintenance & system',
@@ -28,8 +28,7 @@ const maintenance: MessageSchema['pages']['maintenance'] = {
     head: 'Claude processes',
     intro:
       'The disk does not declare everything: a daemon, a pty host or the Chrome extension bridge write no session file. They show up here, and nowhere else.',
-    unsupported:
-      'I do not know how to enumerate processes on this system. The list stays empty, which does not mean nothing is running.',
+    unsupported: 'I do not know how to enumerate processes on this system. The list stays empty, which does not mean nothing is running.',
     empty: 'I see no Claude process at all, not even my own — which is surprising.',
     orphan: 'orphan',
     self: 'me',
@@ -63,6 +62,6 @@ const maintenance: MessageSchema['pages']['maintenance'] = {
     deleted: 'Plan deleted.',
     deleteError: "I couldn't delete this plan",
   },
-};
+}
 
-export default maintenance;
+export default maintenance

@@ -15,21 +15,21 @@
 // intention, ce qui n'est pas mécanique —, mais un test tient les deux listes
 // égales. Rien n'est engendré ; ce qui est engendré, c'est l'accord.
 
-import { t } from '../i18n/index.ts';
+import { t } from '../i18n/index.ts'
 
 /** Ce que Telegram accepte comme nom : minuscules, chiffres, soulignés, 32 max. */
 export interface Commande {
   /** Le mot, **sans** la barre oblique : `setMyCommands` la refuse. */
-  nom: string;
+  nom: string
   /**
    * L'argument attendu, s'il y en a un.
    *
    * Il ne sert qu'à l'aide : la liste de Telegram ne montre pas la forme d'une
    * commande, seulement son nom et ce qu'elle fait.
    */
-  argument?: boolean;
+  argument?: boolean
   /** Sous quel intertitre l'aide la range. */
-  groupe: 'consulter' | 'travailler';
+  groupe: 'consulter' | 'travailler'
 }
 
 /**
@@ -53,11 +53,11 @@ export const COMMANDES: readonly Commande[] = [
   { nom: 'stop', groupe: 'travailler' },
   { nom: 'fin', groupe: 'travailler' },
   { nom: 'aide', groupe: 'travailler' },
-];
+]
 
 /** Ce que fait une commande, dans la langue en vigueur. */
 function description(nom: string): string {
-  return t(`passerelle.commandes.${nom}`);
+  return t(`passerelle.commandes.${nom}`)
 }
 
 /**
@@ -67,24 +67,21 @@ function description(nom: string): string {
  * réduite ne doit pas laisser un titre au-dessus du vide.
  */
 export function aide(): string {
-  const lignes: string[] = [t('passerelle.aideEntete')];
-  const argument = t('passerelle.aideArgument');
+  const lignes: string[] = [t('passerelle.aideEntete')]
+  const argument = t('passerelle.aideArgument')
 
   for (const groupe of ['consulter', 'travailler'] as const) {
-    const dedans = COMMANDES.filter((c) => c.groupe === groupe);
-    if (!dedans.length) continue;
-    lignes.push(
-      '',
-      t(groupe === 'consulter' ? 'passerelle.aideConsulter' : 'passerelle.aideTravailler'),
-    );
+    const dedans = COMMANDES.filter((c) => c.groupe === groupe)
+    if (!dedans.length) continue
+    lignes.push('', t(groupe === 'consulter' ? 'passerelle.aideConsulter' : 'passerelle.aideTravailler'))
     for (const c of dedans) {
-      const forme = c.argument ? `/${c.nom} ${argument}` : `/${c.nom}`;
-      lignes.push(`${forme} — ${description(c.nom)}`);
+      const forme = c.argument ? `/${c.nom} ${argument}` : `/${c.nom}`
+      lignes.push(`${forme} — ${description(c.nom)}`)
     }
   }
 
-  lignes.push('', t('passerelle.aidePied'));
-  return lignes.join('\n');
+  lignes.push('', t('passerelle.aidePied'))
+  return lignes.join('\n')
 }
 
 /**
@@ -94,5 +91,5 @@ export function aide(): string {
  * se suffisent à elles-mêmes plutôt que de renvoyer l'une à l'autre.
  */
 export function pourTelegram(): { command: string; description: string }[] {
-  return COMMANDES.map((c) => ({ command: c.nom, description: description(c.nom) }));
+  return COMMANDES.map((c) => ({ command: c.nom, description: description(c.nom) }))
 }

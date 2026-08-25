@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const agents: MessageSchema['pages']['agents'] = {
   title: 'Agents',
@@ -8,6 +8,6 @@ const agents: MessageSchema['pages']['agents'] = {
   noDescription: "No description: Claude won't know when to delegate to this agent.",
   deleteTitle: 'Delete this agent?',
   deleteNote: 'A timestamped backup is taken before the deletion.',
-};
+}
 
-export default agents;
+export default agents

@@ -20,7 +20,8 @@
 // Rien n'est estimé ici qui ne le soit déjà ailleurs : les montants sont exacts,
 // les tokens d'outils portent leur `~` comme partout.
 
-import { getSignals, type SessionSignal } from './signals.ts';
+import { detect, type Finding } from './rules.ts'
+import { getSignals, type SessionSignal } from './signals.ts'
 import {
   calibrate,
   percentileRank,
@@ -29,50 +30,49 @@ import {
   valueOf as valueFor,
   type MetricName,
   type Unit,
-} from './thresholds.ts';
-import { detect, type Finding } from './rules.ts';
+} from './thresholds.ts'
 
 /** Un signal de cette session, situé dans le parc. */
 export interface SessionRank {
-  metric: MetricName;
-  label: string;
-  unit: Unit;
+  metric: MetricName
+  label: string
+  unit: Unit
   /** La valeur de cette session. */
-  value: number;
+  value: number
   /** Sa place dans le parc, entre 0 et 1 — voir `percentileRank`. */
-  rank: number;
+  rank: number
   /** La médiane du parc, pour donner un repère au rang. */
-  median: number;
+  median: number
   /** Sessions du parc qui portent ce signal. */
-  sampleSize: number;
+  sampleSize: number
   /** `high` : plus haut est pire. Le rang se lit à l'endroit ou à l'envers. */
-  direction: 'high' | 'low';
+  direction: 'high' | 'low'
 }
 
 export interface CostBreakdown {
-  total: number;
+  total: number
   /** Entrée jamais mise en cache. */
-  input: number;
+  input: number
   /** Écriture du cache — construire la fenêtre. */
-  cacheCreate: number;
+  cacheCreate: number
   /** Relecture du cache — la repasser au modèle, tour après tour. */
-  cacheRead: number;
+  cacheRead: number
   /** Le reste : la génération. Déduit, jamais négatif. */
-  output: number;
+  output: number
   /** Vrai si un modèle sans tarif a servi : le total est un plancher. */
-  partial: boolean;
-  unpricedModels: string[];
+  partial: boolean
+  unpricedModels: string[]
 }
 
 export interface SessionDiagnostic {
-  found: boolean;
-  sessionId: string;
-  project: string;
-  cost: CostBreakdown;
-  ranks: SessionRank[];
-  findings: Finding[];
+  found: boolean
+  sessionId: string
+  project: string
+  cost: CostBreakdown
+  ranks: SessionRank[]
+  findings: Finding[]
   /** Sessions du parc auxquelles celle-ci est comparée. */
-  parcSessions: number;
+  parcSessions: number
 }
 
 /**
@@ -82,15 +82,7 @@ export interface SessionDiagnostic {
  * construire, et relire ce qui était déjà là. Les deux derniers ne parlent plus
  * d'argent — c'est voulu, et c'est pourquoi le tiroir ne s'appelle plus « coût ».
  */
-const RANKED: MetricName[] = [
-  'sessionCost',
-  'cacheReadCost',
-  'toolTokens',
-  'toolErrorRate',
-  'cacheHitRatio',
-  'explorationRatio',
-  'rereadTokens',
-];
+const RANKED: MetricName[] = ['sessionCost', 'cacheReadCost', 'toolTokens', 'toolErrorRate', 'cacheHitRatio', 'explorationRatio', 'rereadTokens']
 
 function emptyDiagnostic(project: string, sessionId: string): SessionDiagnostic {
   return {
@@ -109,7 +101,7 @@ function emptyDiagnostic(project: string, sessionId: string): SessionDiagnostic 
     ranks: [],
     findings: [],
     parcSessions: 0,
-  };
+  }
 }
 
 /**
@@ -122,7 +114,7 @@ function emptyDiagnostic(project: string, sessionId: string): SessionDiagnostic 
  * peuvent dépasser un total lui-même incomplet.
  */
 function breakdown(s: SessionSignal): CostBreakdown {
-  const known = s.inputCost + s.cacheCreateCost + s.cacheReadCost;
+  const known = s.inputCost + s.cacheCreateCost + s.cacheReadCost
   return {
     total: s.cost,
     input: s.inputCost,
@@ -131,7 +123,7 @@ function breakdown(s: SessionSignal): CostBreakdown {
     output: Math.max(0, s.cost - known),
     partial: s.unpricedModels.length > 0,
     unpricedModels: s.unpricedModels,
-  };
+  }
 }
 
 /**
@@ -145,30 +137,27 @@ function breakdown(s: SessionSignal): CostBreakdown {
  * `found: false` quand la session n'a produit aucune réponse : rien à dire, et
  * un diagnostic vide vaut mieux qu'un zéro qui se ferait passer pour une mesure.
  */
-export async function diagnoseSession(
-  project: string,
-  sessionId: string,
-): Promise<SessionDiagnostic> {
-  const { signals } = await getSignals();
-  const signal = signals.find((s) => s.sessionId === sessionId && s.project === project);
-  if (!signal) return emptyDiagnostic(project, sessionId);
+export async function diagnoseSession(project: string, sessionId: string): Promise<SessionDiagnostic> {
+  const { signals } = await getSignals()
+  const signal = signals.find((s) => s.sessionId === sessionId && s.project === project)
+  if (!signal) return emptyDiagnostic(project, sessionId)
 
-  const thresholds = calibrate(signals);
+  const thresholds = calibrate(signals)
 
   // Les règles jugent session par session : ne lui passer qu'elle donne
   // exactement ses constats. Seule `socle-gaspille` raisonne sur l'ensemble, et
   // se tait ici — c'est juste, elle ne parle pas d'une session en particulier.
-  const findings = detect([signal], thresholds);
+  const findings = detect([signal], thresholds)
 
-  const ranks: SessionRank[] = [];
+  const ranks: SessionRank[] = []
   for (const metric of RANKED) {
-    const calibration = thresholds.metrics[metric];
-    const value = valueFor(metric, signal);
-    if (value === null) continue;
+    const calibration = thresholds.metrics[metric]
+    const value = valueFor(metric, signal)
+    if (value === null) continue
     // L'échantillon du parc pour ce signal, tel que la calibration l'a défini :
     // les sessions qui ne le portent pas ne sont pas des zéros, elles sont hors
     // sujet, et les compter fausserait le rang.
-    const sample = signals.map((s) => valueFor(metric, s)).filter((v): v is number => v !== null);
+    const sample = signals.map((s) => valueFor(metric, s)).filter((v): v is number => v !== null)
     ranks.push({
       metric,
       label: calibration.label,
@@ -178,7 +167,7 @@ export async function diagnoseSession(
       median: calibration.quantiles.p50,
       sampleSize: calibration.sampleSize,
       direction: calibration.direction,
-    });
+    })
   }
 
   return {
@@ -189,5 +178,5 @@ export async function diagnoseSession(
     ranks,
     findings,
     parcSessions: signals.length,
-  };
+  }
 }

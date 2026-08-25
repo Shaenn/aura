@@ -9,16 +9,16 @@
 // voulait faire, ce qui a échoué, et ce qui reste possible. D'où la signature :
 // l'appelant fournit la tentative, le détail vient de l'exception.
 
-import { useQuasar } from 'quasar';
-import { t } from '@/i18n';
+import { t } from '@/i18n'
+import { useQuasar } from 'quasar'
 
 function detail(e: unknown): string {
-  if (e instanceof Error && e.message.trim()) return e.message;
-  return '';
+  if (e instanceof Error && e.message.trim()) return e.message
+  return ''
 }
 
 export function useNotify() {
-  const $q = useQuasar();
+  const $q = useQuasar()
 
   /**
    * Échec d'une action.
@@ -28,7 +28,7 @@ export function useNotify() {
    *   laisser vide que là où l'action n'est pas nommable.
    */
   function notifyError(e: unknown, tried?: string): void {
-    const d = detail(e);
+    const d = detail(e)
     // Le détail passe en `caption` plutôt que d'être collé au message : il vient
     // du serveur ou du système, il n'est pas dans la voix d'AURA, et le
     // distinguer typographiquement est plus honnête que de le fondre dedans.
@@ -37,18 +37,18 @@ export function useNotify() {
       message: tried ? `${tried}.` : d || t('common.noDetail'),
       ...(tried && d ? { caption: d } : {}),
       position: 'top',
-    });
+    })
   }
 
   /** Action menée à bien. Le message dit ce qui a changé, pas qu'AURA a réussi. */
   function notifyDone(message: string, caption?: string): void {
-    $q.notify({ type: 'positive', message, ...(caption ? { caption } : {}), position: 'top' });
+    $q.notify({ type: 'positive', message, ...(caption ? { caption } : {}), position: 'top' })
   }
 
   /** Rien n'est cassé, mais AURA a renoncé ou a trouvé mieux à faire. */
   function notifyWarn(message: string, caption?: string): void {
-    $q.notify({ type: 'warning', message, ...(caption ? { caption } : {}), position: 'top' });
+    $q.notify({ type: 'warning', message, ...(caption ? { caption } : {}), position: 'top' })
   }
 
-  return { notifyError, notifyDone, notifyWarn };
+  return { notifyError, notifyDone, notifyWarn }
 }

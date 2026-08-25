@@ -4,10 +4,8 @@
 
 ## Vérifié
 
-- [ ] `pnpm lint`
-- [ ] `pnpm typecheck`
-- [ ] `pnpm test`
-- [ ] `pnpm build` — le seul à typer `src/`
+- [ ] `pnpm verifie` — lint, typage et tests
+- [ ] `pnpm build` — Quasar sait produire le bundle
 - [ ] Essayé dans l'application, pas seulement en test
 
 ## À savoir

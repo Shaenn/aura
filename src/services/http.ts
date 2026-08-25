@@ -6,7 +6,7 @@
 // Oublier l'en-tête sur un service, c'est le voir répondre en français au milieu
 // d'une interface anglaise.
 
-import { currentLocale } from '@/i18n';
+import { currentLocale } from '@/i18n'
 
 /**
  * Une table d'en-têtes, sans passer par `HeadersInit`.
@@ -15,7 +15,7 @@ import { currentLocale } from '@/i18n';
  * BFF — Node, sans `lib: dom`. Un type DOM ici casserait `pnpm typecheck` sans
  * rien apporter : nos en-têtes sont des paires de chaînes, et rien d'autre.
  */
-export type HeaderMap = Record<string, string>;
+export type HeaderMap = Record<string, string>
 
 /**
  * Les en-têtes communs, fusionnés avec ceux de l'appelant.
@@ -29,5 +29,5 @@ export function apiHeaders(extra?: HeaderMap): HeaderMap {
     Accept: 'application/json',
     'Accept-Language': currentLocale(),
     ...extra,
-  };
+  }
 }

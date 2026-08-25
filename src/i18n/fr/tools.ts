@@ -34,4 +34,4 @@ export default {
   agentRestricted: 'Délégation restreinte au sous-agent : {arg}.',
   restricted: '{base}, restreint à : {arg}.',
   unknown: 'Outil hors du socle intégré.',
-};
+}

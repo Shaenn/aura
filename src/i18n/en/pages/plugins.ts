@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const plugins: MessageSchema['pages']['plugins'] = {
   title: 'Plugins & Marketplaces',
@@ -9,8 +9,7 @@ const plugins: MessageSchema['pages']['plugins'] = {
   sourceAria: 'Marketplace source',
   sourceRequired: 'Source required',
   getCommand: 'Get the command',
-  marketplaceHint:
-    'Adding and removing marketplaces goes through Claude Code, which manages those files. I give you the exact command to run.',
+  marketplaceHint: 'Adding and removing marketplaces goes through Claude Code, which manages those files. I give you the exact command to run.',
   installed: 'Installed plugins',
   empty: "I don't see any installed plugin.",
   stateAria: 'State of {id}',
@@ -23,6 +22,6 @@ const plugins: MessageSchema['pages']['plugins'] = {
   removeTitle: 'Remove the marketplace',
   removeNote: 'This command also uninstalls the marketplace plugins and deletes its local clone.',
   readError: "I couldn't read your plugin settings",
-};
+}
 
-export default plugins;
+export default plugins

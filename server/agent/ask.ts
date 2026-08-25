@@ -11,12 +11,12 @@
 // persisté garde le nom `AskUserQuestion`, si bien que `AskView` s'applique sans
 // modification.
 
-import { createSdkMcpServer, tool } from '@anthropic-ai/claude-agent-sdk';
-import { z } from 'zod';
-import type { AskQuestion } from '../../shared/agent.ts';
+import { createSdkMcpServer, tool } from '@anthropic-ai/claude-agent-sdk'
+import { z } from 'zod'
+import type { AskQuestion } from '../../shared/agent.ts'
 
 /** Le nom vers lequel `toolAliases` redirige. */
-export const ASK_TOOL = 'mcp__atelier__ask_user';
+export const ASK_TOOL = 'mcp__atelier__ask_user'
 
 /**
  * La phrase du harness, relevée sur des appels réels.
@@ -29,13 +29,13 @@ export const ASK_TOOL = 'mcp__atelier__ask_user';
 export function harnessSentence(answers: Record<string, string>, notes?: string): string {
   const pairs = Object.entries(answers)
     .map(([question, answer]) => `"${question}"="${answer}"`)
-    .join(', ');
-  const trailer = notes?.trim() ? ` user notes: ${notes.trim()}` : '';
-  return `User has answered your questions: ${pairs}${trailer}. You can now continue with the user's answers in mind.`;
+    .join(', ')
+  const trailer = notes?.trim() ? ` user notes: ${notes.trim()}` : ''
+  return `User has answered your questions: ${pairs}${trailer}. You can now continue with the user's answers in mind.`
 }
 
 /** Ce que le CLI répond quand personne n'a répondu. On reprend ses mots. */
-export const NO_ANSWER = 'The user did not answer the questions.';
+export const NO_ANSWER = 'The user did not answer the questions.'
 
 /**
  * L'entrée d'une question, décrite pour ce qu'on sait en rendre — jamais pour ce
@@ -72,7 +72,7 @@ export const QUESTION_SHAPE = {
       })
       .passthrough(),
   ),
-};
+}
 
 /**
  * Le serveur MCP d'une session. `ask` suspend jusqu'à ce qu'un humain réponde et
@@ -83,14 +83,9 @@ export function createAskServer(ask: (questions: AskQuestion[]) => Promise<strin
     name: 'atelier',
     version: '1.0.0',
     tools: [
-      tool(
-        'ask_user',
-        "Pose une ou plusieurs questions à choix à l'utilisateur et retourne ses réponses.",
-        QUESTION_SHAPE,
-        async (args) => ({
-          content: [{ type: 'text' as const, text: await ask(args.questions) }],
-        }),
-      ),
+      tool('ask_user', "Pose une ou plusieurs questions à choix à l'utilisateur et retourne ses réponses.", QUESTION_SHAPE, async (args) => ({
+        content: [{ type: 'text' as const, text: await ask(args.questions) }],
+      })),
     ],
-  });
+  })
 }

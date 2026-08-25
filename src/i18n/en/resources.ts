@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../fr';
+import type { MessageSchema } from '../fr'
 
 const resources: MessageSchema['resources'] = {
   panelTitle: 'Project resources',
@@ -43,6 +43,6 @@ const resources: MessageSchema['resources'] = {
     read: 'Cannot read this file.',
     unreadable: 'Inventory unreadable.',
   },
-};
+}
 
-export default resources;
+export default resources

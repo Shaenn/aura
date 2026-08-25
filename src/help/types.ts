@@ -6,16 +6,16 @@
 
 export interface HelpSection {
   /** Stable slug: the `?s=` deep-link target and the `man aura-<id>` command name. */
-  id: string;
-  title: string;
+  id: string
+  title: string
   /** Material icon, mirrored in the manual's table of contents. */
-  icon: string;
+  icon: string
   /** Position in the manual; the table of contents and scroll-spy follow it. */
-  order: number;
+  order: number
   /** Route names this section documents. Empty for cross-cutting sections. */
-  routes: string[];
+  routes: string[]
   /** Markdown body, frontmatter stripped. */
-  body: string;
+  body: string
   /** Folded title + body, for the manual's search box. */
-  haystack: string;
+  haystack: string
 }

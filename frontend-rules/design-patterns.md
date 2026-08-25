@@ -51,7 +51,7 @@ Un écran qui connaît un libellé dynamique — nom de projet, identifiant de s
 propre traînée :
 
 ```ts
-setBreadcrumbs([{ label: 'Projets', to: { name: 'projects' } }, { label: project.name }]);
+setBreadcrumbs([{ label: 'Projets', to: { name: 'projects' } }, { label: project.name }])
 ```
 
 Le dernier segment **n'a pas de `to`** : c'est la page courante, elle porte `aria-current="page"`

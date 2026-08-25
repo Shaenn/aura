@@ -5,4 +5,4 @@ export default {
   detail: "Elle n'existe pas, ou l'écran qu'elle désignait a changé de nom.",
   home: "Retour à l'accueil",
   help: 'Ouvrir le Manuel',
-};
+}

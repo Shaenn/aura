@@ -15,26 +15,26 @@
 // route qui renvoie le résultat au navigateur. Le modèle n'existe que pour être
 // sérialisé — autant le sérialiser là où il est né.
 
-import { parentPort } from 'node:worker_threads';
-import { parseTranscript } from './transcript.ts';
+import { parentPort } from 'node:worker_threads'
+import { parseTranscript } from './transcript.ts'
 
 /** Ce que le pool demande. `seq` ne sert qu'à rendre la réponse à son appelant. */
 export interface ParseRequest {
-  seq: number;
-  abs: string;
-  id: string;
+  seq: number
+  abs: string
+  id: string
 }
 
 /** Ce que le worker rend : des octets, ou la raison de leur absence. */
-export type ParseResponse = { seq: number; body: Uint8Array } | { seq: number; error: string };
+export type ParseResponse = { seq: number; body: Uint8Array } | { seq: number; error: string }
 
 /** Lire, parser, sérialiser. La seule fonction utile du fichier. */
 export async function serialiseTranscript(abs: string, id: string): Promise<Uint8Array> {
-  const transcript = await parseTranscript(abs, id);
+  const transcript = await parseTranscript(abs, id)
   // `TextEncoder` et non `Buffer.from` : le `Buffer` d'une petite chaîne est une
   // vue sur le pool interne de Node, qu'on ne peut pas transférer sans emporter
   // la mémoire des voisins. `encode` rend un tableau sur son propre tampon.
-  return new TextEncoder().encode(JSON.stringify(transcript));
+  return new TextEncoder().encode(JSON.stringify(transcript))
 }
 
 // Importé par les tests pour ce qu'il exporte, exécuté par le pool pour ce qu'il
@@ -49,8 +49,8 @@ parentPort?.on('message', (req: ParseRequest) => {
     (e: unknown) => {
       // Un transcript illisible est un cas courant — fichier effacé, ligne
       // tronquée pendant la lecture. Il se rend, il ne tue pas le thread.
-      const error = e instanceof Error ? e.message : String(e);
-      parentPort?.postMessage({ seq: req.seq, error });
+      const error = e instanceof Error ? e.message : String(e)
+      parentPort?.postMessage({ seq: req.seq, error })
     },
-  );
-});
+  )
+})

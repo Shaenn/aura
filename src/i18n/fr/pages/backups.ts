@@ -7,16 +7,14 @@ export default {
   restore: 'Restaurer…',
   purgeOneAria: 'Purger la version du {date}',
   restored: 'Version restaurée.',
-  purgeMessage:
-    'Je vais supprimer les {n} sauvegardes. Après ça, je ne pourrai plus revenir en arrière sur aucune écriture passée.',
+  purgeMessage: 'Je vais supprimer les {n} sauvegardes. Après ça, je ne pourrai plus revenir en arrière sur aucune écriture passée.',
   purgeOk: 'Tout supprimer',
   purgeOneTitle: 'Supprimer cette version',
-  purgeOneMessage:
-    'Je vais supprimer la version du {date} de {file}. Cette copie est la seule, et je ne pourrai pas la retrouver.',
+  purgeOneMessage: 'Je vais supprimer la version du {date} de {file}. Cette copie est la seule, et je ne pourrai pas la retrouver.',
   purgeOneOk: 'Supprimer',
   purgedOne: 'Version supprimée.',
   readError: "Je n'ai pas pu lire les sauvegardes",
   prepareError: "Je n'ai pas pu préparer la restauration",
   deleteError: "Je n'ai pas pu supprimer cette version",
   purgeError: "Je n'ai pas pu purger les sauvegardes",
-};
+}

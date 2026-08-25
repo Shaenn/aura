@@ -70,4 +70,4 @@ export default {
       truncated: 'Le dossier est trop grand : je n’en montre qu’une partie.',
     },
   },
-};
+}

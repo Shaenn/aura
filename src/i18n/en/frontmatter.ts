@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../fr';
+import type { MessageSchema } from '../fr'
 
 const frontmatter: MessageSchema['frontmatter'] = {
   unknown: "A key Claude Code doesn't document for this resource type: it will be ignored.",
@@ -177,6 +177,6 @@ const frontmatter: MessageSchema['frontmatter'] = {
       fallback: 'no path declared',
     },
   },
-};
+}
 
-export default frontmatter;
+export default frontmatter

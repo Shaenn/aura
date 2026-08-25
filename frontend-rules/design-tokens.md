@@ -88,11 +88,11 @@ insensibles au thème d'AURA, et repeignent le composant à l'ancienne palette.
 </template>
 
 <style scoped lang="scss">
-.dg-tile {
-  padding: var(--space-md);
-  background: var(--surface-2);
-  border-radius: var(--radius-md);
-}
+  .dg-tile {
+    padding: var(--space-md);
+    background: var(--surface-2);
+    border-radius: var(--radius-md);
+  }
 </style>
 ```
 

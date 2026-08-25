@@ -17,10 +17,8 @@ export default {
 
   fillLimit: '/ {n}',
   captionLast: 'Contexte envoyé au modèle au dernier tour de la phase — chiffre exact.',
-  captionAfterCompaction:
-    "Fenêtre au sortir de la compaction — chiffre exact. Aucun tour n'a encore été joué dans cette phase.",
-  captionPending:
-    'La compaction n’a pas encore dit la taille de la nouvelle fenêtre ; elle sera connue à la fin du tour.',
+  captionAfterCompaction: "Fenêtre au sortir de la compaction — chiffre exact. Aucun tour n'a encore été joué dans cette phase.",
+  captionPending: 'La compaction n’a pas encore dit la taille de la nouvelle fenêtre ; elle sera connue à la fin du tour.',
 
   costFloor: 'au moins —',
   costNote: "prix catalogue API, non ce qu'un abonnement facture",
@@ -35,8 +33,7 @@ export default {
     byTurn: 'Par tour',
   },
 
-  byTurnCaption:
-    'Croissance {exact} de la fenêtre à chaque tour ; le détail nomme, en estimé, ce qu’on sait y rattacher.',
+  byTurnCaption: 'Croissance {exact} de la fenêtre à chaque tour ; le détail nomme, en estimé, ce qu’on sait y rattacher.',
   byTurnExact: 'exacte',
   byTurnLiveOrder: 'Le plus récent en premier.',
 
@@ -53,8 +50,7 @@ export default {
   residual: 'Reste inexpliqué',
   residualNote:
     'Le formatage des messages, les injections que nous ne savons pas encore lire, et la marge de l’estimateur — quatre caractères par token sous-estime le code.',
-  residualCompacted:
-    'Cette session ayant été compactée, le résumé de l’historique réinjecté s’y ajoute.',
+  residualCompacted: 'Cette session ayant été compactée, le résumé de l’historique réinjecté s’y ajoute.',
 
   estimateNote:
     'Le total et le socle sont exacts. Les valeurs préfixées de « ~ » sont {estimated} à environ 4 caractères par token : elles indiquent un ordre de grandeur, pas un décompte.',
@@ -86,4 +82,4 @@ export default {
     thinking: 'Raisonnement',
     answer: 'Réponse',
   },
-};
+}

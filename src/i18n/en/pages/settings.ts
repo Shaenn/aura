@@ -1,10 +1,9 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const settings: MessageSchema['pages']['settings'] = {
   unsavedTitle: 'Changes not applied',
   tabsAria: 'Settings sections',
-  invalidBanner:
-    'The file isn’t valid JSON: I can’t read the fields out of it. The “JSON” tab shows what I read.',
+  invalidBanner: 'The file isn’t valid JSON: I can’t read the fields out of it. The “JSON” tab shows what I read.',
   invalidJson: 'Invalid JSON',
   readError: "I couldn't read your settings",
   tabs: {
@@ -52,8 +51,7 @@ const settings: MessageSchema['pages']['settings'] = {
     dontAsk: 'dontAsk — denies unless an allow rule matches',
     bypassPermissions: 'bypassPermissions — skips the prompts (dangerous)',
   },
-  bypassWarn:
-    '{mode} skips every permission request. Keep it for isolated environments (containers / VMs).',
+  bypassWarn: '{mode} skips every permission request. Keep it for isolated environments (containers / VMs).',
   rules: {
     allow: 'Allowed (allow)',
     allowPlaceholder: 'e.g. Bash(npm run *)',
@@ -92,6 +90,6 @@ const settings: MessageSchema['pages']['settings'] = {
     yes: 'yes',
     no: 'no',
   },
-};
+}
 
-export default settings;
+export default settings

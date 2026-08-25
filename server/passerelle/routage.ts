@@ -62,7 +62,7 @@ export type Intention =
    * boucle s'il y a lieu de répondre. Une commande inconnue mérite un mot ; un
    * message vide n'en mérite aucun.
    */
-  | { kind: 'ignorer'; raison: 'vide' | 'commande-inconnue'; commande?: string };
+  | { kind: 'ignorer'; raison: 'vide' | 'commande-inconnue'; commande?: string }
 
 /**
  * Les conversations autorisées.
@@ -73,18 +73,18 @@ export type Intention =
  * ressemble à une autorisation.
  */
 export function lireChats(raw: string | undefined): Set<number> {
-  const chats = new Set<number>();
+  const chats = new Set<number>()
   for (const part of (raw ?? '').split(',')) {
-    const trimmed = part.trim();
-    if (!trimmed) continue;
+    const trimmed = part.trim()
+    if (!trimmed) continue
     // `Number` accepterait `12 ` ou `0x10` ; on veut la forme que Telegram
     // écrit, et elle seule. Le signe est admis : un groupe a un identifiant
     // négatif.
-    if (!/^-?\d+$/.test(trimmed)) continue;
-    const id = Number(trimmed);
-    if (Number.isSafeInteger(id)) chats.add(id);
+    if (!/^-?\d+$/.test(trimmed)) continue
+    const id = Number(trimmed)
+    if (Number.isSafeInteger(id)) chats.add(id)
   }
-  return chats;
+  return chats
 }
 
 /**
@@ -95,7 +95,7 @@ export function lireChats(raw: string | undefined): Set<number> {
  * pas ouvrir la machine au premier venu.
  */
 export function autorise(chats: Set<number>, chatId: number): boolean {
-  return chats.has(chatId);
+  return chats.has(chatId)
 }
 
 /**
@@ -106,8 +106,8 @@ export function autorise(chats: Set<number>, chatId: number): boolean {
  * arguments dont aucun ne désignerait rien.
  */
 function argument(texte: string): string {
-  const i = texte.indexOf(' ');
-  return i === -1 ? '' : texte.slice(i + 1).trim();
+  const i = texte.indexOf(' ')
+  return i === -1 ? '' : texte.slice(i + 1).trim()
 }
 
 /**
@@ -118,46 +118,46 @@ function argument(texte: string): string {
  * qu'on ne le pilote, et le cas fréquent ne doit demander aucune syntaxe.
  */
 export function parseIntention(brut: string): Intention {
-  const texte = brut.trim();
-  if (!texte) return { kind: 'ignorer', raison: 'vide' };
-  if (!texte.startsWith('/')) return { kind: 'parler', texte };
+  const texte = brut.trim()
+  if (!texte) return { kind: 'ignorer', raison: 'vide' }
+  if (!texte.startsWith('/')) return { kind: 'parler', texte }
 
   // Telegram suffixe les commandes du nom du bot dans un groupe : `/fin@monbot`.
-  const mot = (texte.split(/\s/)[0] ?? '').split('@')[0]?.toLowerCase() ?? '';
+  const mot = (texte.split(/\s/)[0] ?? '').split('@')[0]?.toLowerCase() ?? ''
   switch (mot) {
     case '/atelier': {
-      const ref = argument(texte);
+      const ref = argument(texte)
       // Sans référence, il n'y a pas de session à ouvrir : on montre les
       // projets, qui portent les numéros que cette commande attend.
-      return ref ? { kind: 'ouvrir', ref } : { kind: 'projets' };
+      return ref ? { kind: 'ouvrir', ref } : { kind: 'projets' }
     }
     case '/projets':
-      return { kind: 'projets' };
+      return { kind: 'projets' }
     case '/projet': {
-      const ref = argument(texte);
-      return ref ? { kind: 'projet', ref } : { kind: 'projets' };
+      const ref = argument(texte)
+      return ref ? { kind: 'projet', ref } : { kind: 'projets' }
     }
     case '/voir': {
-      const ref = argument(texte);
+      const ref = argument(texte)
       // Sans référence, il n'y a rien à ouvrir — l'aide dit la forme attendue.
-      return ref ? { kind: 'voir', ref } : { kind: 'aide' };
+      return ref ? { kind: 'voir', ref } : { kind: 'aide' }
     }
     case '/fin':
-      return { kind: 'fin' };
+      return { kind: 'fin' }
     case '/etat':
-      return { kind: 'etat' };
+      return { kind: 'etat' }
     case '/compacter':
-      return { kind: 'compacter' };
+      return { kind: 'compacter' }
     case '/sessions':
-      return { kind: 'sessions' };
+      return { kind: 'sessions' }
     case '/stop':
-      return { kind: 'stop' };
+      return { kind: 'stop' }
     case '/start':
-      return { kind: 'accueil' };
+      return { kind: 'accueil' }
     case '/aide':
     case '/help':
-      return { kind: 'aide' };
+      return { kind: 'aide' }
     default:
-      return { kind: 'ignorer', raison: 'commande-inconnue', commande: mot };
+      return { kind: 'ignorer', raison: 'commande-inconnue', commande: mot }
   }
 }

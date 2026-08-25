@@ -11,33 +11,33 @@
 // boolean the value would not change, no watcher would fire, and the card would
 // stay open. The counter makes every press a distinct event.
 
-import { inject, provide, ref, watch, type InjectionKey, type Ref } from 'vue';
+import { inject, provide, ref, watch, type InjectionKey, type Ref } from 'vue'
 
 interface ExpandCommand {
-  open: boolean;
-  seq: number;
+  open: boolean
+  seq: number
   /**
    * L'ordre vaut aussi pour ce qui se monte après lui. Un flux en direct ajoute
    * des outils au tour en cours seconde après seconde : sans cela, chacun
    * arriverait replié, la commande étant passée avant sa naissance. Un bouton
    * « tout déplier », lui, s'adresse à ce qui est là — d'où le défaut à faux.
    */
-  sticky: boolean;
+  sticky: boolean
 }
 
-const EXPAND_ALL: InjectionKey<Ref<ExpandCommand>> = Symbol('replay:expand-all');
+const EXPAND_ALL: InjectionKey<Ref<ExpandCommand>> = Symbol('replay:expand-all')
 
 /** Call once, in the page that owns the toolbar. */
 export function provideExpandAll(): {
-  expandAll: () => void;
-  collapseAll: () => void;
+  expandAll: () => void
+  collapseAll: () => void
 } {
-  const command = ref<ExpandCommand>({ open: false, seq: 0, sticky: false });
-  const setAll = (open: boolean): void => {
-    command.value = { open, seq: command.value.seq + 1, sticky: false };
-  };
-  provide(EXPAND_ALL, command);
-  return { expandAll: () => setAll(true), collapseAll: () => setAll(false) };
+  const command = ref<ExpandCommand>({ open: false, seq: 0, sticky: false })
+  function setAll(open: boolean): void {
+    command.value = { open, seq: command.value.seq + 1, sticky: false }
+  }
+  provide(EXPAND_ALL, command)
+  return { expandAll: () => setAll(true), collapseAll: () => setAll(false) }
 }
 
 /**
@@ -49,21 +49,21 @@ export function provideExpandAll(): {
  * suivre la commande de la page, pas celle qu'il fournit à ses descendants.
  */
 export function provideScopedExpandAll(): {
-  setAll: (open: boolean, sticky?: boolean) => void;
+  setAll: (open: boolean, sticky?: boolean) => void
 } {
-  const parent = inject(EXPAND_ALL, null);
-  const command = ref<ExpandCommand>({ open: false, seq: 0, sticky: false });
-  const setAll = (open: boolean, sticky = false): void => {
-    command.value = { open, seq: command.value.seq + 1, sticky };
-  };
+  const parent = inject(EXPAND_ALL, null)
+  const command = ref<ExpandCommand>({ open: false, seq: 0, sticky: false })
+  function setAll(open: boolean, sticky = false): void {
+    command.value = { open, seq: command.value.seq + 1, sticky }
+  }
   if (parent) {
     watch(
       () => parent.value.seq,
       () => setAll(parent.value.open, parent.value.sticky),
-    );
+    )
   }
-  provide(EXPAND_ALL, command);
-  return { setAll };
+  provide(EXPAND_ALL, command)
+  return { setAll }
 }
 
 /**
@@ -83,27 +83,26 @@ export function provideScopedExpandAll(): {
  * Safe outside a provider: the ref is then simply local (keeps the components
  * usable in isolation, and in tests).
  */
-export function useExpandable(
-  initial = false,
-  { followSticky = true }: { followSticky?: boolean } = {},
-): Ref<boolean> {
-  const command = inject(EXPAND_ALL, null);
+export function useExpandable(initial = false, { followSticky = true }: { followSticky?: boolean } = {}): Ref<boolean> {
+  const command = inject(EXPAND_ALL, null)
   // Un ordre adhésif déjà donné vaut pour ce qui naît sous lui : l'outil qui
   // vient d'apparaître dans le tour suivi en direct s'ouvre comme les autres.
-  const sticky = (): boolean => Boolean(command?.value.sticky) && followSticky;
-  const open = ref(sticky() ? command!.value.open : initial);
+  function sticky(): boolean {
+    return Boolean(command?.value.sticky) && followSticky
+  }
+  const open = ref(sticky() ? command!.value.open : initial)
   if (command) {
     watch(
       () => command.value.seq,
       () => {
         // Un ordre adhésif ignoré ne referme pas non plus : le repli de fin de
         // direct, lui, n'est pas adhésif et continue de s'appliquer.
-        if (command.value.sticky && !followSticky) return;
-        open.value = command.value.open;
+        if (command.value.sticky && !followSticky) return
+        open.value = command.value.open
       },
-    );
+    )
   }
-  return open;
+  return open
 }
 
 /**
@@ -113,8 +112,8 @@ export function useExpandable(
  */
 export function syncDetails(open: Ref<boolean>): (e: Event) => void {
   return (e: Event) => {
-    open.value = (e.target as HTMLDetailsElement).open;
-  };
+    open.value = (e.target as HTMLDetailsElement).open
+  }
 }
 
 /**
@@ -122,10 +121,10 @@ export function syncDetails(open: Ref<boolean>): (e: Event) => void {
  * sections) where one boolean ref per element would not do.
  */
 export function onExpandAll(handler: (open: boolean) => void): void {
-  const command = inject(EXPAND_ALL, null);
-  if (!command) return;
+  const command = inject(EXPAND_ALL, null)
+  if (!command) return
   watch(
     () => command.value.seq,
     () => handler(command.value.open),
-  );
+  )
 }

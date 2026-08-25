@@ -8,33 +8,33 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch, useTemplateRef } from 'vue';
-import { Chart, type ChartConfiguration } from 'chart.js/auto';
+  import { Chart, type ChartConfiguration } from 'chart.js/auto'
+  import { onBeforeUnmount, onMounted, ref, watch, useTemplateRef } from 'vue'
 
-const props = withDefaults(defineProps<{ config: ChartConfiguration; height?: number }>(), {
-  height: 260,
-});
+  const props = withDefaults(defineProps<{ config: ChartConfiguration; height?: number }>(), {
+    height: 260,
+  })
 
-const canvasEl = useTemplateRef<HTMLCanvasElement>('canvasEl');
-const chart = ref<Chart | null>(null);
+  const canvasEl = useTemplateRef<HTMLCanvasElement>('canvasEl')
+  const chart = ref<Chart | null>(null)
 
-function render(): void {
-  const el = canvasEl.value;
-  if (!el) return;
-  chart.value?.destroy();
-  chart.value = new Chart(el, props.config);
-}
+  function render(): void {
+    const el = canvasEl.value
+    if (!el) return
+    chart.value?.destroy()
+    chart.value = new Chart(el, props.config)
+  }
 
-onMounted(render);
-// The config is rebuilt from scratch on a theme flip or a data reload; Chart.js
-// mutates the object it is handed, so replace the instance rather than patch it.
-watch(() => props.config, render, { deep: false });
-onBeforeUnmount(() => chart.value?.destroy());
+  onMounted(render)
+  // The config is rebuilt from scratch on a theme flip or a data reload; Chart.js
+  // mutates the object it is handed, so replace the instance rather than patch it.
+  watch(() => props.config, render, { deep: false })
+  onBeforeUnmount(() => chart.value?.destroy())
 </script>
 
 <style scoped lang="scss">
-.chart-box {
-  position: relative;
-  width: 100%;
-}
+  .chart-box {
+    position: relative;
+    width: 100%;
+  }
 </style>

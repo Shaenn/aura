@@ -17,7 +17,7 @@
 
 export interface SkillDoc {
   /** Le nom du skill — celui de l'appel, sinon le dernier segment du dossier. */
-  name: string;
+  name: string
   /**
    * D'où il vient, en un mot, quand le dossier le dit.
    *
@@ -25,15 +25,15 @@ export interface SkillDoc {
    * calculé ici serait figé dans la langue du démarrage. `''` quand le chemin
    * ne dit rien.
    */
-  origin: '' | 'bundled' | 'plugin' | 'project' | 'personal';
+  origin: '' | 'bundled' | 'plugin' | 'project' | 'personal'
   /** Le dossier de base, tel que l'en-tête l'annonce. `''` sans en-tête. */
-  dir: string;
+  dir: string
   /** Le document lui-même, en-tête retirée. */
-  body: string;
-  lines: number;
+  body: string
+  lines: number
 }
 
-const HEAD = 'Base directory for this skill: ';
+const HEAD = 'Base directory for this skill: '
 
 /**
  * D'où vient un skill, lu sur son chemin.
@@ -42,11 +42,11 @@ const HEAD = 'Base directory for this skill: ';
  * livrés avec le CLI, 4 viennent d'une extension, 2 du dossier personnel.
  */
 function originOf(dir: string): SkillDoc['origin'] {
-  const p = dir.split('\\').join('/');
-  if (p.includes('/bundled-skills/')) return 'bundled';
-  if (p.includes('/plugins/')) return 'plugin';
-  if (/\/\.claude\/skills\//.test(p)) return p.includes('/Documents/') ? 'project' : 'personal';
-  return '';
+  const p = dir.split('\\').join('/')
+  if (p.includes('/bundled-skills/')) return 'bundled'
+  if (p.includes('/plugins/')) return 'plugin'
+  if (/\/\.claude\/skills\//.test(p)) return p.includes('/Documents/') ? 'project' : 'personal'
+  return ''
 }
 
 /**
@@ -58,18 +58,18 @@ function originOf(dir: string): SkillDoc['origin'] {
  * de quel skill il s'agit.
  */
 export function skillDocument(text: string, named?: string): SkillDoc | null {
-  const lines = text.split('\n');
-  const first = lines[0] ?? '';
-  const hasHead = first.startsWith(HEAD);
-  if (!hasHead && !named) return null;
+  const lines = text.split('\n')
+  const first = lines[0] ?? ''
+  const hasHead = first.startsWith(HEAD)
+  if (!hasHead && !named) return null
 
-  const dir = hasHead ? first.slice(HEAD.length).trim() : '';
+  const dir = hasHead ? first.slice(HEAD.length).trim() : ''
   // Les 58 en-têtes du parc sont suivies d'une ligne vide : la retirer aussi,
   // sinon le markdown s'ouvre sur un blanc.
-  const body = (hasHead ? lines.slice(1).join('\n') : text).replace(/^\r?\n/, '');
-  const fromDir = dir.split(/[\\/]/).pop() ?? '';
-  const name = named || fromDir;
-  if (!name) return null;
+  const body = (hasHead ? lines.slice(1).join('\n') : text).replace(/^\r?\n/, '')
+  const fromDir = dir.split(/[\\/]/).pop() ?? ''
+  const name = named || fromDir
+  if (!name) return null
 
   return {
     name,
@@ -77,5 +77,5 @@ export function skillDocument(text: string, named?: string): SkillDoc | null {
     dir,
     body,
     lines: body ? body.split('\n').length : 0,
-  };
+  }
 }

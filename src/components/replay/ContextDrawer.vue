@@ -31,87 +31,73 @@
            que soit la page hôte. -->
       <header class="cd-head">
         <h2 class="cd-title">{{ t('replay.context.drawer.title') }}</h2>
-        <q-btn
-          flat
-          dense
-          round
-          size="sm"
-          icon="close"
-          :aria-label="t('replay.context.drawer.close')"
-          @click="open = false"
-        />
+        <q-btn flat dense round size="sm" icon="close" :aria-label="t('replay.context.drawer.close')" @click="open = false" />
       </header>
-      <ContextPanel
-        :context="context"
-        :cost-usd="costUsd"
-        :cost-partial="costPartial"
-        :live="live"
-        @navigate="onNavigate"
-      />
+      <ContextPanel :context="context" :cost-usd="costUsd" :cost-partial="costPartial" :live="live" @navigate="onNavigate" />
     </q-drawer>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onBeforeUnmount } from 'vue';
-import { useI18n } from 'vue-i18n';
-import ContextPanel from './ContextPanel.vue';
-import type { SessionContext } from '@/services/projects';
+  import type { SessionContext } from '@/services/projects'
+  import { ref, watch, onBeforeUnmount } from 'vue'
+  import { useI18n } from 'vue-i18n'
+  import ContextPanel from './ContextPanel.vue'
 
-withDefaults(
-  defineProps<{
-    context: SessionContext;
-    costUsd?: number | null;
-    costPartial?: boolean;
-    /** Distingue les tiroirs si deux instances coexistaient un jour. */
-    drawerId?: string;
-    /** Session en cours : voir `ContextPanel`. Simplement transmis. */
-    live?: boolean;
-  }>(),
-  { costUsd: null, costPartial: false, drawerId: 'context-drawer', live: false },
-);
+  withDefaults(
+    defineProps<{
+      context: SessionContext
+      costUsd?: number | null
+      costPartial?: boolean
+      /** Distingue les tiroirs si deux instances coexistaient un jour. */
+      drawerId?: string
+      /** Session en cours : voir `ContextPanel`. Simplement transmis. */
+      live?: boolean
+    }>(),
+    { costUsd: null, costPartial: false, drawerId: 'context-drawer', live: false },
+  )
 
-const { t } = useI18n();
+  const { t } = useI18n()
 
-const emit = defineEmits<{ navigate: [uuid: string] }>();
+  const emit = defineEmits<{ navigate: [uuid: string] }>()
 
-const open = ref(false);
+  const open = ref(false)
 
-/** Échap ferme le tiroir, comme n'importe quelle surface superposée. */
-function onKeydown(e: KeyboardEvent): void {
-  if (e.key === 'Escape') open.value = false;
-}
+  /** Échap ferme le tiroir, comme n'importe quelle surface superposée. */
+  function onKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Escape') open.value = false
+  }
 
-watch(open, (v) => {
-  if (v) window.addEventListener('keydown', onKeydown);
-  else window.removeEventListener('keydown', onKeydown);
-});
+  watch(open, (v) => {
+    if (v) window.addEventListener('keydown', onKeydown)
+    else window.removeEventListener('keydown', onKeydown)
+  })
 
-onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
+  onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
-/**
- * Relayer le saut vers un tour, et se fermer sur écran étroit — là, le tiroir
- * recouvre le flux, et l'on défilerait derrière lui.
- */
-function onNavigate(uuid: string): void {
-  emit('navigate', uuid);
-  if (window.matchMedia('(max-width: 1023px)').matches) open.value = false;
-}
+  /**
+   * Relayer le saut vers un tour, et se fermer sur écran étroit — là, le tiroir
+   * recouvre le flux, et l'on défilerait derrière lui.
+   */
+  function onNavigate(uuid: string): void {
+    emit('navigate', uuid)
+    if (window.matchMedia('(max-width: 1023px)').matches) open.value = false
+  }
 </script>
 
 <style scoped lang="scss">
-// Même en-tête que HelpDrawer : titre à gauche, fermeture à droite.
-.cd-head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-md) var(--space-sm) 0 var(--space-md);
-}
+  // Même en-tête que HelpDrawer : titre à gauche, fermeture à droite.
+  .cd-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-sm) 0 var(--space-md);
+  }
 
-.cd-title {
-  flex: 1 1 auto;
-  margin: 0;
-  font-size: var(--fs-sm);
-  color: var(--text);
-}
+  .cd-title {
+    flex: 1 1 auto;
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--text);
+  }
 </style>

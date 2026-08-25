@@ -8,7 +8,7 @@
 // que choisir dans ce qu'on lui donne. C'est ce qui rend la garde de `/atelier`
 // vérifiable par un test.
 
-import type { ProjectResources, ProjectSummary, ResourceNode } from '../../shared/projects.ts';
+import type { ProjectResources, ProjectSummary, ResourceNode } from '../../shared/projects.ts'
 
 /**
  * Un fichier consultable, tel que la conversation le désigne.
@@ -30,10 +30,10 @@ import type { ProjectResources, ProjectSummary, ResourceNode } from '../../share
  */
 export interface Entree {
   /** Le chemin que le lecteur attend, tel quel. */
-  rel: string;
+  rel: string
   /** Ce que la conversation affiche. */
-  label: string;
-  source: 'claude' | 'arbre' | 'inclus';
+  label: string
+  source: 'claude' | 'arbre' | 'inclus'
 }
 
 /**
@@ -48,11 +48,11 @@ export interface Entree {
  */
 export interface Noeud {
   /** Le segment affiché — un nom de dossier, ou un nom de fichier. */
-  nom: string;
+  nom: string
   /** Le fichier, pour une feuille. Absent sur un dossier. */
-  fichier?: { entree: Entree; rang: number };
+  fichier?: { entree: Entree; rang: number }
   /** Le contenu, pour un dossier. Vide sur une feuille. */
-  enfants: Noeud[];
+  enfants: Noeud[]
 }
 
 /**
@@ -65,7 +65,7 @@ function comparable(chemin: string): string {
   return chemin
     .replace(/[\\/]+/g, '/')
     .replace(/\/+$/, '')
-    .toLowerCase();
+    .toLowerCase()
 }
 
 /**
@@ -80,24 +80,24 @@ function comparable(chemin: string): string {
  * simplement jamais trouvé, ce qui ne laisse aucune règle à contourner.
  */
 export function resoudreProjet(projets: ProjectSummary[], ref: string): ProjectSummary | undefined {
-  const brut = ref.trim();
-  if (!brut) return undefined;
+  const brut = ref.trim()
+  if (!brut) return undefined
 
   if (/^\d+$/.test(brut)) {
     // Les listes sont numérotées à partir de 1 : c'est ce qu'on lit à l'écran.
-    return projets[Number(brut) - 1];
+    return projets[Number(brut) - 1]
   }
 
-  const cible = comparable(brut);
+  const cible = comparable(brut)
   return (
     projets.find((p) => comparable(p.path) === cible) ??
     projets.find((p) => p.name.toLowerCase() === cible) ??
     projets.find((p) => p.slug.toLowerCase() === cible)
-  );
+  )
 }
 
 function noeuds(liste: ResourceNode[], source: Entree['source'], prefixe = ''): Entree[] {
-  return liste.map((n) => ({ rel: n.rel, label: `${prefixe}${n.rel}`, source }));
+  return liste.map((n) => ({ rel: n.rel, label: `${prefixe}${n.rel}`, source }))
 }
 
 /**
@@ -111,29 +111,29 @@ function noeuds(liste: ResourceNode[], source: Entree['source'], prefixe = ''): 
  * c'est l'ordre d'un explorateur, et celui de l'arborescence de l'Atelier.
  */
 export function arborescence(entrees: Entree[]): Noeud {
-  const racine: Noeud = { nom: '', enfants: [] };
+  const racine: Noeud = { nom: '', enfants: [] }
 
   entrees.forEach((entree, i) => {
-    const segments = entree.label.split('/').filter(Boolean);
-    const nomFichier = segments.pop() ?? entree.label;
+    const segments = entree.label.split('/').filter(Boolean)
+    const nomFichier = segments.pop() ?? entree.label
 
-    let courant = racine;
+    let courant = racine
     for (const segment of segments) {
       // Un dossier ne se crée qu'une fois : deux fichiers du même dossier
       // doivent atterrir dans le même nœud, pas dans deux homonymes.
-      let enfant = courant.enfants.find((n) => !n.fichier && n.nom === segment);
+      let enfant = courant.enfants.find((n) => !n.fichier && n.nom === segment)
       if (!enfant) {
-        enfant = { nom: segment, enfants: [] };
-        courant.enfants.push(enfant);
+        enfant = { nom: segment, enfants: [] }
+        courant.enfants.push(enfant)
       }
-      courant = enfant;
+      courant = enfant
     }
-    courant.enfants.push({ nom: nomFichier, fichier: { entree, rang: i + 1 }, enfants: [] });
-  });
+    courant.enfants.push({ nom: nomFichier, fichier: { entree, rang: i + 1 }, enfants: [] })
+  })
 
-  compacte(racine);
-  trie(racine);
-  return racine;
+  compacte(racine)
+  trie(racine)
+  return racine
 }
 
 /**
@@ -144,31 +144,27 @@ export function arborescence(entrees: Entree[]): Noeud {
  * code fait de même, et pour la même raison.
  */
 function compacte(noeud: Noeud): void {
-  for (const enfant of noeud.enfants) compacte(enfant);
+  for (const enfant of noeud.enfants) compacte(enfant)
 
-  const seul = noeud.enfants[0];
+  const seul = noeud.enfants[0]
   // Jamais la racine : elle n'a pas de nom à porter, et son unique enfant doit
   // rester une ligne qu'on choisit.
   if (noeud.nom && noeud.enfants.length === 1 && seul && !seul.fichier) {
-    noeud.nom = `${noeud.nom}/${seul.nom}`;
-    noeud.enfants = seul.enfants;
+    noeud.nom = `${noeud.nom}/${seul.nom}`
+    noeud.enfants = seul.enfants
   }
 }
 
 /** Dossiers avant fichiers, puis alphabétique — l'ordre d'un explorateur. */
 function trie(noeud: Noeud): void {
-  noeud.enfants.sort(
-    (a, b) =>
-      Number(Boolean(a.fichier)) - Number(Boolean(b.fichier)) ||
-      a.nom.localeCompare(b.nom, 'fr', { numeric: true }),
-  );
-  for (const enfant of noeud.enfants) trie(enfant);
+  noeud.enfants.sort((a, b) => Number(Boolean(a.fichier)) - Number(Boolean(b.fichier)) || a.nom.localeCompare(b.nom, 'fr', { numeric: true }))
+  for (const enfant of noeud.enfants) trie(enfant)
 }
 
 /** Combien de fichiers sous ce nœud, à toute profondeur. */
 export function compte(noeud: Noeud): number {
-  if (noeud.fichier) return 1;
-  return noeud.enfants.reduce((total, enfant) => total + compte(enfant), 0);
+  if (noeud.fichier) return 1
+  return noeud.enfants.reduce((total, enfant) => total + compte(enfant), 0)
 }
 
 /**
@@ -179,12 +175,12 @@ export function compte(noeud: Noeud): number {
  * chemin qu'on recomposerait.
  */
 export function descendre(racine: Noeud, chemin: string[]): Noeud | undefined {
-  let courant: Noeud | undefined = racine;
+  let courant: Noeud | undefined = racine
   for (const segment of chemin) {
-    courant = courant.enfants.find((n) => !n.fichier && n.nom === segment);
-    if (!courant) return undefined;
+    courant = courant.enfants.find((n) => !n.fichier && n.nom === segment)
+    if (!courant) return undefined
   }
-  return courant;
+  return courant
 }
 
 /**
@@ -206,5 +202,5 @@ export function aplatir(res: ProjectResources): Entree[] {
     // des noms que `sourceFileKind` reconnaît, et c'est bien pourquoi il a fallu
     // demander leur inclusion pour les voir. Leur `rel` part déjà de la racine.
     ...res.folders.flatMap((f) => noeuds(f.files, 'inclus')),
-  ];
+  ]
 }

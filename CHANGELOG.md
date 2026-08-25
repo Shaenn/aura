@@ -19,6 +19,33 @@ par cas.
 Une version se pose quand il y a quelque chose à annoncer, pas à chaque fusion. Une journée
 entière de montées de dépendances n'en produit aucune.
 
+## [1.3.1] — 2026-08-25
+
+Une version d'entretien : rien de visible à l'écran, tout sous le capot. Elle réunit deux
+chantiers — ce qu'il faut pour installer AURA sans surprise, et l'adoption du socle de
+qualité commun aux dépôts du parc.
+
+### Ce qui change pour vous
+
+- **L'installation dit ce qu'elle exige.** Le gestionnaire de paquets est épinglé dans le
+  manifeste, le socle exigé nomme la version que le projet fige, et la politique
+  d'installation dit ce qu'elle refuse plutôt que de le laisser découvrir à l'échec.
+- **Les dépendances sont à jour.** Quasar, Vite, Fastify, Vitest, ESLint, vue-i18n, mermaid,
+  dompurify et le reste. Aucune ne change ce que vous voyez.
+
+### Sous le capot
+
+- **Le typecheck ne laisse plus rien dehors.** `pnpm typecheck` ne regardait que le BFF et
+  les tests : une rupture de types dans un composant du front passait pour vérifiée. Il
+  ouvre maintenant la marche par `vue-tsc`.
+- **Un seul geste avant de pousser.** `pnpm verifie` enchaîne le lint, le typage et les
+  tests. `pnpm lint` relit les 384 fichiers du dépôt au lieu de quatre dossiers.
+- **La mise en forme est vérifiée, pas seulement disponible.** Prettier est lancé comme une
+  règle ESLint, aux réglages du parc. Le dépôt est reformaté en entier.
+- **Des règles de style que le dépôt ne portait pas.** `eqeqeq`, `curly`, `func-style`,
+  `no-console`, `ban-ts-comment`, plus les règles Vue et Vitest du parc. Le lint ne relève
+  plus rien : zéro erreur, zéro avertissement.
+
 ## [1.3.0] — 2026-08-20
 
 Une version d'une seule capacité, et elle est grande : la **Passerelle**, qui relie une
@@ -173,6 +200,7 @@ collées, reprise d'une session existante.
   externe, aucun secret dans le navigateur. Voir [SECURITY.md](SECURITY.md).
 - Windows, exclusivement — la seule plateforme sur laquelle l'application a tourné.
 
+[1.3.1]: https://github.com/Shaenn/aura/releases/tag/v1.3.1
 [1.3.0]: https://github.com/Shaenn/aura/releases/tag/v1.3.0
 [1.2.0]: https://github.com/Shaenn/aura/releases/tag/v1.2.0
 [1.1.0]: https://github.com/Shaenn/aura/releases/tag/v1.1.0

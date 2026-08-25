@@ -8,47 +8,47 @@
 
 /** Un seul consommateur : le `for await` du SDK. Pousser depuis n'importe où. */
 export class AsyncQueue<T> {
-  private readonly items: T[] = [];
-  private waiting: ((value: IteratorResult<T>) => void) | null = null;
-  private closed = false;
+  private readonly items: T[] = []
+  private waiting: ((value: IteratorResult<T>) => void) | null = null
+  private closed = false
 
   push(item: T): void {
-    if (this.closed) return;
+    if (this.closed) return
     // Un consommateur déjà en attente reçoit directement : ne pas passer par le
     // tableau évite un tour de boucle d'événements par message.
     if (this.waiting) {
-      const resolve = this.waiting;
-      this.waiting = null;
-      resolve({ value: item, done: false });
-      return;
+      const resolve = this.waiting
+      this.waiting = null
+      resolve({ value: item, done: false })
+      return
     }
-    this.items.push(item);
+    this.items.push(item)
   }
 
   /** Ferme la file : le `for await` du SDK se termine, donc le tour aussi. */
   close(): void {
-    if (this.closed) return;
-    this.closed = true;
+    if (this.closed) return
+    this.closed = true
     if (this.waiting) {
-      const resolve = this.waiting;
-      this.waiting = null;
-      resolve({ value: undefined as never, done: true });
+      const resolve = this.waiting
+      this.waiting = null
+      resolve({ value: undefined as never, done: true })
     }
   }
 
   async *[Symbol.asyncIterator](): AsyncGenerator<T> {
     for (;;) {
-      const buffered = this.items.shift();
+      const buffered = this.items.shift()
       if (buffered !== undefined) {
-        yield buffered;
-        continue;
+        yield buffered
+        continue
       }
-      if (this.closed) return;
+      if (this.closed) return
       const next = await new Promise<IteratorResult<T>>((resolve) => {
-        this.waiting = resolve;
-      });
-      if (next.done) return;
-      yield next.value;
+        this.waiting = resolve
+      })
+      if (next.done) return
+      yield next.value
     }
   }
 }

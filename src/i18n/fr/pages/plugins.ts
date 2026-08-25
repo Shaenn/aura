@@ -19,7 +19,6 @@ export default {
   addTitle: 'Ajouter une marketplace',
   addNote: 'Claude Code clonera/copiera la marketplace puis la rendra disponible.',
   removeTitle: 'Supprimer la marketplace',
-  removeNote:
-    'Cette commande désinstalle aussi les plugins de la marketplace et supprime son clone local.',
+  removeNote: 'Cette commande désinstalle aussi les plugins de la marketplace et supprime son clone local.',
   readError: "Je n'ai pas pu lire vos réglages de plugins",
-};
+}

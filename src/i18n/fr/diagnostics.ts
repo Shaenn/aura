@@ -4,4 +4,4 @@ export default {
     warn: 'À surveiller',
     info: 'Pour information',
   },
-};
+}

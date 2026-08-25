@@ -26,23 +26,17 @@
 //     est un avertissement. Un parc qui se calme voit ses `critical` s'éteindre
 //     tout seuls, sans qu'on ait retouché quoi que ce soit.
 
-import { createHash } from 'node:crypto';
-import { t } from '../i18n/index.ts';
-import { pct, ratio, tok, usd } from './format.ts';
-import type { SessionSignal } from './signals.ts';
-import type { Pace } from './pace.ts';
-import {
-  exceeds,
-  valueOf,
-  type Calibration,
-  type MetricName,
-  type Thresholds,
-} from './thresholds.ts';
+import { createHash } from 'node:crypto'
+import { t } from '../i18n/index.ts'
+import { pct, ratio, tok, usd } from './format.ts'
+import type { Pace } from './pace.ts'
+import type { SessionSignal } from './signals.ts'
+import { exceeds, valueOf, type Calibration, type MetricName, type Thresholds } from './thresholds.ts'
 
 // ── Ce qu'on publie ──────────────────────────────────────────────────────────
 
-export type Severity = 'info' | 'warn' | 'critical';
-export type Scope = 'session' | 'project' | 'global';
+export type Severity = 'info' | 'warn' | 'critical'
+export type Scope = 'session' | 'project' | 'global'
 
 /**
  * Le chiffre qui porte le constat.
@@ -57,39 +51,39 @@ export type Scope = 'session' | 'project' | 'global';
  * n'a pas causée. `basis` porte alors ce qui a été compté, et rien de plus.
  */
 export interface Impact {
-  usd?: number;
-  tokens?: number;
-  kind: 'measured' | 'estimated';
+  usd?: number
+  tokens?: number
+  kind: 'measured' | 'estimated'
   /** D'où sort le chiffre, en une phrase. Rendu à l'utilisateur. */
-  basis: string;
+  basis: string
 }
 
 /** Le seuil qui a déclenché, tel qu'il a été calibré — pour que l'UI puisse douter. */
 export interface Trigger {
-  metric: MetricName;
-  value: number;
-  threshold: number;
+  metric: MetricName
+  value: number
+  threshold: number
   /** Faux quand l'échantillon était trop maigre : le seuil vient du garde-fou. */
-  calibrated: boolean;
-  bound: Calibration['bound'];
+  calibrated: boolean
+  bound: Calibration['bound']
 }
 
 export interface Finding {
   /** Stable d'un scan à l'autre : c'est lui qu'on met en liste d'exclusion. */
-  id: string;
-  rule: RuleName;
-  severity: Severity;
-  scope: Scope;
+  id: string
+  rule: RuleName
+  severity: Severity
+  scope: Scope
   /** `sessionId`, slug de projet, ou `''` pour un constat de parc. */
-  target: string;
+  target: string
   /** Le projet concerné, pour le renvoi vers la session. */
-  project: string;
-  title: string;
-  message: string;
+  project: string
+  title: string
+  message: string
   /** Ce que l'UI peut afficher en détail. Toujours des nombres, jamais du texte. */
-  metrics: Record<string, number>;
-  impact: Impact;
-  trigger?: Trigger;
+  metrics: Record<string, number>
+  impact: Impact
+  trigger?: Trigger
 }
 
 export const RULE_NAMES = [
@@ -111,20 +105,20 @@ export const RULE_NAMES = [
   // Ce qui consomme la ressource — des rythmes, lisibles en direct
   'rythme-5h',
   'sessions-paralleles',
-] as const;
+] as const
 
-export type RuleName = (typeof RULE_NAMES)[number];
+export type RuleName = (typeof RULE_NAMES)[number]
 
 export interface DetectOptions {
   /** Constats à taire, par `id`. Un faux positif se fait taire sans bouger un seuil. */
-  ignore?: string[];
+  ignore?: string[]
   /** Règles désactivées. */
-  disabled?: RuleName[];
+  disabled?: RuleName[]
   /**
    * Le rythme du parc, quand on l'a calculé. Sans lui, les deux règles qui en
    * dépendent se taisent : elles ne portent aucun jugement par défaut.
    */
-  pace?: Pace;
+  pace?: Pace
 }
 
 // ── Outillage commun ─────────────────────────────────────────────────────────
@@ -137,7 +131,7 @@ export interface DetectOptions {
  * d'exclusion de l'utilisateur se viderait à chaque relecture du corpus.
  */
 function makeId(rule: RuleName, scope: Scope, target: string): string {
-  return createHash('sha1').update(`${rule}|${scope}|${target}`).digest('hex').slice(0, 12);
+  return createHash('sha1').update(`${rule}|${scope}|${target}`).digest('hex').slice(0, 12)
 }
 
 /**
@@ -147,13 +141,10 @@ function makeId(rule: RuleName, scope: Scope, target: string): string {
  * 35 % sous un seuil de 70 % dépasse d'autant qu'un coût double de son seuil.
  */
 function severityOf(calibration: Calibration, value: number): Severity {
-  const ratio =
-    calibration.direction === 'high'
-      ? value / (calibration.value || 1)
-      : (calibration.value || 1) / (value || calibration.value || 1);
-  if (ratio >= 2) return 'critical';
-  if (ratio >= 1.3) return 'warn';
-  return 'info';
+  const ratio = calibration.direction === 'high' ? value / (calibration.value || 1) : (calibration.value || 1) / (value || calibration.value || 1)
+  if (ratio >= 2) return 'critical'
+  if (ratio >= 1.3) return 'warn'
+  return 'info'
 }
 
 function triggerOf(metric: MetricName, calibration: Calibration, value: number): Trigger {
@@ -163,7 +154,7 @@ function triggerOf(metric: MetricName, calibration: Calibration, value: number):
     threshold: calibration.value,
     calibrated: calibration.calibrated,
     bound: calibration.bound,
-  };
+  }
 }
 
 /**
@@ -176,11 +167,13 @@ function triggerOf(metric: MetricName, calibration: Calibration, value: number):
  * est donc absent, et l'impact retombe sur ses tokens, qui eux sont comptés.
  */
 function money(n: number): number | undefined {
-  return n > 0 ? n : undefined;
+  return n > 0 ? n : undefined
 }
 
 /** Le début d'un `sessionId`, seule forme lisible dans une phrase. */
-const short = (id: string): string => `${id.slice(0, 8)}…`;
+function short(id: string): string {
+  return `${id.slice(0, 8)}…`
+}
 
 /**
  * Le contexte réellement attribué d'une session.
@@ -190,7 +183,7 @@ const short = (id: string): string => `${id.slice(0, 8)}…`;
  * sait nommer*, jamais une part de la fenêtre — les messages le disent.
  */
 function attributed(s: SessionSignal): number {
-  return Object.values(s.byCategory).reduce((a, b) => a + b, 0);
+  return Object.values(s.byCategory).reduce((a, b) => a + b, 0)
 }
 
 // ── Les règles, une par constat ──────────────────────────────────────────────
@@ -199,15 +192,15 @@ function attributed(s: SessionSignal): number {
 // `null`. Le déclenchement est toujours délégué à `exceeds` : aucune règle ne
 // compare elle-même à un nombre.
 
-type SessionRule = (s: SessionSignal, t: Thresholds) => Finding | null;
+type SessionRule = (s: SessionSignal, t: Thresholds) => Finding | null
 
 /** Ce que coûte la seule relecture de l'historique déjà lu. */
-const historiqueRelu: SessionRule = (s, th) => {
-  const c = th.metrics.cacheReadCost;
-  const value = valueOf('cacheReadCost', s);
-  if (!exceeds(c, value) || value === null) return null;
+function historiqueRelu(s: SessionSignal, th: Thresholds): Finding | null {
+  const c = th.metrics.cacheReadCost
+  const value = valueOf('cacheReadCost', s)
+  if (!exceeds(c, value) || value === null) return null
 
-  const share = s.cost > 0 ? value / s.cost : 0;
+  const share = s.cost > 0 ? value / s.cost : 0
   return {
     id: makeId('historique-relu', 'session', s.sessionId),
     rule: 'historique-relu',
@@ -238,21 +231,21 @@ const historiqueRelu: SessionRule = (s, th) => {
       basis: t('diagnostics.rules.historique-relu.basis'),
     },
     trigger: triggerOf('cacheReadCost', c, value),
-  };
-};
+  }
+}
 
 /** Une fenêtre reconstruite plutôt que relue : le cache ne prend pas. */
-const cacheFaible: SessionRule = (s, th) => {
-  const c = th.metrics.cacheHitRatio;
-  const value = valueOf('cacheHitRatio', s);
-  if (!exceeds(c, value) || value === null) return null;
+function cacheFaible(s: SessionSignal, th: Thresholds): Finding | null {
+  const c = th.metrics.cacheHitRatio
+  const value = valueOf('cacheHitRatio', s)
+  if (!exceeds(c, value) || value === null) return null
 
   // Le prix de *construction* de la fenêtre : l'entrée jamais mise en cache, plus
   // le cache qu'il a fallu écrire. C'est ce que la session n'a pas amorti — et
   // c'est non nul par construction, puisque la règle ne tire qu'en dessous de
   // 70 % de relecture.
-  const building = s.inputCost + s.cacheCreateCost;
-  const buildingTokens = s.tokens.input + s.tokens.cacheCreate;
+  const building = s.inputCost + s.cacheCreateCost
+  const buildingTokens = s.tokens.input + s.tokens.cacheCreate
 
   return {
     id: makeId('cache-faible', 'session', s.sessionId),
@@ -270,9 +263,7 @@ const cacheFaible: SessionRule = (s, th) => {
         median: pct(c.quantiles.p50),
         tokens: tok(buildingTokens),
       }) +
-      (s.unpricedModels.length
-        ? t('diagnostics.rules.cache-faible.unpriced')
-        : t('diagnostics.rules.cache-faible.priced', { cost: usd(building) })),
+      (s.unpricedModels.length ? t('diagnostics.rules.cache-faible.unpriced') : t('diagnostics.rules.cache-faible.priced', { cost: usd(building) })),
     metrics: {
       cacheHitRatio: value,
       parcMedian: c.quantiles.p50,
@@ -293,17 +284,17 @@ const cacheFaible: SessionRule = (s, th) => {
       basis: t('diagnostics.rules.cache-faible.basis'),
     },
     trigger: triggerOf('cacheHitRatio', c, value),
-  };
-};
+  }
+}
 
 /** Ce que les délégations ont coûté, lu dans leurs propres fichiers. */
-const sousAgentsCouteux: SessionRule = (s, th) => {
-  const c = th.metrics.subagentCost;
-  const value = valueOf('subagentCost', s);
-  if (!exceeds(c, value) || value === null) return null;
+function sousAgentsCouteux(s: SessionSignal, th: Thresholds): Finding | null {
+  const c = th.metrics.subagentCost
+  const value = valueOf('subagentCost', s)
+  if (!exceeds(c, value) || value === null) return null
 
-  const share = s.cost > 0 ? value / s.cost : 0;
-  const types = [...new Set(s.subagents.map((a) => a.agentType).filter(Boolean))];
+  const share = s.cost > 0 ? value / s.cost : 0
+  const types = [...new Set(s.subagents.map((a) => a.agentType).filter(Boolean))]
   return {
     id: makeId('sous-agents-couteux', 'session', s.sessionId),
     rule: 'sous-agents-couteux',
@@ -315,9 +306,7 @@ const sousAgentsCouteux: SessionRule = (s, th) => {
     message: t('diagnostics.rules.sous-agents-couteux.message', {
       id: short(s.sessionId),
       count: s.subagents.length,
-      types: types.length
-        ? types.join(', ')
-        : t('diagnostics.rules.sous-agents-couteux.unknownType'),
+      types: types.length ? types.join(', ') : t('diagnostics.rules.sous-agents-couteux.unknownType'),
       cost: usd(value),
       share: pct(share),
       turns: s.subagentTurns,
@@ -335,17 +324,17 @@ const sousAgentsCouteux: SessionRule = (s, th) => {
       basis: t('diagnostics.rules.sous-agents-couteux.basis'),
     },
     trigger: triggerOf('subagentCost', c, value),
-  };
-};
+  }
+}
 
 /** Les outils occupent la fenêtre — et c'est le premier poste du parc. */
-const outilsGourmands: SessionRule = (s, th) => {
-  const c = th.metrics.toolTokens;
-  const value = valueOf('toolTokens', s);
-  if (!exceeds(c, value) || value === null) return null;
+function outilsGourmands(s: SessionSignal, th: Thresholds): Finding | null {
+  const c = th.metrics.toolTokens
+  const value = valueOf('toolTokens', s)
+  if (!exceeds(c, value) || value === null) return null
 
-  const top = s.tools[0];
-  const known = attributed(s);
+  const top = s.tools[0]
+  const known = attributed(s)
   return {
     id: makeId('outils-gourmands', 'session', s.sessionId),
     rule: 'outils-gourmands',
@@ -385,23 +374,20 @@ const outilsGourmands: SessionRule = (s, th) => {
       basis: t('diagnostics.rules.outils-gourmands.basis'),
     },
     trigger: triggerOf('toolTokens', c, value),
-  };
-};
+  }
+}
 
 /** Des appels qui échouent : des tokens dépensés sans rien produire. */
-const outilsEnEchec: SessionRule = (s, th) => {
-  const c = th.metrics.toolErrorRate;
-  const value = valueOf('toolErrorRate', s);
-  if (!exceeds(c, value) || value === null) return null;
+function outilsEnEchec(s: SessionSignal, th: Thresholds): Finding | null {
+  const c = th.metrics.toolErrorRate
+  const value = valueOf('toolErrorRate', s)
+  if (!exceeds(c, value) || value === null) return null
 
-  const calls = s.tools.reduce((n, x) => n + x.calls, 0);
-  const worst = [...s.tools].sort((a, b) => b.errors - a.errors)[0];
+  const calls = s.tools.reduce((n, x) => n + x.calls, 0)
+  const worst = [...s.tools].sort((a, b) => b.errors - a.errors)[0]
   // Le coût d'un appel raté n'est pas relevé : on prorate le poids de l'outil par
   // sa part d'échecs. Ordre de grandeur, et rien de plus.
-  const wasted = s.tools.reduce(
-    (n, x) => n + (x.calls > 0 ? (x.tokens * x.errors) / x.calls : 0),
-    0,
-  );
+  const wasted = s.tools.reduce((n, x) => n + (x.calls > 0 ? (x.tokens * x.errors) / x.calls : 0), 0)
 
   return {
     id: makeId('outils-en-echec', 'session', s.sessionId),
@@ -439,16 +425,16 @@ const outilsEnEchec: SessionRule = (s, th) => {
       basis: t('diagnostics.rules.outils-en-echec.basis'),
     },
     trigger: triggerOf('toolErrorRate', c, value),
-  };
-};
+  }
+}
 
 /** Une compaction jette du contexte qu'il a fallu payer pour construire. */
-const compactionLourde: SessionRule = (s, th) => {
-  const c = th.metrics.compactionWaste;
-  const value = valueOf('compactionWaste', s);
-  if (!exceeds(c, value) || value === null) return null;
+function compactionLourde(s: SessionSignal, th: Thresholds): Finding | null {
+  const c = th.metrics.compactionWaste
+  const value = valueOf('compactionWaste', s)
+  if (!exceeds(c, value) || value === null) return null
 
-  const auto = s.compactions.filter((x) => x.trigger === 'auto').length;
+  const auto = s.compactions.filter((x) => x.trigger === 'auto').length
   return {
     id: makeId('compaction-lourde', 'session', s.sessionId),
     rule: 'compaction-lourde',
@@ -460,9 +446,7 @@ const compactionLourde: SessionRule = (s, th) => {
     message: t('diagnostics.rules.compaction-lourde.message', {
       id: short(s.sessionId),
       count: s.compactions.length,
-      kind: auto
-        ? t('diagnostics.rules.compaction-lourde.auto', { count: auto })
-        : t('diagnostics.rules.compaction-lourde.manual'),
+      kind: auto ? t('diagnostics.rules.compaction-lourde.auto', { count: auto }) : t('diagnostics.rules.compaction-lourde.manual'),
       tokens: tok(value),
       peak: tok(s.peakContext),
     }),
@@ -479,16 +463,16 @@ const compactionLourde: SessionRule = (s, th) => {
       basis: t('diagnostics.rules.compaction-lourde.basis'),
     },
     trigger: triggerOf('compactionWaste', c, value),
-  };
-};
+  }
+}
 
 /** Des mémoires, catalogues et hooks qui entrent dans chaque fenêtre. */
-const contexteInjecte: SessionRule = (s, th) => {
-  const c = th.metrics.injectedContext;
-  const value = valueOf('injectedContext', s);
-  if (!exceeds(c, value) || value === null) return null;
+function contexteInjecte(s: SessionSignal, th: Thresholds): Finding | null {
+  const c = th.metrics.injectedContext
+  const value = valueOf('injectedContext', s)
+  if (!exceeds(c, value) || value === null) return null
 
-  const top = s.topInjections.slice(0, 3);
+  const top = s.topInjections.slice(0, 3)
   return {
     id: makeId('contexte-injecte', 'session', s.sessionId),
     rule: 'contexte-injecte',
@@ -520,8 +504,8 @@ const contexteInjecte: SessionRule = (s, th) => {
       basis: t('diagnostics.rules.contexte-injecte.basis'),
     },
     trigger: triggerOf('injectedContext', c, value),
-  };
-};
+  }
+}
 
 // ── Ce qui fait patiner ──────────────────────────────────────────────────────
 //
@@ -537,12 +521,12 @@ const contexteInjecte: SessionRule = (s, th) => {
 //    où rien n'est chiffrable, `impact` ne porte aucun nombre et le dit.
 
 /** Chercher plus qu'on ne construit. */
-const explorationSansFin: SessionRule = (s, th) => {
-  const c = th.metrics.explorationRatio;
-  const value = valueOf('explorationRatio', s);
-  if (!exceeds(c, value) || value === null) return null;
+function explorationSansFin(s: SessionSignal, th: Thresholds): Finding | null {
+  const c = th.metrics.explorationRatio
+  const value = valueOf('explorationRatio', s)
+  if (!exceeds(c, value) || value === null) return null
 
-  const f = s.families;
+  const f = s.families
   return {
     id: makeId('exploration-sans-fin', 'session', s.sessionId),
     rule: 'exploration-sans-fin',
@@ -574,8 +558,8 @@ const explorationSansFin: SessionRule = (s, th) => {
       basis: t('diagnostics.rules.exploration-sans-fin.basis'),
     },
     trigger: triggerOf('explorationRatio', c, value),
-  };
-};
+  }
+}
 
 /**
  * La tâche donnée en morceaux.
@@ -585,10 +569,10 @@ const explorationSansFin: SessionRule = (s, th) => {
  * tâche entière d'un coup et laisse-la courir ». Les sessions qui produisent le
  * plus font 23 tours par prompt ; celles qui produisent le moins, 11,7.
  */
-const briefMorcele: SessionRule = (s, th) => {
-  const c = th.metrics.turnsPerPrompt;
-  const value = valueOf('turnsPerPrompt', s);
-  if (!exceeds(c, value) || value === null) return null;
+function briefMorcele(s: SessionSignal, th: Thresholds): Finding | null {
+  const c = th.metrics.turnsPerPrompt
+  const value = valueOf('turnsPerPrompt', s)
+  if (!exceeds(c, value) || value === null) return null
 
   return {
     id: makeId('brief-morcele', 'session', s.sessionId),
@@ -620,14 +604,14 @@ const briefMorcele: SessionRule = (s, th) => {
       basis: t('diagnostics.rules.brief-morcele.basis'),
     },
     trigger: triggerOf('turnsPerPrompt', c, value),
-  };
-};
+  }
+}
 
 /** Le travail partait ailleurs qu'attendu. */
-const reorientations: SessionRule = (s, th) => {
-  const c = th.metrics.interruptions;
-  const value = valueOf('interruptions', s);
-  if (!exceeds(c, value) || value === null) return null;
+function reorientations(s: SessionSignal, th: Thresholds): Finding | null {
+  const c = th.metrics.interruptions
+  const value = valueOf('interruptions', s)
+  if (!exceeds(c, value) || value === null) return null
 
   return {
     id: makeId('reorientations', 'session', s.sessionId),
@@ -653,17 +637,17 @@ const reorientations: SessionRule = (s, th) => {
       basis: t('diagnostics.rules.reorientations.basis'),
     },
     trigger: triggerOf('interruptions', c, value),
-  };
-};
+  }
+}
 
 /** Les mêmes fichiers relus plusieurs fois dans la même session. */
-const relectures: SessionRule = (s, th) => {
-  const c = th.metrics.rereadTokens;
-  const value = valueOf('rereadTokens', s);
-  if (!exceeds(c, value) || value === null) return null;
+function relectures(s: SessionSignal, th: Thresholds): Finding | null {
+  const c = th.metrics.rereadTokens
+  const value = valueOf('rereadTokens', s)
+  if (!exceeds(c, value) || value === null) return null
 
-  const readTool = s.tools.find((x) => x.name === 'Read');
-  const share = readTool && readTool.tokens > 0 ? value / readTool.tokens : 0;
+  const readTool = s.tools.find((x) => x.name === 'Read')
+  const share = readTool && readTool.tokens > 0 ? value / readTool.tokens : 0
   return {
     id: makeId('relectures', 'session', s.sessionId),
     rule: 'relectures',
@@ -677,10 +661,7 @@ const relectures: SessionRule = (s, th) => {
         id: short(s.sessionId),
         calls: s.rereadCalls,
         tokens: tok(value),
-      }) +
-      (share > 0
-        ? t('diagnostics.rules.relectures.share', { share: pct(share) })
-        : t('diagnostics.rules.relectures.noShare')),
+      }) + (share > 0 ? t('diagnostics.rules.relectures.share', { share: pct(share) }) : t('diagnostics.rules.relectures.noShare')),
     metrics: {
       rereadTokens: value,
       rereadCalls: s.rereadCalls,
@@ -695,16 +676,16 @@ const relectures: SessionRule = (s, th) => {
       basis: t('diagnostics.rules.relectures.basis'),
     },
     trigger: triggerOf('rereadTokens', c, value),
-  };
-};
+  }
+}
 
 /** La fenêtre approche de ce que le modèle peut tenir. */
-const fenetreProcheLimite: SessionRule = (s, th) => {
-  const c = th.metrics.contextFill;
-  const value = valueOf('contextFill', s);
-  if (!exceeds(c, value) || value === null) return null;
+function fenetreProcheLimite(s: SessionSignal, th: Thresholds): Finding | null {
+  const c = th.metrics.contextFill
+  const value = valueOf('contextFill', s)
+  if (!exceeds(c, value) || value === null) return null
 
-  const auto = s.compactions.filter((x) => x.trigger === 'auto').length;
+  const auto = s.compactions.filter((x) => x.trigger === 'auto').length
   return {
     id: makeId('fenetre-proche-limite', 'session', s.sessionId),
     rule: 'fenetre-proche-limite',
@@ -719,10 +700,7 @@ const fenetreProcheLimite: SessionRule = (s, th) => {
         peak: tok(s.peakContext),
         fill: pct(value),
         limit: tok(s.contextLimit),
-      }) +
-      (auto
-        ? t('diagnostics.rules.fenetre-proche-limite.auto', { count: auto })
-        : t('diagnostics.rules.fenetre-proche-limite.noAuto')),
+      }) + (auto ? t('diagnostics.rules.fenetre-proche-limite.auto', { count: auto }) : t('diagnostics.rules.fenetre-proche-limite.noAuto')),
     metrics: {
       contextFill: value,
       peakContext: s.peakContext,
@@ -737,8 +715,8 @@ const fenetreProcheLimite: SessionRule = (s, th) => {
       basis: t('diagnostics.rules.fenetre-proche-limite.basis'),
     },
     trigger: triggerOf('contextFill', c, value),
-  };
-};
+  }
+}
 
 // ── La règle de parc ─────────────────────────────────────────────────────────
 
@@ -751,14 +729,14 @@ const fenetreProcheLimite: SessionRule = (s, th) => {
  * qu'y tient le socle.
  */
 function socleGaspille(signals: SessionSignal[], th: Thresholds): Finding | null {
-  const c = th.metrics.shortSessionBaseline;
-  const shortOnes = signals.filter((s) => exceeds(c, valueOf('shortSessionBaseline', s)));
+  const c = th.metrics.shortSessionBaseline
+  const shortOnes = signals.filter((s) => exceeds(c, valueOf('shortSessionBaseline', s)))
   // Un cas isolé n'est pas un motif ; c'est l'accumulation qui en fait un.
-  if (shortOnes.length < 5) return null;
+  if (shortOnes.length < 5) return null
 
-  const baseline = shortOnes.reduce((n, s) => n + s.firstTurnContext, 0);
-  const cost = shortOnes.reduce((n, s) => n + s.cost, 0);
-  const turns = shortOnes.reduce((n, s) => n + s.turns, 0);
+  const baseline = shortOnes.reduce((n, s) => n + s.firstTurnContext, 0)
+  const cost = shortOnes.reduce((n, s) => n + s.cost, 0)
+  const turns = shortOnes.reduce((n, s) => n + s.turns, 0)
 
   return {
     id: makeId('socle-gaspille', 'global', ''),
@@ -789,7 +767,7 @@ function socleGaspille(signals: SessionSignal[], th: Thresholds): Finding | null
       basis: t('diagnostics.rules.socle-gaspille.basis'),
     },
     trigger: triggerOf('shortSessionBaseline', c, c.value),
-  };
+  }
 }
 
 // ── Les règles de rythme ─────────────────────────────────────────────────────
@@ -801,11 +779,11 @@ function socleGaspille(signals: SessionSignal[], th: Thresholds): Finding | null
 
 /** Où en est la fenêtre de 5 h. */
 function rythme5h(pace: Pace): Finding | null {
-  const w = pace.windows;
-  const value = pace.current.cost;
-  if (value <= w.threshold) return null;
+  const w = pace.windows
+  const value = pace.current.cost
+  if (value <= w.threshold) return null
 
-  const ratio = value / (w.threshold || 1);
+  const ratio = value / (w.threshold || 1)
   return {
     id: makeId('rythme-5h', 'global', ''),
     rule: 'rythme-5h',
@@ -842,15 +820,15 @@ function rythme5h(pace: Pace): Finding | null {
       calibrated: w.calibrated,
       bound: w.calibrated ? 'percentile' : 'guard',
     },
-  };
+  }
 }
 
 /** Plusieurs sessions menées en même temps : la ressource part d'autant plus vite. */
 function sessionsParalleles(pace: Pace): Finding | null {
-  const c = pace.concurrency;
-  if (c.max < 2 || c.hoursAtLeast2 <= c.threshold) return null;
+  const c = pace.concurrency
+  if (c.max < 2 || c.hoursAtLeast2 <= c.threshold) return null
 
-  const share = c.activeHours > 0 ? c.hoursAtLeast2 / c.activeHours : 0;
+  const share = c.activeHours > 0 ? c.hoursAtLeast2 / c.activeHours : 0
   return {
     id: makeId('sessions-paralleles', 'global', ''),
     rule: 'sessions-paralleles',
@@ -878,15 +856,12 @@ function sessionsParalleles(pace: Pace): Finding | null {
       kind: 'measured',
       basis: t('diagnostics.rules.sessions-paralleles.basis'),
     },
-  };
+  }
 }
 
 // ── Composition ──────────────────────────────────────────────────────────────
 
-const SESSION_RULES: Record<
-  Exclude<RuleName, 'socle-gaspille' | 'rythme-5h' | 'sessions-paralleles'>,
-  SessionRule
-> = {
+const SESSION_RULES: Record<Exclude<RuleName, 'socle-gaspille' | 'rythme-5h' | 'sessions-paralleles'>, SessionRule> = {
   'historique-relu': historiqueRelu,
   'cache-faible': cacheFaible,
   'sous-agents-couteux': sousAgentsCouteux,
@@ -899,16 +874,16 @@ const SESSION_RULES: Record<
   reorientations,
   relectures,
   'fenetre-proche-limite': fenetreProcheLimite,
-};
+}
 
-const SEVERITY_RANK: Record<Severity, number> = { info: 0, warn: 1, critical: 2 };
+const SEVERITY_RANK: Record<Severity, number> = { info: 0, warn: 1, critical: 2 }
 
 /** Le poids d'un constat, pour trier. Un dollar prime sur un token, faute de taux. */
 function weight(f: Finding): number {
-  if (f.impact.usd !== undefined) return f.impact.usd;
+  if (f.impact.usd !== undefined) return f.impact.usd
   // Les constats en tokens passent après ceux en dollars, mais restent ordonnés
   // entre eux. Aucun taux de change n'est inventé pour les mêler.
-  return -1 / ((f.impact.tokens ?? 0) + 1);
+  return -1 / ((f.impact.tokens ?? 0) + 1)
 }
 
 /**
@@ -918,45 +893,36 @@ function weight(f: Finding): number {
  * donnent huit constats. Les rassembler en une recommandation est le travail de
  * l'étape suivante, qui a besoin de les voir tous.
  */
-export function detect(
-  signals: SessionSignal[],
-  thresholds: Thresholds,
-  options: DetectOptions = {},
-): Finding[] {
-  const disabled = new Set(options.disabled ?? []);
-  const ignored = new Set(options.ignore ?? []);
-  const findings: Finding[] = [];
+export function detect(signals: SessionSignal[], thresholds: Thresholds, options: DetectOptions = {}): Finding[] {
+  const disabled = new Set(options.disabled ?? [])
+  const ignored = new Set(options.ignore ?? [])
+  const findings: Finding[] = []
 
   for (const signal of signals) {
     for (const [name, rule] of Object.entries(SESSION_RULES) as [RuleName, SessionRule][]) {
-      if (disabled.has(name)) continue;
-      const found = rule(signal, thresholds);
-      if (found) findings.push(found);
+      if (disabled.has(name)) continue
+      const found = rule(signal, thresholds)
+      if (found) findings.push(found)
     }
   }
 
   if (!disabled.has('socle-gaspille')) {
-    const found = socleGaspille(signals, thresholds);
-    if (found) findings.push(found);
+    const found = socleGaspille(signals, thresholds)
+    if (found) findings.push(found)
   }
 
   if (options.pace) {
     if (!disabled.has('rythme-5h')) {
-      const found = rythme5h(options.pace);
-      if (found) findings.push(found);
+      const found = rythme5h(options.pace)
+      if (found) findings.push(found)
     }
     if (!disabled.has('sessions-paralleles')) {
-      const found = sessionsParalleles(options.pace);
-      if (found) findings.push(found);
+      const found = sessionsParalleles(options.pace)
+      if (found) findings.push(found)
     }
   }
 
   return findings
     .filter((f) => !ignored.has(f.id))
-    .sort(
-      (a, b) =>
-        SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity] ||
-        weight(b) - weight(a) ||
-        a.rule.localeCompare(b.rule),
-    );
+    .sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity] || weight(b) - weight(a) || a.rule.localeCompare(b.rule))
 }

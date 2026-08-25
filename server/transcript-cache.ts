@@ -18,13 +18,13 @@
 // autre chantier, plus délicat — une ligne ajoutée peut modifier un événement
 // déjà émis, car le `tool_result` d'un `tool_use` vit dans la ligne suivante.
 
-import { stat, readdir } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
-import { createHash } from 'node:crypto';
-import { dirname, join } from 'node:path';
-import type { Stats } from 'node:fs';
-import { summariseTranscript, type TranscriptSummary } from './transcript.ts';
-import { serialiseInPool } from './parse-pool.ts';
+import { createHash } from 'node:crypto'
+import { existsSync } from 'node:fs'
+import type { Stats } from 'node:fs'
+import { stat, readdir } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { serialiseInPool } from './parse-pool.ts'
+import { summariseTranscript, type TranscriptSummary } from './transcript.ts'
 
 export interface CachedTranscript {
   /**
@@ -39,9 +39,9 @@ export interface CachedTranscript {
    * que le premier comme un corps déjà écrit. Un `Uint8Array` nu lui semblerait
    * un objet ordinaire, qu'il sérialiserait en JSON — un tableau de nombres.
    */
-  body: Buffer;
+  body: Buffer
   /** Condensé de l'empreinte des sources, tel qu'envoyé en `ETag`. */
-  etag: string;
+  etag: string
 }
 
 /**
@@ -52,17 +52,17 @@ export interface CachedTranscript {
  * autres à côté, ce qui couvre le cas réel — quelques sessions consultées, pas
  * le dossier entier.
  */
-const MAX_BYTES = 24 * 1024 * 1024;
+const MAX_BYTES = 24 * 1024 * 1024
 
 interface Entry {
-  print: string;
-  bytes: number;
-  cached: CachedTranscript;
+  print: string
+  bytes: number
+  cached: CachedTranscript
 }
 
 /** L'ordre d'insertion d'une `Map` fait l'ordre d'éviction : le plus ancien sort. */
-const entries = new Map<string, Entry>();
-let heldBytes = 0;
+const entries = new Map<string, Entry>()
+let heldBytes = 0
 
 /**
  * Ce qui identifie l'état d'un fichier en append seul.
@@ -72,7 +72,7 @@ let heldBytes = 0;
  * fichier auquel on ne fait qu'ajouter des lignes, ils ne peuvent pas mentir.
  */
 function fingerprint(s: Stats): string {
-  return `${Math.round(s.mtimeMs)}-${s.size}`;
+  return `${Math.round(s.mtimeMs)}-${s.size}`
 }
 
 /**
@@ -87,7 +87,7 @@ function fingerprint(s: Stats): string {
  *
  * À incrémenter à chaque changement de ce que `parseTranscript` produit.
  */
-const PARSER_VERSION = 9;
+const PARSER_VERSION = 9
 
 /**
  * L'état de tous les fichiers d'où le transcript parsé est tiré.
@@ -108,28 +108,28 @@ const PARSER_VERSION = 9;
  * retient maintenant des octets, qu'il compte exactement.
  */
 export async function sourceState(abs: string, id: string): Promise<string> {
-  const main = await stat(abs);
-  const parts = [`v${PARSER_VERSION}`, fingerprint(main)];
+  const main = await stat(abs)
+  const parts = [`v${PARSER_VERSION}`, fingerprint(main)]
 
-  const dir = join(dirname(abs), id, 'subagents');
-  let files: string[];
+  const dir = join(dirname(abs), id, 'subagents')
+  let files: string[]
   try {
-    files = (await readdir(dir)).filter((f) => f.endsWith('.jsonl'));
+    files = (await readdir(dir)).filter((f) => f.endsWith('.jsonl'))
   } catch {
-    return parts.join('|');
+    return parts.join('|')
   }
   // Trié : l'ordre de `readdir` n'est pas garanti, et deux ordres différents pour
   // le même état feraient reparser sans raison.
-  files.sort();
+  files.sort()
 
   for (const f of files) {
     try {
-      parts.push(`${f}:${fingerprint(await stat(join(dir, f)))}`);
+      parts.push(`${f}:${fingerprint(await stat(join(dir, f)))}`)
     } catch {
       /* un sidecar disparu entre le listing et le stat ne compte pas */
     }
   }
-  return parts.join('|');
+  return parts.join('|')
 }
 
 /**
@@ -141,24 +141,24 @@ export async function sourceState(abs: string, id: string): Promise<string> {
  * seule propriété qu'on lui demande : changer quand la source change.
  */
 function etagOf(print: string): string {
-  return `W/"${createHash('sha1').update(print).digest('base64url').slice(0, 22)}"`;
+  return `W/"${createHash('sha1').update(print).digest('base64url').slice(0, 22)}"`
 }
 
 function evictUntilUnder(limit: number): void {
   for (const [key, entry] of entries) {
-    if (heldBytes <= limit) return;
-    entries.delete(key);
-    heldBytes -= entry.bytes;
+    if (heldBytes <= limit) return
+    entries.delete(key)
+    heldBytes -= entry.bytes
   }
 }
 
 function remember(abs: string, entry: Entry): void {
-  const previous = entries.get(abs);
-  if (previous) heldBytes -= previous.bytes;
-  entries.delete(abs);
-  entries.set(abs, entry);
-  heldBytes += entry.bytes;
-  evictUntilUnder(MAX_BYTES);
+  const previous = entries.get(abs)
+  if (previous) heldBytes -= previous.bytes
+  entries.delete(abs)
+  entries.set(abs, entry)
+  heldBytes += entry.bytes
+  evictUntilUnder(MAX_BYTES)
 }
 
 // ── Les résumés de la liste ──────────────────────────────────────────────────
@@ -176,40 +176,37 @@ function remember(abs: string, entry: Entry): void {
 // dossier tient largement sous le plafond.
 
 /** De quoi tenir un dossier bien fourni avec de la marge. */
-const MAX_SUMMARIES = 2000;
+const MAX_SUMMARIES = 2000
 
 interface SummaryEntry {
-  print: string;
-  summary: TranscriptSummary;
+  print: string
+  summary: TranscriptSummary
 }
 
-const summaries = new Map<string, SummaryEntry>();
+const summaries = new Map<string, SummaryEntry>()
 
 /** Résumer un transcript, en réutilisant le résumé précédent s'il vaut encore. */
-export async function summariseTranscriptCached(
-  abs: string,
-  id: string,
-): Promise<TranscriptSummary> {
-  const print = fingerprint(await stat(abs));
+export async function summariseTranscriptCached(abs: string, id: string): Promise<TranscriptSummary> {
+  const print = fingerprint(await stat(abs))
 
-  const hit = summaries.get(abs);
+  const hit = summaries.get(abs)
   if (hit && hit.print === print) {
     // Le resservir le rend récent : il repasse en fin de file d'éviction.
-    summaries.delete(abs);
-    summaries.set(abs, hit);
-    return hit.summary;
+    summaries.delete(abs)
+    summaries.set(abs, hit)
+    return hit.summary
   }
 
-  const summary = await summariseTranscript(abs, id);
-  summaries.delete(abs);
-  summaries.set(abs, { print, summary });
+  const summary = await summariseTranscript(abs, id)
+  summaries.delete(abs)
+  summaries.set(abs, { print, summary })
   // L'ordre d'insertion fait l'ordre d'éviction : le plus ancien sort.
   while (summaries.size > MAX_SUMMARIES) {
-    const oldest = summaries.keys().next().value;
-    if (oldest === undefined) break;
-    summaries.delete(oldest);
+    const oldest = summaries.keys().next().value
+    if (oldest === undefined) break
+    summaries.delete(oldest)
   }
-  return summary;
+  return summary
 }
 
 /**
@@ -219,16 +216,16 @@ export async function summariseTranscriptCached(
  * l'autre. Grand ouvert, ce sont N fichiers de plusieurs centaines de Ko en
  * mémoire en même temps. Un lot borné prend l'accélération sans le pic.
  */
-const SUMMARY_CONCURRENCY = 8;
+const SUMMARY_CONCURRENCY = 8
 
 /** List every `<id>.jsonl` transcript in a project's transcript directory. */
 export async function listTranscripts(projectDir: string): Promise<TranscriptSummary[]> {
-  if (!existsSync(projectDir)) return [];
-  const files = (await readdir(projectDir)).filter((f) => f.endsWith('.jsonl'));
+  if (!existsSync(projectDir)) return []
+  const files = (await readdir(projectDir)).filter((f) => f.endsWith('.jsonl'))
 
-  const out: TranscriptSummary[] = [];
+  const out: TranscriptSummary[] = []
   for (let i = 0; i < files.length; i += SUMMARY_CONCURRENCY) {
-    const lot = files.slice(i, i + SUMMARY_CONCURRENCY);
+    const lot = files.slice(i, i + SUMMARY_CONCURRENCY)
     const done = await Promise.all(
       lot.map((f) =>
         summariseTranscriptCached(join(projectDir, f), f.replace(/\.jsonl$/, '')).catch(
@@ -236,10 +233,10 @@ export async function listTranscripts(projectDir: string): Promise<TranscriptSum
           () => null,
         ),
       ),
-    );
-    for (const s of done) if (s) out.push(s);
+    )
+    for (const s of done) if (s) out.push(s)
   }
-  return out.sort((a, b) => b.mtime - a.mtime);
+  return out.sort((a, b) => b.mtime - a.mtime)
 }
 
 /**
@@ -254,28 +251,28 @@ export async function listTranscripts(projectDir: string): Promise<TranscriptSum
  * pour des sources devenues différentes.
  */
 export async function readTranscriptCached(abs: string, id: string): Promise<CachedTranscript> {
-  const before = await sourceState(abs, id);
+  const before = await sourceState(abs, id)
 
-  const hit = entries.get(abs);
+  const hit = entries.get(abs)
   if (hit && hit.print === before) {
     // Le relire le rend récent : il repasse en fin de file d'éviction.
-    entries.delete(abs);
-    entries.set(abs, hit);
-    return hit.cached;
+    entries.delete(abs)
+    entries.set(abs, hit)
+    return hit.cached
   }
 
   // Le seul endroit du BFF où un transcript est lu : le travail part dans un
   // thread, la boucle d'événements reste libre de servir les autres pendant ce
   // temps. Ce `await` n'immobilise que la requête qui l'a demandé.
-  const bytes = await serialiseInPool(abs, id);
+  const bytes = await serialiseInPool(abs, id)
   // Une vue sur les mêmes octets, sans copie : le transfert depuis le thread
   // nous en a donné la propriété, il n'y a rien à recopier pour les habiller.
-  const body = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  const cached: CachedTranscript = { body, etag: etagOf(before) };
+  const body = Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  const cached: CachedTranscript = { body, etag: etagOf(before) }
 
-  const after = await sourceState(abs, id);
+  const after = await sourceState(abs, id)
   if (after === before) {
-    remember(abs, { print: before, bytes: body.byteLength, cached });
+    remember(abs, { print: before, bytes: body.byteLength, cached })
   }
-  return cached;
+  return cached
 }

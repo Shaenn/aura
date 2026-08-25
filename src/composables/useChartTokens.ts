@@ -3,31 +3,33 @@
 // theme flips — otherwise a dark-mode toggle leaves the charts painted for the
 // old surface.
 
-import { ref, watch, type Ref } from 'vue';
-import { useQuasar } from 'quasar';
+import { useQuasar } from 'quasar'
+import { ref, watch, type Ref } from 'vue'
 
 export interface ChartTokens {
   /** Categorical slots, in the fixed order defined by the theme. */
-  series: string[];
-  text: string;
-  muted: string;
-  line: string;
-  surface: string;
+  series: string[]
+  text: string
+  muted: string
+  line: string
+  surface: string
 }
 
 /** Number of `--series-N` tokens declared in `app.scss`. */
-const SERIES_COUNT = 6;
+const SERIES_COUNT = 6
 
 function read(): ChartTokens {
-  const s = getComputedStyle(document.body);
-  const v = (name: string) => s.getPropertyValue(name).trim();
+  const s = getComputedStyle(document.body)
+  function v(name: string) {
+    return s.getPropertyValue(name).trim()
+  }
   return {
     series: Array.from({ length: SERIES_COUNT }, (_, i) => v(`--series-${i + 1}`)),
     text: v('--text'),
     muted: v('--muted'),
     line: v('--line'),
     surface: v('--surface'),
-  };
+  }
 }
 
 /**
@@ -35,16 +37,16 @@ function read(): ChartTokens {
  * rebuilds its chart from the new values.
  */
 export function useChartTokens(): Ref<ChartTokens> {
-  const $q = useQuasar();
-  const tokens = ref<ChartTokens>(read());
+  const $q = useQuasar()
+  const tokens = ref<ChartTokens>(read())
   watch(
     () => $q.dark.isActive,
     () => {
       // The class swap happens on <body>; wait a frame so getComputedStyle sees it.
-      requestAnimationFrame(() => (tokens.value = read()));
+      requestAnimationFrame(() => (tokens.value = read()))
     },
-  );
-  return tokens;
+  )
+  return tokens
 }
 
 /**
@@ -53,5 +55,5 @@ export function useChartTokens(): Ref<ChartTokens> {
  * bucket rather than reuse a hue — a repeated colour reads as the same entity.
  */
 export function seriesColor(tokens: ChartTokens, i: number): string {
-  return tokens.series[i] ?? tokens.muted;
+  return tokens.series[i] ?? tokens.muted
 }

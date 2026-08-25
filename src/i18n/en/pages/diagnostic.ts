@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const diagnostic: MessageSchema['pages']['diagnostic'] = {
   title: 'Cost diagnostic',
@@ -51,8 +51,7 @@ const diagnostic: MessageSchema['pages']['diagnostic'] = {
   },
   readings: {
     same: 'Your two quarters behave the same here: this gesture does not separate them.',
-    exploreMore:
-      'Here, the most productive quarter explores more: it searches more than it builds, and still delivers.',
+    exploreMore: 'Here, the most productive quarter explores more: it searches more than it builds, and still delivers.',
     exploreLess: 'Here, the most productive quarter searches less than it builds.',
     turnsMore:
       'Here, the most productive quarter takes more turns per prompt — the result nobody expects, and a “too many turns” rule would have advised the opposite of the right move.',
@@ -60,18 +59,15 @@ const diagnostic: MessageSchema['pages']['diagnostic'] = {
   },
   workReading: {
     prefix: 'On your corpus: {parts}.',
-    explore:
-      'your most productive sessions search less than they build ({top} exploration per change against {bottom})',
-    turns:
-      'they take {top} turns per prompt where the others take {bottom} — one complete brief left to run, not ten short follow-ups',
+    explore: 'your most productive sessions search less than they build ({top} exploration per change against {bottom})',
+    turns: 'they take {top} turns per prompt where the others take {bottom} — one complete brief left to run, not ten short follow-ups',
     none: 'Your two quarters look alike on these gestures: nothing clearly separates them here.',
   },
 
   pace: 'Pace',
   paceWindow: '{n} h window',
   current: 'The last 5 hours',
-  currentWhat:
-    'What was spent in the last five hours, across every project and every session — the quantity a usage limit counts.',
+  currentWhat: 'What was spent in the last five hours, across every project and every session — the quantity a usage limit counts.',
   currentHint: '{sessions} — {rank}',
   currentRank: {
     none: 'nothing spent in this window',
@@ -93,12 +89,10 @@ const diagnostic: MessageSchema['pages']['diagnostic'] = {
   windowsReading:
     '{n} windows measured. They overlap widely — one per response — so the peak is not a day but a moment: the five most expensive hours you strung together.',
   concurrency: 'Concurrent sessions',
-  concurrencyWhat:
-    'The highest number of sessions open at the same time, from the overlap of their bounds — first to last line of each.',
+  concurrencyWhat: 'The highest number of sessions open at the same time, from the overlap of their bounds — first to last line of each.',
   concurrencyReading:
     'A session left open without being touched counts as open: that is what it was. Running two sessions at once fills the 5 h window twice as fast.',
-  concurrencyHint:
-    'at most — {hours} h at two or more, that is {share} of the time a session was open',
+  concurrencyHint: 'at most — {hours} h at two or more, that is {share} of the time a session was open',
   paceReading:
     'A sliding window knows nothing about sessions: it counts what was spent in the last five hours, all sessions together. Two sessions run at once fill it twice as fast.',
 
@@ -131,8 +125,7 @@ const diagnostic: MessageSchema['pages']['diagnostic'] = {
   boundWeak: 'sample too small',
   boundGuard: 'guardrail',
   boundPark: 'your corpus',
-  reviewed:
-    'Guardrails last reviewed by hand on {date}. Your corpus holds {sessions} today. How to recalibrate them is in the {link}.',
+  reviewed: 'Guardrails last reviewed by hand on {date}. Your corpus holds {sessions} today. How to recalibrate them is in the {link}.',
   reviewedLink: 'manual',
   caveats: "What this report doesn't know",
 
@@ -147,12 +140,9 @@ const diagnostic: MessageSchema['pages']['diagnostic'] = {
     silenced: ', which silences {n} session{cost} | , which silences {n} sessions{cost}',
     silencedCost: ' weighing {cost}',
     orphansNone: ' None of them disappears for all that: each is flagged by another signal.',
-    orphans:
-      ' {n} of them ({cost}) are named by no other signal — that is what this floor really costs; the others are duplicates.',
-    guardLine:
-      '{rank} of your corpus {p} · guardrail {guard} → we keep {which}, so the guardrail{silenced}. {weight}{orphans}',
-    parkLine:
-      '{rank} of your corpus {p} · guardrail {guard} → we keep {which}, so your corpus: {verdict}. {weight}',
+    orphans: ' {n} of them ({cost}) are named by no other signal — that is what this floor really costs; the others are duplicates.',
+    guardLine: '{rank} of your corpus {p} · guardrail {guard} → we keep {which}, so the guardrail{silenced}. {weight}{orphans}',
+    parkLine: '{rank} of your corpus {p} · guardrail {guard} → we keep {which}, so your corpus: {verdict}. {weight}',
     verdictSame: 'both land in the same place, and there is nothing between them to silence',
     verdictPassed: 'the floor is passed and has nothing to silence',
   },
@@ -172,6 +162,6 @@ const diagnostic: MessageSchema['pages']['diagnostic'] = {
     guardSilenced: ' The {n} sessions in between are silenced{cost}.',
     guardSilencedCost: ' — {cost} in total',
   },
-};
+}
 
-export default diagnostic;
+export default diagnostic

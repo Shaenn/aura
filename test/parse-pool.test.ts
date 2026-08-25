@@ -11,45 +11,43 @@
 // assertions valent dans les deux cas — c'est précisément ce qu'on veut d'un
 // repli.
 
-import { describe, expect, it } from 'vitest';
-import { fileURLToPath } from 'node:url';
-import { join } from 'node:path';
-import { parseTranscript } from '../server/transcript.ts';
-import { serialiseTranscript } from '../server/transcript-worker.ts';
-import { serialiseInPool, poolState } from '../server/parse-pool.ts';
-import { readTranscriptCached } from '../server/transcript-cache.ts';
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { describe, expect, it } from 'vitest'
+import { serialiseInPool, poolState } from '../server/parse-pool.ts'
+import { readTranscriptCached } from '../server/transcript-cache.ts'
+import { serialiseTranscript } from '../server/transcript-worker.ts'
+import { parseTranscript } from '../server/transcript.ts'
 
-const fixtures = fileURLToPath(new URL('./fixtures/', import.meta.url));
-const abs = join(fixtures, 'withsub.jsonl');
-const id = 'withsub';
+const fixtures = fileURLToPath(new URL('./fixtures/', import.meta.url))
+const abs = join(fixtures, 'withsub.jsonl')
+const id = 'withsub'
 
 describe('lecture de transcript hors boucle', () => {
   it('sérialise exactement ce que le parse produit', async () => {
-    const expected = JSON.stringify(await parseTranscript(abs, id));
-    const bytes = await serialiseTranscript(abs, id);
-    expect(Buffer.from(bytes).toString('utf8')).toBe(expected);
-  });
+    const expected = JSON.stringify(await parseTranscript(abs, id))
+    const bytes = await serialiseTranscript(abs, id)
+    expect(Buffer.from(bytes).toString('utf8')).toBe(expected)
+  })
 
   it('rend les mêmes octets quel que soit le chemin emprunté', async () => {
-    const direct = await serialiseTranscript(abs, id);
-    const pooled = await serialiseInPool(abs, id);
-    expect(Buffer.from(pooled).equals(Buffer.from(direct))).toBe(true);
-  });
+    const direct = await serialiseTranscript(abs, id)
+    const pooled = await serialiseInPool(abs, id)
+    expect(Buffer.from(pooled).equals(Buffer.from(direct))).toBe(true)
+  })
 
   it('rend un `Buffer`, seule forme que Fastify écrit telle quelle', async () => {
     // Un `Uint8Array` nu passerait pour un objet ordinaire et serait sérialisé
     // en JSON — un tableau de nombres à la place du transcript.
-    const { body } = await readTranscriptCached(abs, id);
-    expect(Buffer.isBuffer(body)).toBe(true);
-    expect(() => JSON.parse(body.toString('utf8'))).not.toThrow();
-  });
+    const { body } = await readTranscriptCached(abs, id)
+    expect(Buffer.isBuffer(body)).toBe(true)
+    expect(() => JSON.parse(body.toString('utf8'))).not.toThrow()
+  })
 
   it('remonte l’échec d’un transcript absent, sans le confondre avec une panne de thread', async () => {
-    await expect(
-      serialiseInPool(join(fixtures, 'nexistepas.jsonl'), 'nexistepas'),
-    ).rejects.toThrow();
+    await expect(serialiseInPool(join(fixtures, 'nexistepas.jsonl'), 'nexistepas')).rejects.toThrow(/ENOENT/)
     // Un fichier manquant ne condamne pas le pool : c'est le transcript qui a
     // échoué, pas le mécanisme.
-    expect(poolState().size).toBeGreaterThan(0);
-  });
-});
+    expect(poolState().size).toBeGreaterThan(0)
+  })
+})

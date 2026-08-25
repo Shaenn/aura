@@ -5,9 +5,10 @@
 # système de fichiers, les noms courts 8.3, l'énumération des processus. Les faire tourner
 # ailleurs vérifierait autre chose que ce qui est livré.
 #
-# `build` en plus de `typecheck` : `pnpm typecheck` ne couvre que `server/` et `test/`. Le
-# front n'est typé que par `vue-tsc`, que seul le build déclenche. Sans cette étape, une
-# rupture de types dans `src/` passerait la CI.
+# `build` en plus de `typecheck` : depuis la mise au socle, `pnpm typecheck` ouvre la marche
+# par `vue-tsc` et couvre donc le front, ce qu'il ne faisait pas — le build ne rattrape plus
+# une rupture de types. Il reste parce qu'il vérifie autre chose : que Quasar sait produire
+# le bundle, résoudre les alias et les imports dynamiques du manuel.
 
 name: CI
 
@@ -27,16 +28,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # 11 et non 10 : les gardes de `pnpm-workspace.yaml` sont des fonctions de
-      # pnpm 11. Sous la 10, `pnpm install` ne vérifie pas le lockfile contre
-      # elles — la quarantaine ne protégeait donc que la machine qui résout, et
-      # un lockfile fabriqué ailleurs avec une dérogation locale passait la CI
-      # sans un mot. C'est aussi la version qui écrit le lockfile en local :
-      # laisser la CI le relire avec une majeure de retard est une panne qui
-      # attend son heure.
+      # Pas de version ici : `packageManager` dans `package.json` la porte
+      # désormais, et l'action refuse de démarrer si les deux se contredisent.
+      # Ce qui se joue sur ce numéro : les gardes de `pnpm-workspace.yaml` sont
+      # des fonctions de pnpm 11. Sous la 10, `pnpm install` ne vérifie pas le
+      # lockfile contre elles — la quarantaine ne protégeait donc que la machine
+      # qui résout, et un lockfile fabriqué ailleurs avec une dérogation locale
+      # passait la CI sans un mot.
       - uses: pnpm/action-setup@v6
-        with:
-          version: 11
 
       - uses: actions/setup-node@v7
         with:

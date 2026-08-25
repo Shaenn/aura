@@ -10,10 +10,10 @@
 // `currentLocale()` y crée la dépendance réactive qui rafraîchit l'affichage
 // quand la langue change.
 
-import { currentLocale, t, type AppLocale } from '@/i18n';
+import { currentLocale, t, type AppLocale } from '@/i18n'
 
 /** Rien à afficher — un tiret cadratin, pas un vide qui ferait douter. */
-const EMPTY = '—';
+const EMPTY = '—'
 
 /**
  * Garde un formateur `Intl` tant que la langue ne bouge pas.
@@ -22,36 +22,36 @@ const EMPTY = '—';
  * événement affiché. La clé est la locale : elle change, le formateur suit.
  */
 function perLocale<T>(make: (locale: AppLocale) => T): () => T {
-  let key: AppLocale | null = null;
-  let value: T;
+  let key: AppLocale | null = null
+  let value: T
   return () => {
-    const locale = currentLocale();
+    const locale = currentLocale()
     if (locale !== key) {
-      key = locale;
-      value = make(locale);
+      key = locale
+      value = make(locale)
     }
-    return value;
-  };
+    return value
+  }
 }
 
 // Même mise en cache que `perLocale`, mais la clé porte aussi le nombre de
 // décimales : deux appelants qui n'en demandent pas autant ne doivent pas se
 // disputer une seule instance.
-const decimalFormats = new Map<string, Intl.NumberFormat>();
+const decimalFormats = new Map<string, Intl.NumberFormat>()
 
 /** Un nombre à décimales fixes, dans la ponctuation du pays. */
 function decimals(n: number, digits: number): string {
-  const locale = currentLocale();
-  const key = `${locale}:${digits}`;
-  let format = decimalFormats.get(key);
+  const locale = currentLocale()
+  const key = `${locale}:${digits}`
+  let format = decimalFormats.get(key)
   if (!format) {
     format = new Intl.NumberFormat(locale, {
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
-    });
-    decimalFormats.set(key, format);
+    })
+    decimalFormats.set(key, format)
   }
-  return format.format(n);
+  return format.format(n)
 }
 
 /**
@@ -62,11 +62,11 @@ function decimals(n: number, digits: number): string {
  * d'une interface française trahit tout de suite l'unité recollée à la main.
  */
 export function fmtBytes(n: number): string {
-  if (!n) return `0 ${t('formats.bytes.b')}`;
-  if (n < 1024) return `${fmtInt(n)} ${t('formats.bytes.b')}`;
-  if (n < 1024 * 1024) return `${decimals(n / 1024, 1)} ${t('formats.bytes.kb')}`;
-  if (n < 1024 * 1024 * 1024) return `${decimals(n / (1024 * 1024), 1)} ${t('formats.bytes.mb')}`;
-  return `${decimals(n / (1024 * 1024 * 1024), 2)} ${t('formats.bytes.gb')}`;
+  if (!n) return `0 ${t('formats.bytes.b')}`
+  if (n < 1024) return `${fmtInt(n)} ${t('formats.bytes.b')}`
+  if (n < 1024 * 1024) return `${decimals(n / 1024, 1)} ${t('formats.bytes.kb')}`
+  if (n < 1024 * 1024 * 1024) return `${decimals(n / (1024 * 1024), 1)} ${t('formats.bytes.mb')}`
+  return `${decimals(n / (1024 * 1024 * 1024), 2)} ${t('formats.bytes.gb')}`
 }
 
 /**
@@ -79,25 +79,25 @@ export function fmtBytes(n: number): string {
  * contredisent pas dans la même phrase.
  */
 export function fmtNum(n: number): string {
-  const space = currentLocale() === 'fr' ? ' ' : '';
-  if (n < 1000) return decimals(n, 0);
-  if (n < 1_000_000) return `${decimals(n / 1000, n < 10_000 ? 1 : 0)}${space}k`;
-  return `${decimals(n / 1_000_000, 1)}${space}M`;
+  const space = currentLocale() === 'fr' ? ' ' : ''
+  if (n < 1000) return decimals(n, 0)
+  if (n < 1_000_000) return `${decimals(n / 1000, n < 10_000 ? 1 : 0)}${space}k`
+  return `${decimals(n / 1_000_000, 1)}${space}M`
 }
 
 /** Un nombre à décimales fixes : `10,1` / `10.1`. */
 export function fmtDecimal(n: number, digits = 1): string {
-  return decimals(n, digits);
+  return decimals(n, digits)
 }
 
-const intFormat = perLocale((l) => new Intl.NumberFormat(l));
+const intFormat = perLocale((l) => new Intl.NumberFormat(l))
 
 /** Un entier avec ses séparateurs de milliers : `1 234 567` / `1,234,567`. */
 export function fmtInt(n: number): string {
-  return intFormat().format(n);
+  return intFormat().format(n)
 }
 
-const percentFormats = new Map<string, Intl.NumberFormat>();
+const percentFormats = new Map<string, Intl.NumberFormat>()
 
 /**
  * Une proportion, à partir d'un rapport : `77 %` / `77%`.
@@ -106,18 +106,18 @@ const percentFormats = new Map<string, Intl.NumberFormat>();
  * la chaîne — la recoller à la main donnerait `77 %` des deux côtés.
  */
 export function fmtPercent(ratio: number, digits = 0): string {
-  const locale = currentLocale();
-  const key = `${locale}:${digits}`;
-  let format = percentFormats.get(key);
+  const locale = currentLocale()
+  const key = `${locale}:${digits}`
+  let format = percentFormats.get(key)
   if (!format) {
     format = new Intl.NumberFormat(locale, {
       style: 'percent',
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
-    });
-    percentFormats.set(key, format);
+    })
+    percentFormats.set(key, format)
   }
-  return format.format(ratio);
+  return format.format(ratio)
 }
 
 const dateTimeFormat = perLocale(
@@ -129,61 +129,57 @@ const dateTimeFormat = perLocale(
       hour: '2-digit',
       minute: '2-digit',
     }),
-);
+)
 
 /** Absolute local date-time, e.g. "8 juil. 2026, 14:32". */
 export function fmtDate(ms: number): string {
-  if (!ms) return EMPTY;
-  return dateTimeFormat().format(new Date(ms));
+  if (!ms) return EMPTY
+  return dateTimeFormat().format(new Date(ms))
 }
 
-const dateShortFormat = perLocale((l) => new Intl.DateTimeFormat(l));
+const dateShortFormat = perLocale((l) => new Intl.DateTimeFormat(l))
 
 /** La date seule, au format court du pays : `08/07/2026` / `7/8/2026`. */
 export function fmtDateShort(ms: number): string {
-  if (!ms) return EMPTY;
-  const d = new Date(ms);
-  return Number.isNaN(d.getTime()) ? EMPTY : dateShortFormat().format(d);
+  if (!ms) return EMPTY
+  const d = new Date(ms)
+  return Number.isNaN(d.getTime()) ? EMPTY : dateShortFormat().format(d)
 }
 
-const dateLongFormat = perLocale(
-  (l) => new Intl.DateTimeFormat(l, { day: 'numeric', month: 'long', year: 'numeric' }),
-);
+const dateLongFormat = perLocale((l) => new Intl.DateTimeFormat(l, { day: 'numeric', month: 'long', year: 'numeric' }))
 
 /** La date écrite en toutes lettres : `8 juillet 2026` / `July 8, 2026`. */
 export function fmtDateLong(ms: number): string {
-  const d = new Date(ms);
-  return Number.isNaN(d.getTime()) ? EMPTY : dateLongFormat().format(d);
+  const d = new Date(ms)
+  return Number.isNaN(d.getTime()) ? EMPTY : dateLongFormat().format(d)
 }
 
-const monthFormat = perLocale((l) => new Intl.DateTimeFormat(l, { month: 'long' }));
+const monthFormat = perLocale((l) => new Intl.DateTimeFormat(l, { month: 'long' }))
 
 /** Le nom du mois seul, pour un regroupement par période. */
 export function fmtMonth(ms: number): string {
-  return monthFormat().format(new Date(ms));
+  return monthFormat().format(new Date(ms))
 }
 
-const timeFormat = perLocale(
-  (l) => new Intl.DateTimeFormat(l, { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-);
+const timeFormat = perLocale((l) => new Intl.DateTimeFormat(l, { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
 
 /** L'heure seule, à la seconde — l'échelle du rejeu d'une session. */
 export function fmtTime(ms: number): string {
-  if (!ms) return '';
-  return timeFormat().format(new Date(ms));
+  if (!ms) return ''
+  return timeFormat().format(new Date(ms))
 }
 
-const relFormat = perLocale((l) => new Intl.RelativeTimeFormat(l, { style: 'narrow' }));
+const relFormat = perLocale((l) => new Intl.RelativeTimeFormat(l, { style: 'narrow' }))
 
 /** Relative time, e.g. "il y a 3 j". */
 export function relTime(ms: number): string {
-  if (!ms) return EMPTY;
-  const s = Math.max(0, (Date.now() - ms) / 1000);
-  if (s < 60) return t('formats.justNow');
-  if (s < 3600) return relFormat().format(-Math.floor(s / 60), 'minute');
-  if (s < 86400) return relFormat().format(-Math.floor(s / 3600), 'hour');
-  if (s < 2592000) return relFormat().format(-Math.floor(s / 86400), 'day');
-  return fmtDate(ms);
+  if (!ms) return EMPTY
+  const s = Math.max(0, (Date.now() - ms) / 1000)
+  if (s < 60) return t('formats.justNow')
+  if (s < 3600) return relFormat().format(-Math.floor(s / 60), 'minute')
+  if (s < 86400) return relFormat().format(-Math.floor(s / 3600), 'hour')
+  if (s < 2592000) return relFormat().format(-Math.floor(s / 86400), 'day')
+  return fmtDate(ms)
 }
 
 /**
@@ -200,7 +196,7 @@ export function fmtMoney(usd: number, maximumFractionDigits = 2): string {
     currency: 'USD',
     currencyDisplay: 'narrowSymbol',
     maximumFractionDigits,
-  }).format(usd);
+  }).format(usd)
 }
 
 /**
@@ -209,18 +205,18 @@ export function fmtMoney(usd: number, maximumFractionDigits = 2): string {
  * Deux décimales afficheraient « 0,00 $ » là où il s'est passé quelque chose.
  */
 export function fmtCost(usd: number): string {
-  if (usd >= 1) return fmtMoney(usd);
-  return `${decimals(usd * 100, 1)} ¢`;
+  if (usd >= 1) return fmtMoney(usd)
+  return `${decimals(usd * 100, 1)} ¢`
 }
 
 /** A duration in ms → "5 min 3 s" / "1 h 2 min" / "820 ms". */
 export function fmtDuration(ms: number): string {
-  if (ms <= 0) return EMPTY;
-  if (ms < 1000) return `${Math.round(ms)} ${t('formats.duration.ms')}`;
-  const s = Math.round(ms / 1000);
-  if (s < 60) return `${s} ${t('formats.duration.s')}`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m} ${t('formats.duration.min')} ${s % 60} ${t('formats.duration.s')}`;
-  const h = Math.floor(m / 60);
-  return `${h} ${t('formats.duration.h')} ${m % 60} ${t('formats.duration.min')}`;
+  if (ms <= 0) return EMPTY
+  if (ms < 1000) return `${Math.round(ms)} ${t('formats.duration.ms')}`
+  const s = Math.round(ms / 1000)
+  if (s < 60) return `${s} ${t('formats.duration.s')}`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m} ${t('formats.duration.min')} ${s % 60} ${t('formats.duration.s')}`
+  const h = Math.floor(m / 60)
+  return `${h} ${t('formats.duration.h')} ${m % 60} ${t('formats.duration.min')}`
 }

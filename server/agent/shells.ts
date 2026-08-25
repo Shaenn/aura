@@ -16,16 +16,20 @@
 // quand il le lance et quand il le termine, là où un rapprochement par processus
 // devrait deviner.
 
-import { open } from 'node:fs/promises';
-import type { BackgroundShell, ShellOutput } from '../../shared/agent.ts';
-import { str } from '../json.ts';
-import { parseTaskNotification } from '../transcript.ts';
-import { resultText } from './translate.ts';
+import { open } from 'node:fs/promises'
+import type { BackgroundShell, ShellOutput } from '../../shared/agent.ts'
+import { str } from '../json.ts'
+import { parseTaskNotification } from '../transcript.ts'
+import { resultText } from './translate.ts'
 
-type Rec = Record<string, unknown>;
+type Rec = Record<string, unknown>
 
-const rec = (v: unknown): Rec => (v && typeof v === 'object' ? (v as Rec) : {});
-const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+function rec(v: unknown): Rec {
+  return v && typeof v === 'object' ? (v as Rec) : {}
+}
+function arr(v: unknown): unknown[] {
+  return Array.isArray(v) ? v : []
+}
 
 /**
  * La promesse que rend `run_in_background` : un identifiant, pas une sortie.
@@ -35,13 +39,13 @@ const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
  * composants — mais elles se corrigent ensemble le jour où le CLI change sa
  * formule.
  */
-const LAUNCHED = /^Command running in background with ID: (\S+?)\./;
+const LAUNCHED = /^Command running in background with ID: (\S+?)\./
 
 /** Le fichier où le CLI déverse la sortie, annoncé dans la même phrase. */
-const OUTPUT_FILE = /Output is being written to: (.+?\.output)\b/;
+const OUTPUT_FILE = /Output is being written to: (.+?\.output)\b/
 
 /** Ce que le `<summary>` d'une notification dit de la fin. */
-const EXIT_CODE = /exit code (-?\d+)/;
+const EXIT_CODE = /exit code (-?\d+)/
 
 /**
  * Les `<status>` qui disent une coupure plutôt qu'un terme.
@@ -52,10 +56,10 @@ const EXIT_CODE = /exit code (-?\d+)/;
  * plutôt que de prendre tout ce qui n'est pas `completed` : un `failed` est une
  * fin, pas un arrêt, et son code de sortie le dit déjà.
  */
-const KILLED_STATUS = /^(killed|stopped|aborted|cancell?ed|terminated|interrupted)$/i;
+const KILLED_STATUS = /^(killed|stopped|aborted|cancell?ed|terminated|interrupted)$/i
 
 /** La forme d'un identifiant de shell — `btt4xdjh2`, `bq55159a`. */
-export const SHELL_ID = /^[a-z0-9]{4,24}$/;
+export const SHELL_ID = /^[a-z0-9]{4,24}$/
 
 /**
  * Ce chemin est-il bien celui du fichier de sortie de ce shell ?
@@ -71,21 +75,17 @@ export const SHELL_ID = /^[a-z0-9]{4,24}$/;
  * même où tout fonctionne.
  */
 export function isOutputPath(path: string, shellId: string): boolean {
-  if (!SHELL_ID.test(shellId)) return false;
-  const parts = path.toLowerCase().split(/[\\/]/);
-  const last = parts[parts.length - 1];
-  return (
-    last === `${shellId.toLowerCase()}.output` &&
-    parts.includes('claude') &&
-    parts[parts.length - 2] === 'tasks'
-  );
+  if (!SHELL_ID.test(shellId)) return false
+  const parts = path.toLowerCase().split(/[\\/]/)
+  const last = parts[parts.length - 1]
+  return last === `${shellId.toLowerCase()}.output` && parts.includes('claude') && parts[parts.length - 2] === 'tasks'
 }
 
 /** Ce qu'on retient d'un appel entre son départ et la réponse qui le nomme. */
 interface Pending {
-  command: string;
-  description: string;
-  startedAt: number;
+  command: string
+  description: string
+  startedAt: number
 }
 
 /**
@@ -96,7 +96,7 @@ interface Pending {
  * suite à partir de son curseur, donc cette borne ne se paie qu'à la première
  * ouverture — ou après une longue absence.
  */
-const TAIL_MAX = 64 * 1024;
+const TAIL_MAX = 64 * 1024
 
 /**
  * Ce qu'une passe de lecture du transcript avale au plus.
@@ -105,7 +105,7 @@ const TAIL_MAX = 64 * 1024;
  * mais de rattraper un fichier, et une passe qui n'a pas fini reprend au tour
  * suivant, deux secondes plus tard.
  */
-const PAGE_MAX = 512 * 1024;
+const PAGE_MAX = 512 * 1024
 
 /**
  * La suite d'un fichier de sortie, à partir d'un curseur.
@@ -128,57 +128,54 @@ const PAGE_MAX = 512 * 1024;
  *
  * `next` dit où reprendre : tant qu'il diffère de `size`, il reste à lire.
  */
-export async function readSince(
-  path: string,
-  from: number,
-): Promise<{ text: string; next: number; size: number }> {
-  const handle = await open(path, 'r');
+export async function readSince(path: string, from: number): Promise<{ text: string; next: number; size: number }> {
+  const handle = await open(path, 'r')
   try {
-    const { size } = await handle.stat();
-    const at = from > size || from < 0 ? 0 : from;
-    const length = Math.min(size - at, PAGE_MAX);
-    if (length <= 0) return { text: '', next: size, size };
+    const { size } = await handle.stat()
+    const at = from > size || from < 0 ? 0 : from
+    const length = Math.min(size - at, PAGE_MAX)
+    if (length <= 0) return { text: '', next: size, size }
 
-    const buffer = Buffer.alloc(length);
-    await handle.read(buffer, 0, length, at);
+    const buffer = Buffer.alloc(length)
+    await handle.read(buffer, 0, length, at)
 
     // Une page qui s'arrête au milieu d'une ligne la perdrait des deux côtés :
     // tronquée ici, et déjà dépassée par le curseur à la passe suivante. On
     // rend donc les lignes entières, et le reste au tour d'après. Le cas ne se
     // pose qu'avant la fin du fichier — la dernière page se rend telle quelle,
     // sa ligne finale fût-elle encore en cours d'écriture.
-    const end = at + length < size ? buffer.lastIndexOf(0x0a) + 1 : length;
-    if (end <= 0) return { text: '', next: at + length, size };
+    const end = at + length < size ? buffer.lastIndexOf(0x0a) + 1 : length
+    if (end <= 0) return { text: '', next: at + length, size }
 
-    return { text: buffer.subarray(0, end).toString('utf8'), next: at + end, size };
+    return { text: buffer.subarray(0, end).toString('utf8'), next: at + end, size }
   } finally {
-    await handle.close();
+    await handle.close()
   }
 }
 
 export async function readTail(path: string, from: number): Promise<ShellOutput> {
-  const handle = await open(path, 'r');
+  const handle = await open(path, 'r')
   try {
-    const { size } = await handle.stat();
-    const start = from > size || from < 0 ? 0 : from;
-    const skipped = Math.max(0, size - start - TAIL_MAX);
-    const at = start + skipped;
-    const length = size - at;
-    if (length <= 0) return { text: '', from: at, size, ...(skipped ? { skipped } : {}) };
+    const { size } = await handle.stat()
+    const start = from > size || from < 0 ? 0 : from
+    const skipped = Math.max(0, size - start - TAIL_MAX)
+    const at = start + skipped
+    const length = size - at
+    if (length <= 0) return { text: '', from: at, size, ...(skipped ? { skipped } : {}) }
 
-    const buffer = Buffer.alloc(length);
-    await handle.read(buffer, 0, length, at);
-    return { text: buffer.toString('utf8'), from: at, size, ...(skipped ? { skipped } : {}) };
+    const buffer = Buffer.alloc(length)
+    await handle.read(buffer, 0, length, at)
+    return { text: buffer.toString('utf8'), from: at, size, ...(skipped ? { skipped } : {}) }
   } finally {
-    await handle.close();
+    await handle.close()
   }
 }
 
 export class ShellTracker {
   /** Les shells connus, dans l'ordre où ils sont partis. */
-  private readonly shells = new Map<string, BackgroundShell>();
+  private readonly shells = new Map<string, BackgroundShell>()
   /** Où le CLI écrit chaque sortie. Gardé à part : ce n'est pas du protocole. */
-  private readonly paths = new Map<string, string>();
+  private readonly paths = new Map<string, string>()
   /**
    * Les appels partis dont la réponse n'est pas revenue.
    *
@@ -187,20 +184,20 @@ export class ShellTracker {
    * l'appel seul donnerait une ligne qu'on ne saurait pas relire, la réponse
    * seule une ligne qui ne dirait pas ce qui tourne.
    */
-  private readonly pending = new Map<string, Pending>();
+  private readonly pending = new Map<string, Pending>()
 
   snapshot(): BackgroundShell[] {
-    return [...this.shells.values()];
+    return [...this.shells.values()]
   }
 
   /** Le fichier de sortie d'un shell — `undefined` s'il n'en a pas annoncé. */
   outputPath(id: string): string | undefined {
-    return this.paths.get(id);
+    return this.paths.get(id)
   }
 
   /** Les shells qu'on croit encore vivants, et dont le fichier vaut d'être relu. */
   running(): BackgroundShell[] {
-    return this.snapshot().filter((s) => s.state === 'running');
+    return this.snapshot().filter((s) => s.state === 'running')
   }
 
   /**
@@ -210,11 +207,11 @@ export class ShellTracker {
    * C'est le runner qui va voir, et qui repasse ici ce qu'il a mesuré.
    */
   observe(id: string, size: number, lastWriteAt: number): boolean {
-    const shell = this.shells.get(id);
-    if (!shell || (shell.size === size && shell.lastWriteAt === lastWriteAt)) return false;
-    shell.size = size;
-    shell.lastWriteAt = lastWriteAt;
-    return true;
+    const shell = this.shells.get(id)
+    if (!shell || (shell.size === size && shell.lastWriteAt === lastWriteAt)) return false
+    shell.size = size
+    shell.lastWriteAt = lastWriteAt
+    return true
   }
 
   /**
@@ -230,51 +227,51 @@ export class ShellTracker {
    * le même jeton, simplement lue là où elle se trouve.
    */
   fromTranscript(chunk: string): boolean {
-    let changed = false;
+    let changed = false
     for (const raw of chunk.split('\n')) {
-      if (!raw.includes('<task-notification>')) continue;
+      if (!raw.includes('<task-notification>')) continue
       // Une ligne de transcript est du JSON, et la notification y vit échappée.
       // On la déplie plutôt que de la lire à travers ses barres obliques.
-      let text = raw;
+      let text = raw
       try {
-        const line: unknown = JSON.parse(raw);
-        const content = (rec(line).message as Rec | undefined)?.content ?? rec(line).content;
-        if (typeof content === 'string') text = content;
+        const line: unknown = JSON.parse(raw)
+        const content = (rec(line).message as Rec | undefined)?.content ?? rec(line).content
+        if (typeof content === 'string') text = content
       } catch {
         // Ligne tronquée par une écriture en cours : la prochaine passe la
         // relira entière.
       }
-      if (this.onNotification(text)) changed = true;
+      if (this.onNotification(text)) changed = true
     }
-    return changed;
+    return changed
   }
 
   /** Lit un message du SDK et dit si la liste a bougé. */
   consume(message: Rec): boolean {
     switch (str(message.type)) {
       case 'assistant':
-        return this.onAssistant(rec(message.message));
+        return this.onAssistant(rec(message.message))
       case 'user':
-        return this.onUser(rec(message.message));
+        return this.onUser(rec(message.message))
       default:
-        return false;
+        return false
     }
   }
 
   private onAssistant(payload: Rec): boolean {
-    let changed = false;
+    let changed = false
     for (const raw of arr(payload.content)) {
-      const block = rec(raw);
-      if (str(block.type) !== 'tool_use') continue;
-      const input = rec(block.input);
+      const block = rec(raw)
+      if (str(block.type) !== 'tool_use') continue
+      const input = rec(block.input)
 
       if (str(block.name) === 'Bash' && input.run_in_background === true) {
         this.pending.set(str(block.id), {
           command: str(input.command),
           description: str(input.description),
           startedAt: Date.now(),
-        });
-        continue;
+        })
+        continue
       }
 
       // La seule trace d'une coupure. Le harnais n'écrit pas de
@@ -287,15 +284,15 @@ export class ShellTracker {
       // et `shell_id` sont l'ancienne forme, gardée en repli — le schéma de
       // l'outil documente encore `shell_id` comme déprécié.
       if (str(block.name) === 'TaskStop' || str(block.name) === 'KillShell') {
-        const shell = this.shells.get(str(input.task_id) || str(input.shell_id));
+        const shell = this.shells.get(str(input.task_id) || str(input.shell_id))
         if (shell && shell.state === 'running') {
-          shell.state = 'killed';
-          shell.endedAt = Date.now();
-          changed = true;
+          shell.state = 'killed'
+          shell.endedAt = Date.now()
+          changed = true
         }
       }
     }
-    return changed;
+    return changed
   }
 
   /**
@@ -308,16 +305,16 @@ export class ShellTracker {
    * flux, et ne lire que la liste la faisait manquer entièrement.
    */
   private onUser(payload: Rec): boolean {
-    if (typeof payload.content === 'string') return this.onNotification(payload.content);
+    if (typeof payload.content === 'string') return this.onNotification(payload.content)
 
-    let changed = false;
+    let changed = false
     for (const raw of arr(payload.content)) {
-      const block = rec(raw);
-      const type = str(block.type);
-      if (type === 'tool_result' && this.onResult(block)) changed = true;
-      if (type === 'text' && this.onNotification(str(block.text))) changed = true;
+      const block = rec(raw)
+      const type = str(block.type)
+      if (type === 'tool_result' && this.onResult(block)) changed = true
+      if (type === 'text' && this.onNotification(str(block.text))) changed = true
     }
-    return changed;
+    return changed
   }
 
   /**
@@ -328,17 +325,17 @@ export class ShellTracker {
    * C'est le cas d'un `Bash` refusé, qui est parti sans jamais tourner.
    */
   private onResult(block: Rec): boolean {
-    const toolUseId = str(block.tool_use_id);
-    const start = this.pending.get(toolUseId);
-    if (!start) return false;
-    this.pending.delete(toolUseId);
+    const toolUseId = str(block.tool_use_id)
+    const start = this.pending.get(toolUseId)
+    if (!start) return false
+    this.pending.delete(toolUseId)
 
-    const text = resultText(block.content);
-    const id = LAUNCHED.exec(text.trim())?.[1];
-    if (!id) return false;
+    const text = resultText(block.content)
+    const id = LAUNCHED.exec(text.trim())?.[1]
+    if (!id) return false
 
-    const path = OUTPUT_FILE.exec(text)?.[1];
-    if (path) this.paths.set(id, path);
+    const path = OUTPUT_FILE.exec(text)?.[1]
+    if (path) this.paths.set(id, path)
 
     this.shells.set(id, {
       id,
@@ -347,8 +344,8 @@ export class ShellTracker {
       ...(start.description ? { description: start.description } : {}),
       startedAt: start.startedAt,
       state: 'running',
-    });
-    return true;
+    })
+    return true
   }
 
   /**
@@ -367,15 +364,15 @@ export class ShellTracker {
    * l'inverse de ce qui vient de se passer.
    */
   private onNotification(text: string): boolean {
-    if (!text.includes('<task-notification>')) return false;
-    const parsed = parseTaskNotification(text);
-    const shell = this.shells.get(parsed.taskId ?? '');
-    if (!shell || shell.state !== 'running') return false;
+    if (!text.includes('<task-notification>')) return false
+    const parsed = parseTaskNotification(text)
+    const shell = this.shells.get(parsed.taskId ?? '')
+    if (!shell || shell.state !== 'running') return false
 
-    shell.state = KILLED_STATUS.test(parsed.status ?? '') ? 'killed' : 'done';
-    shell.endedAt = Date.now();
-    const code = EXIT_CODE.exec(parsed.summary ?? '')?.[1];
-    if (code !== undefined) shell.exitCode = Number(code);
-    return true;
+    shell.state = KILLED_STATUS.test(parsed.status ?? '') ? 'killed' : 'done'
+    shell.endedAt = Date.now()
+    const code = EXIT_CODE.exec(parsed.summary ?? '')?.[1]
+    if (code !== undefined) shell.exitCode = Number(code)
+    return true
   }
 }

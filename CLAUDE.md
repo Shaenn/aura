@@ -42,14 +42,23 @@ un téléphone, ce qui supposerait de l'adapter à cet écran.
 ```bash
 pnpm dev:all     # front :9100 + BFF :8800 (proxy /api → :8800)
 pnpm test        # vitest, environnement node, test/**/*.test.ts
-pnpm typecheck   # tsc sur server/ et test/ — ne couvre PAS src/
-pnpm lint
-pnpm format
+pnpm typecheck   # vue-tsc sur src/, puis tsc sur server/ et test/
+pnpm lint        # eslint . — 384 fichiers, mise en forme comprise
+pnpm lint:fix
+pnpm format      # prettier . --write puis pnpm lint:fix
+pnpm format:check
+pnpm verifie     # lint + typecheck + test : le geste avant de pousser
 ```
 
-`src/` est typé par `vue-tsc` via `vite-plugin-checker`, donc uniquement pendant
-`pnpm dev` ou `pnpm build`. Une modification du front qui casse les types ne sera **pas**
-vue par `pnpm typecheck`.
+`pnpm typecheck` couvre tout ce que le dépôt contient : le front par `vue-tsc`, le BFF et
+les tests par `tsc`. `vite-plugin-checker` continue de typer `src/` pendant `pnpm dev`,
+mais il ne rattrape plus rien que la ligne de commande ne verrait pas.
+
+Prettier est lancé **comme une règle ESLint** (`eslint-plugin-prettier/recommended`) : la
+mise en forme se relève par `pnpm lint` et se corrige par le même `--fix`. Une seule
+réserve : le correcteur de `local/import-order` remplace le bloc des imports par les seuls
+imports triés, et efface ce qui vit entre eux — un `export … from`, un commentaire de
+groupe. Ordonner les imports à la main plutôt que de laisser `pnpm format` s'en charger.
 
 `server/` et `test/` ont leur propre `tsconfig.json` (Node, pas de `lib: dom`) ; la racine
 les exclut. `exactOptionalPropertyTypes` est actif côté `src/`, inactif côté `server/`.

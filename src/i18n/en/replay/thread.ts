@@ -1,6 +1,6 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
-type Thread = Omit<MessageSchema['replay'], 'context' | 'cost' | 'tools'>;
+type Thread = Omit<MessageSchema['replay'], 'context' | 'cost' | 'tools'>
 
 const thread: Thread = {
   tracks: {
@@ -21,8 +21,7 @@ const thread: Thread = {
   timeline: {
     phase: 'Phase {n}',
     compacted: '{before} → {after} tokens',
-    silent:
-      '{n} hook run with no effect · {total} in total | {n} hook runs with no effect · {total} in total',
+    silent: '{n} hook run with no effect · {total} in total | {n} hook runs with no effect · {total} in total',
     silentNote: 'These hooks ran without returning anything to Claude or reporting an error.',
   },
 
@@ -63,8 +62,7 @@ const thread: Thread = {
     copyMine: 'Copy your message',
     copyBrief: 'Copy the brief',
     queued: 'mid-turn',
-    queuedHint:
-      'Written while the agent was working: the CLI queued it, then handed it over in the middle of its reply.',
+    queuedHint: 'Written while the agent was working: the CLI queued it, then handed it over in the middle of its reply.',
     imageLabel: 'Image attached to the message',
     imageMissing: '🖼 [image attached]',
   },
@@ -75,8 +73,7 @@ const thread: Thread = {
   },
 
   images: {
-    unloadable:
-      '{n} image — cannot be loaded from this view | {n} images — cannot be loaded from this view',
+    unloadable: '{n} image — cannot be loaded from this view | {n} images — cannot be loaded from this view',
     byTool: 'Image rendered by {tool}',
     alt: 'Transcript image',
     open: 'Open',
@@ -192,6 +189,6 @@ const thread: Thread = {
       teammate_terminated: 'Has stopped.',
     },
   },
-};
+}
 
-export default thread;
+export default thread

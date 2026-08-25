@@ -20,27 +20,27 @@
 // HTTP. Threader la locale jusque-là aurait touché toute la chaîne pour un
 // besoin qui n'est pas le sien.
 
-import { AsyncLocalStorage } from 'node:async_hooks';
-import fr from './fr.ts';
-import en from './en.ts';
+import { AsyncLocalStorage } from 'node:async_hooks'
+import en from './en.ts'
+import fr from './fr.ts'
 
-export const SUPPORTED_LOCALES = ['fr', 'en'] as const;
-export type Locale = (typeof SUPPORTED_LOCALES)[number];
+export const SUPPORTED_LOCALES = ['fr', 'en'] as const
+export type Locale = (typeof SUPPORTED_LOCALES)[number]
 
 /** Le français est la langue de référence : celle du repli comme celle du départ. */
-export const DEFAULT_LOCALE: Locale = 'fr';
+export const DEFAULT_LOCALE: Locale = 'fr'
 
-export type Catalog = typeof fr;
+export type Catalog = typeof fr
 
-const CATALOGS: Record<Locale, Catalog> = { fr, en };
+const CATALOGS: Record<Locale, Catalog> = { fr, en }
 
-type Params = Record<string, string | number>;
+type Params = Record<string, string | number>
 
 function isLocale(v: unknown): v is Locale {
-  return typeof v === 'string' && (SUPPORTED_LOCALES as readonly string[]).includes(v);
+  return typeof v === 'string' && (SUPPORTED_LOCALES as readonly string[]).includes(v)
 }
 
-const context = new AsyncLocalStorage<Locale>();
+const context = new AsyncLocalStorage<Locale>()
 
 /**
  * Fixe la langue de la requête en cours.
@@ -51,12 +51,12 @@ const context = new AsyncLocalStorage<Locale>();
  * qui en descendent — ce qui est exactement la durée d'une requête.
  */
 export function enterLocale(locale: Locale | null): void {
-  context.enterWith(locale ?? DEFAULT_LOCALE);
+  context.enterWith(locale ?? DEFAULT_LOCALE)
 }
 
 /** Exécute `fn` dans une langue donnée — pour les tests, et le hors-requête. */
 export function withLocale<T>(locale: Locale, fn: () => T): T {
-  return context.run(locale, fn);
+  return context.run(locale, fn)
 }
 
 /**
@@ -67,27 +67,27 @@ export function withLocale<T>(locale: Locale, fn: () => T): T {
  * complète n'auraient rien à départager ici.
  */
 export function localeFromHeader(header: string | undefined): Locale | null {
-  if (!header) return null;
+  if (!header) return null
   for (const part of header.split(',')) {
-    const tag = part.split(';')[0]?.trim().toLowerCase() ?? '';
-    const base = tag.split('-')[0];
-    if (isLocale(base)) return base;
+    const tag = part.split(';')[0]?.trim().toLowerCase() ?? ''
+    const base = tag.split('-')[0]
+    if (isLocale(base)) return base
   }
-  return null;
+  return null
 }
 
 /** La langue en vigueur : celle de la requête, ou la référence hors requête. */
 export function locale(): Locale {
-  return context.getStore() ?? DEFAULT_LOCALE;
+  return context.getStore() ?? DEFAULT_LOCALE
 }
 
 function lookup(catalog: Catalog, path: string): unknown {
-  let node: unknown = catalog;
+  let node: unknown = catalog
   for (const part of path.split('.')) {
-    if (typeof node !== 'object' || node === null) return undefined;
-    node = (node as Record<string, unknown>)[part];
+    if (typeof node !== 'object' || node === null) return undefined
+    node = (node as Record<string, unknown>)[part]
   }
-  return node;
+  return node
 }
 
 /**
@@ -98,10 +98,8 @@ function lookup(catalog: Catalog, path: string): unknown {
  * phrase dans la mauvaise langue qu'un identifiant à l'écran.
  */
 export function t(path: string, params?: Params): string {
-  const found = lookup(CATALOGS[locale()], path) ?? lookup(fr, path);
-  if (typeof found !== 'string') return path;
-  if (!params) return found;
-  return found.replace(/\{(\w+)\}/g, (whole, name: string) =>
-    name in params ? String(params[name]) : whole,
-  );
+  const found = lookup(CATALOGS[locale()], path) ?? lookup(fr, path)
+  if (typeof found !== 'string') return path
+  if (!params) return found
+  return found.replace(/\{(\w+)\}/g, (whole, name: string) => (name in params ? String(params[name]) : whole))
 }

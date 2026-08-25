@@ -20,66 +20,66 @@
 //     sessions retenues, deux quarts ne sont que deux poignées : `comparable`
 //     passe à faux et l'UI doit s'abstenir de conclure.
 
-import type { SessionSignal } from './signals.ts';
+import type { SessionSignal } from './signals.ts'
 
 // ── Ce qu'on publie ──────────────────────────────────────────────────────────
 
 /** Un geste, vu chez les deux extrêmes du rendement. */
 export interface BehaviourStat {
   /** Médiane sur toutes les sessions retenues. */
-  median: number;
+  median: number
   /** Médiane du quart qui produit le plus d'éditions par heure. */
-  top: number;
+  top: number
   /** Médiane du quart qui en produit le moins. */
-  bottom: number;
+  bottom: number
 }
 
 export interface Behaviour {
   /** Sessions retenues : assez longues et ayant produit une modification. */
-  sessions: number;
+  sessions: number
   /** Faux quand l'échantillon est trop maigre pour opposer deux quarts. */
-  comparable: boolean;
+  comparable: boolean
   /** Éditions par heure — le rendement qui définit les quarts, pas une valeur. */
-  editsPerHour: BehaviourStat;
-  explorationRatio: BehaviourStat;
-  turnsPerPrompt: BehaviourStat;
+  editsPerHour: BehaviourStat
+  explorationRatio: BehaviourStat
+  turnsPerPrompt: BehaviourStat
   /** Part des sessions du quart qui portent au moins une interruption. */
-  interruptedShare: { top: number; bottom: number };
+  interruptedShare: { top: number; bottom: number }
 }
 
 /**
  * Deux quarts de moins de huit sessions chacun ne s'opposent pas : une seule
  * session atypique y déplacerait la médiane de moitié.
  */
-const MIN_SESSIONS = 32;
+const MIN_SESSIONS = 32
 
 /** Une session trop courte n'a pas de rendement : elle n'a pas eu le temps. */
-const MIN_TURNS = 10;
+const MIN_TURNS = 10
 
 // ── Outillage ────────────────────────────────────────────────────────────────
 
 function median(values: number[]): number {
-  if (!values.length) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = sorted.length >> 1;
-  return sorted.length % 2
-    ? (sorted[mid] as number)
-    : ((sorted[mid - 1] as number) + (sorted[mid] as number)) / 2;
+  if (!values.length) return 0
+  const sorted = [...values].sort((a, b) => a - b)
+  const mid = sorted.length >> 1
+  return sorted.length % 2 ? (sorted[mid] as number) : ((sorted[mid - 1] as number) + (sorted[mid] as number)) / 2
 }
 
 /** Les heures d'une session, d'après ses bornes. Zéro si elles sont illisibles. */
 function hoursOf(s: SessionSignal): number {
-  const start = Date.parse(s.firstTs);
-  const end = Date.parse(s.lastTs);
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 0;
-  return (end - start) / 3_600_000;
+  const start = Date.parse(s.firstTs)
+  const end = Date.parse(s.lastTs)
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 0
+  return (end - start) / 3_600_000
 }
 
-const stat = (all: number[], top: number[], bottom: number[]): BehaviourStat => ({
-  median: median(all),
-  top: median(top),
-  bottom: median(bottom),
-});
+function stat(all: number[], top: number[], bottom: number[]): BehaviourStat {
+  return {
+    median: median(all),
+    top: median(top),
+    bottom: median(bottom),
+  }
+}
 
 // ── Le calcul ────────────────────────────────────────────────────────────────
 
@@ -101,18 +101,20 @@ export function buildBehaviour(signals: SessionSignal[]): Behaviour {
       // Une session sans prompt identifiable (transcript ancien, reprise) n'a pas
       // de rapport tours/prompt : on la laisse hors de ce geste-là seulement.
       turnsPerPrompt: s.userTurns > 0 ? s.turns / s.userTurns : null,
-    }));
+    }))
 
-  const comparable = kept.length >= MIN_SESSIONS;
-  const sorted = [...kept].sort((a, b) => a.editsPerHour - b.editsPerHour);
-  const quarter = Math.floor(sorted.length / 4);
-  const bottom = comparable ? sorted.slice(0, quarter) : [];
-  const top = comparable ? sorted.slice(sorted.length - quarter) : [];
+  const comparable = kept.length >= MIN_SESSIONS
+  const sorted = [...kept].sort((a, b) => a.editsPerHour - b.editsPerHour)
+  const quarter = Math.floor(sorted.length / 4)
+  const bottom = comparable ? sorted.slice(0, quarter) : []
+  const top = comparable ? sorted.slice(sorted.length - quarter) : []
 
-  const perPrompt = (list: typeof kept): number[] =>
-    list.map((k) => k.turnsPerPrompt).filter((v): v is number => v !== null);
-  const interrupted = (list: typeof kept): number =>
-    list.length ? list.filter((k) => k.signal.interruptions > 0).length / list.length : 0;
+  function perPrompt(list: typeof kept): number[] {
+    return list.map((k) => k.turnsPerPrompt).filter((v): v is number => v !== null)
+  }
+  function interrupted(list: typeof kept): number {
+    return list.length ? list.filter((k) => k.signal.interruptions > 0).length / list.length : 0
+  }
 
   return {
     sessions: kept.length,
@@ -129,5 +131,5 @@ export function buildBehaviour(signals: SessionSignal[]): Behaviour {
     ),
     turnsPerPrompt: stat(perPrompt(kept), perPrompt(top), perPrompt(bottom)),
     interruptedShare: { top: interrupted(top), bottom: interrupted(bottom) },
-  };
+  }
 }

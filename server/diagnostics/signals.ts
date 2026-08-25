@@ -26,45 +26,34 @@
 //
 // Ce module ne juge rien. Il mesure. Les seuils sont à l'étape suivante.
 
-import { createReadStream } from 'node:fs';
-import { readFile, readdir, stat } from 'node:fs/promises';
-import { createInterface } from 'node:readline';
-import { join } from 'node:path';
-import { CLAUDE_DIR } from '../claude/paths.ts';
-import { str, num } from '../json.ts';
-import { costOf, isPriced, type TokenCounts } from '../pricing.ts';
-import { ZERO, addTokens, growth, localDay, zeroTokens } from '../tokens.ts';
-import { classifyAttachment, contextLimitFor, readCompaction } from '../context.ts';
-import {
-  eachImage,
-  imageSize,
-  isHiResVisionModel,
-  resultToText,
-  visualTokens,
-} from '../transcript.ts';
-import {
-  CONTEXT_CATEGORIES,
-  estimateTokens,
-  type Compaction,
-  type ContextCategory,
-} from '../../shared/context.ts';
+import { createReadStream } from 'node:fs'
+import { readFile, readdir, stat } from 'node:fs/promises'
+import { join } from 'node:path'
+import { createInterface } from 'node:readline'
+import { CONTEXT_CATEGORIES, estimateTokens, type Compaction, type ContextCategory } from '../../shared/context.ts'
+import { CLAUDE_DIR } from '../claude/paths.ts'
+import { classifyAttachment, contextLimitFor, readCompaction } from '../context.ts'
+import { str, num } from '../json.ts'
+import { costOf, isPriced, type TokenCounts } from '../pricing.ts'
+import { ZERO, addTokens, growth, localDay, zeroTokens } from '../tokens.ts'
+import { eachImage, imageSize, isHiResVisionModel, resultToText, visualTokens } from '../transcript.ts'
 
 // ── Ce qu'on publie ──────────────────────────────────────────────────────────
 
 /** Ce qu'un outil a pesé sur une session. Estimation — voir l'en-tête. */
 export interface ToolCost {
-  name: string;
+  name: string
   /** `inputTokens + outputTokens`, le poids total de l'outil sur la fenêtre. */
-  tokens: number;
+  tokens: number
   /** Ce qui est parti vers l'outil : le corps d'un `Write`, le patch d'un `Edit`. */
-  inputTokens: number;
+  inputTokens: number
   /** Ce qu'il a rendu, images comprises. */
-  outputTokens: number;
+  outputTokens: number
   /** Part de `outputTokens` due aux images rendues. */
-  imageTokens: number;
-  calls: number;
+  imageTokens: number
+  calls: number
   /** Appels revenus en erreur — des tokens dépensés sans résultat. */
-  errors: number;
+  errors: number
 }
 
 /**
@@ -76,12 +65,12 @@ export interface ToolCost {
  * et rien à décider : c'est le travail de la session.
  */
 export interface InjectionCost {
-  category: ContextCategory;
+  category: ContextCategory
   /** Le libellé produit par `classifyAttachment` : `rules/foo.md`, `Hook lint`… */
-  label: string;
-  tokens: number;
+  label: string
+  tokens: number
   /** Combien de fois cette injection est entrée dans la fenêtre. */
-  count: number;
+  count: number
 }
 
 /**
@@ -94,41 +83,41 @@ export interface InjectionCost {
  * travailler.
  */
 export interface ToolFamilies {
-  explorationCalls: number;
-  explorationErrors: number;
+  explorationCalls: number
+  explorationErrors: number
   /** Poids de ces appels dans la fenêtre, entrée et sortie. Estimation. */
-  explorationTokens: number;
-  productionCalls: number;
-  productionErrors: number;
-  productionTokens: number;
+  explorationTokens: number
+  productionCalls: number
+  productionErrors: number
+  productionTokens: number
 }
 
 /** Un point de dépense : une réponse API, à sa date et à son prix. */
 export interface CostPoint {
   /** Millisecondes epoch — l'horodatage de la réponse. */
-  t: number;
-  cost: number;
-  sessionId: string;
+  t: number
+  cost: number
+  sessionId: string
 }
 
 /** Un sous-agent, chiffré depuis son propre fichier. */
 export interface SubagentCost {
-  agentId: string;
+  agentId: string
   /** Le type d'agent, quand le `.meta.json` le nomme. */
-  agentType: string | null;
-  turns: number;
-  tokens: TokenCounts;
-  cost: number;
+  agentType: string | null
+  turns: number
+  tokens: TokenCounts
+  cost: number
 }
 
 /** Un modèle, tel qu'il a servi dans cette session. */
 export interface ModelCost {
-  model: string;
-  turns: number;
-  tokens: TokenCounts;
-  cost: number;
+  model: string
+  turns: number
+  tokens: TokenCounts
+  cost: number
   /** Faux quand aucun tarif n'est connu : ses tokens comptent, pas son coût. */
-  priced: boolean;
+  priced: boolean
 }
 
 /**
@@ -139,20 +128,20 @@ export interface ModelCost {
  * « la longueur d'une session » parle de la conversation, pas de ses délégations.
  */
 export interface SessionSignal {
-  sessionId: string;
+  sessionId: string
   /** Le slug du répertoire sous `~/.claude/projects`. */
-  project: string;
-  branch: string;
+  project: string
+  branch: string
   /** Bornes ISO observées, tous fichiers de la session confondus. */
-  firstTs: string;
-  lastTs: string;
+  firstTs: string
+  lastTs: string
   /** Jour local du premier événement — la clé de tout regroupement temporel. */
-  firstDay: string;
+  firstDay: string
 
   /** Réponses API du fil principal, dédupées. Jamais un nombre de lignes. */
-  turns: number;
+  turns: number
   /** Réponses API produites dans les sidecars de sous-agents. */
-  subagentTurns: number;
+  subagentTurns: number
   /**
    * Réponses portant `isSidechain` **dans le fichier principal**.
    *
@@ -161,22 +150,22 @@ export interface SessionSignal {
    * ferait diverger le total de celui de la page Usage, qui les compte aussi.
    * Le champ existe pour qu'une règle sache qu'une session mélange les deux.
    */
-  sidechainTurns: number;
+  sidechainTurns: number
 
-  tokens: TokenCounts;
+  tokens: TokenCounts
   /** Dollars aux tarifs API. Somme des cellules (jour × modèle) de la session. */
-  cost: number;
+  cost: number
   /** `cacheRead / (input + cacheRead + cacheCreate)`. 0 si rien n'est entré. */
-  cacheHitRatio: number;
+  cacheHitRatio: number
   /** Ce que coûte la seule relecture de l'historique, en dollars. */
-  cacheReadCost: number;
+  cacheReadCost: number
   /**
    * Ce qu'a coûté la *construction* du cache, en dollars.
    *
    * Le pendant du précédent : ce qu'on paie une fois pour n'avoir à relire qu'au
    * dixième du prix ensuite. Une session dont ce poste domine n'amortit pas.
    */
-  cacheCreateCost: number;
+  cacheCreateCost: number
   /**
    * Ce qu'a coûté l'entrée jamais mise en cache, en dollars.
    *
@@ -184,17 +173,17 @@ export interface SessionSignal {
    * `cacheReadCost` celui de sa relecture. Les trois se somment au coût d'entrée
    * total ; leur rapport dit si une session amortit ou recommence.
    */
-  inputCost: number;
+  inputCost: number
 
-  models: ModelCost[];
+  models: ModelCost[]
   /** Modèles de la session dont on ignore le tarif — leur coût manque au total. */
-  unpricedModels: string[];
+  unpricedModels: string[]
 
   /**
    * La plus grande fenêtre observée : `max(input + cacheRead + cacheCreate)`.
    * Exact. Une compaction prouve aussi une fenêtre — voir `compactions`.
    */
-  peakContext: number;
+  peakContext: number
   /**
    * La fenêtre de la toute première réponse. Exact.
    *
@@ -204,29 +193,29 @@ export interface SessionSignal {
    * borne haute, celle qu'on peut lire sans rien estimer. 0 si la première
    * réponse ne porte pas d'`usage`.
    */
-  firstTurnContext: number;
+  firstTurnContext: number
   /** Chaque compaction, avec ses champs tels que le harness les a écrits. */
-  compactions: Compaction[];
+  compactions: Compaction[]
 
-  subagents: SubagentCost[];
+  subagents: SubagentCost[]
   /** Les outils de la session, les plus lourds d'abord. Estimation. */
-  tools: ToolCost[];
+  tools: ToolCost[]
   /** Total des appels d'outil revenus en erreur. */
-  toolErrors: number;
+  toolErrors: number
   /** Tokens visuels de toutes les images entrées dans la fenêtre. Estimation. */
-  imageTokens: number;
+  imageTokens: number
   /**
    * Ce qui est entré dans la fenêtre, par catégorie, cumulé sur la session.
    * Estimation, et **cumul, non instantané** : ce qu'une compaction a vidé puis
    * réinjecté compte deux fois, parce qu'il a été payé deux fois.
    */
-  byCategory: Record<ContextCategory, number>;
+  byCategory: Record<ContextCategory, number>
   /**
    * Les injections nommées les plus lourdes (mémoires, catalogues, hooks), les
    * plus grosses d'abord. Estimation — c'est ce qui permet à un diagnostic de
    * désigner un fichier plutôt qu'une catégorie.
    */
-  topInjections: InjectionCost[];
+  topInjections: InjectionCost[]
 
   // ── Ce que la session a *fait* ─────────────────────────────────────────────
   //
@@ -237,7 +226,7 @@ export interface SessionSignal {
   // serait la moins productive de toutes selon un décompte d'éditions.
 
   /** Les appels d'outil par famille, fil principal et sous-agents réunis. */
-  families: ToolFamilies;
+  families: ToolFamilies
   /**
    * Les tours réellement pris par l'humain — ni les échos de résultats d'outil,
    * ni les injections du harness, ni les lignes de commande locales.
@@ -247,18 +236,18 @@ export interface SessionSignal {
    * le plus en font nettement plus. Un brief complet qu'on laisse courir bat dix
    * relances courtes.
    */
-  userTurns: number;
+  userTurns: number
   /**
    * Les `[Request interrupted by user]` du transcript.
    *
    * Leur coût direct est négligeable ; ce qu'elles marquent ne l'est pas : le
    * travail partait ailleurs qu'attendu.
    */
-  interruptions: number;
+  interruptions: number
   /** Appels de `Read` sur un chemin déjà lu dans la session. */
-  rereadCalls: number;
+  rereadCalls: number
   /** Ce que ces relectures ont remis dans la fenêtre. Estimation. */
-  rereadTokens: number;
+  rereadTokens: number
   /**
    * La taille de la fenêtre du modèle, déduite de ce que la session a fait.
    *
@@ -266,14 +255,14 @@ export interface SessionSignal {
    * une session sur fenêtre longue écrit `claude-opus-4-8` tout court. On la
    * déduit donc de la plus grande fenêtre observée.
    */
-  contextLimit: number;
+  contextLimit: number
 
   /** Fichiers lus pour bâtir ce relevé (principal + sidecars). */
-  files: number;
+  files: number
 }
 
 export interface SignalsReport {
-  signals: SessionSignal[];
+  signals: SessionSignal[]
   /**
    * Chaque réponse API du parc, à sa date et à son prix, en ordre chronologique.
    *
@@ -282,9 +271,9 @@ export interface SignalsReport {
    * axe : les relevés par session ne savent rien dire d'une fenêtre de 5 h, qui
    * traverse les sessions et les coupe. Voir `pace.ts`.
    */
-  points: CostPoint[];
+  points: CostPoint[]
   /** Fichiers relus lors de cet appel — 0 quand tout venait du cache. */
-  filesScanned: number;
+  filesScanned: number
 }
 
 // ── Le relevé d'un fichier ───────────────────────────────────────────────────
@@ -295,59 +284,59 @@ export interface SignalsReport {
 
 /** Une cellule (jour × modèle) : l'unité de chiffrage, comme dans `usage.ts`. */
 interface Cell extends TokenCounts {
-  day: string;
-  model: string;
-  turns: number;
+  day: string
+  model: string
+  turns: number
 }
 
 interface ToolTally {
-  inputTokens: number;
-  outputTokens: number;
-  imageTokens: number;
-  calls: number;
-  errors: number;
+  inputTokens: number
+  outputTokens: number
+  imageTokens: number
+  calls: number
+  errors: number
 }
 
 /** Une image en attente de chiffrage : son palier dépend des modèles du fichier. */
 interface PendingImage {
-  toolUseId: string;
-  width: number;
-  height: number;
+  toolUseId: string
+  width: number
+  height: number
 }
 
 export interface FileScan {
-  sessionId: string;
-  project: string;
-  branch: string;
-  firstTs: string;
-  lastTs: string;
+  sessionId: string
+  project: string
+  branch: string
+  firstTs: string
+  lastTs: string
   /** `null` pour le fil principal ; sinon le sidecar d'un sous-agent. */
-  agentId: string | null;
-  agentType: string | null;
-  cells: Cell[];
-  turns: number;
-  sidechainTurns: number;
-  peakContext: number;
-  firstTurnContext: number;
-  compactions: Compaction[];
-  tools: Map<string, ToolTally>;
-  toolErrors: number;
-  imageTokens: number;
-  byCategory: Record<ContextCategory, number>;
+  agentId: string | null
+  agentType: string | null
+  cells: Cell[]
+  turns: number
+  sidechainTurns: number
+  peakContext: number
+  firstTurnContext: number
+  compactions: Compaction[]
+  tools: Map<string, ToolTally>
+  toolErrors: number
+  imageTokens: number
+  byCategory: Record<ContextCategory, number>
   /** Par `catégorie|libellé`, pour les seules catégories décidables. */
-  injections: Map<string, InjectionCost>;
-  families: ToolFamilies;
-  userTurns: number;
-  interruptions: number;
-  rereadCalls: number;
-  rereadTokens: number;
-  models: Set<string>;
+  injections: Map<string, InjectionCost>
+  families: ToolFamilies
+  userTurns: number
+  interruptions: number
+  rereadCalls: number
+  rereadTokens: number
+  models: Set<string>
   /** Les réponses de ce fichier, horodatées et chiffrées. Voir `CostPoint`. */
-  points: { t: number; cost: number }[];
+  points: { t: number; cost: number }[]
 }
 
 /** Les catégories dont on retient les libellés — voir `InjectionCost`. */
-const NAMED_CATEGORIES = new Set<ContextCategory>(['memory', 'skills', 'harness']);
+const NAMED_CATEGORIES = new Set<ContextCategory>(['memory', 'skills', 'harness'])
 
 /**
  * Les deux familles d'outils qui décrivent une manière de travailler.
@@ -357,11 +346,11 @@ const NAMED_CATEGORIES = new Set<ContextCategory>(['memory', 'skills', 'harness'
  * il peut lister un répertoire, et le ranger d'un côté fabriquerait un ratio que
  * rien ne soutient.
  */
-const EXPLORATION_TOOLS = new Set(['Read', 'Grep', 'Glob', 'WebFetch', 'WebSearch']);
-const PRODUCTION_TOOLS = new Set(['Edit', 'Write', 'NotebookEdit']);
+const EXPLORATION_TOOLS = new Set(['Read', 'Grep', 'Glob', 'WebFetch', 'WebSearch'])
+const PRODUCTION_TOOLS = new Set(['Edit', 'Write', 'NotebookEdit'])
 
 /** Ce que le harness écrit quand l'utilisateur coupe la parole. */
-const INTERRUPTED = '[Request interrupted by user';
+const INTERRUPTED = '[Request interrupted by user'
 
 function zeroFamilies(): ToolFamilies {
   return {
@@ -371,14 +360,14 @@ function zeroFamilies(): ToolFamilies {
     productionCalls: 0,
     productionErrors: 0,
     productionTokens: 0,
-  };
+  }
 }
 
 /** La famille d'un outil, ou `null` s'il n'en a pas. */
 function familyOf(name: string): 'exploration' | 'production' | null {
-  if (EXPLORATION_TOOLS.has(name)) return 'exploration';
-  if (PRODUCTION_TOOLS.has(name)) return 'production';
-  return null;
+  if (EXPLORATION_TOOLS.has(name)) return 'exploration'
+  if (PRODUCTION_TOOLS.has(name)) return 'production'
+  return null
 }
 
 /**
@@ -389,36 +378,36 @@ function familyOf(name: string): 'exploration' | 'production' | null {
  * libellés dont aucun diagnostic n'a l'usage. Vingt suffisent largement à trouver
  * les plus lourds d'une session.
  */
-const MAX_NAMED_INJECTIONS = 20;
+const MAX_NAMED_INJECTIONS = 20
 
 function zeroCategories(): Record<ContextCategory, number> {
-  const out = {} as Record<ContextCategory, number>;
-  for (const c of CONTEXT_CATEGORIES) out[c] = 0;
-  return out;
+  const out = {} as Record<ContextCategory, number>
+  for (const c of CONTEXT_CATEGORIES) out[c] = 0
+  return out
 }
 
 /** Le texte qu'un appel d'outil emporte, tel que la fenêtre l'a reçu. */
 function toolInputText(input: unknown): string {
-  if (input === undefined || input === null) return '';
-  if (typeof input === 'string') return input;
+  if (input === undefined || input === null) return ''
+  if (typeof input === 'string') return input
   try {
-    return JSON.stringify(input);
+    return JSON.stringify(input)
   } catch {
-    return '';
+    return ''
   }
 }
 
 function tally(tools: Map<string, ToolTally>, name: string): ToolTally {
-  const key = name || 'Outil';
+  const key = name || 'Outil'
   const found = tools.get(key) ?? {
     inputTokens: 0,
     outputTokens: 0,
     imageTokens: 0,
     calls: 0,
     errors: 0,
-  };
-  tools.set(key, found);
-  return found;
+  }
+  tools.set(key, found)
+  return found
 }
 
 // ── Le scan d'un fichier ─────────────────────────────────────────────────────
@@ -432,11 +421,11 @@ function tally(tools: Map<string, ToolTally>, name: string): ToolTally {
  * pas `CLAUDE_DIR`.
  */
 export interface FileRef {
-  path: string;
-  sessionId: string;
-  project: string;
-  agentId: string | null;
-  agentType: string | null;
+  path: string
+  sessionId: string
+  project: string
+  agentId: string | null
+  agentType: string | null
 }
 
 /**
@@ -479,156 +468,153 @@ export async function scanFile(ref: FileRef): Promise<FileScan> {
     rereadTokens: 0,
     models: new Set(),
     points: [],
-  };
+  }
 
-  const cells = new Map<string, Cell>();
+  const cells = new Map<string, Cell>()
   /** Par `message.id` : la cellule où la réponse a atterri, et son compte courant. */
-  const seen = new Map<string, { cell: Cell; counted: TokenCounts }>();
+  const seen = new Map<string, { cell: Cell; counted: TokenCounts }>()
   /** Par `tool_use_id` : le nom de l'outil, pour recoller l'appel à son résultat. */
-  const toolNames = new Map<string, string>();
+  const toolNames = new Map<string, string>()
   /** Par `message.id` : l'index du point de dépense, pour le compléter. */
-  const pointOf = new Map<string, number>();
+  const pointOf = new Map<string, number>()
   /** Les chemins déjà lus : un `Read` qui y revient est une relecture. */
-  const readPaths = new Set<string>();
+  const readPaths = new Set<string>()
   /** Les `tool_use_id` des relectures, pour peser leur résultat quand il arrive. */
-  const rereadIds = new Set<string>();
+  const rereadIds = new Set<string>()
   /** Les images, chiffrées à la fin : leur palier dépend des modèles du fichier. */
-  const pendingImages: PendingImage[] = [];
+  const pendingImages: PendingImage[] = []
   /**
    * Les clés déjà admises dans la fenêtre courante. Une compaction la vide, donc
    * le jeu se vide avec elle : une mémoire réinjectée après coup est repayée.
    */
-  let seenKeys = new Set<string>();
-  let hiRes = false;
-  let firstTurnSeen = false;
+  let seenKeys = new Set<string>()
+  let hiRes = false
+  let firstTurnSeen = false
 
   const rl = createInterface({
     input: createReadStream(ref.path, { encoding: 'utf8' }),
     crlfDelay: Infinity,
-  });
+  })
 
   try {
     for await (const line of rl) {
-      if (!line.trim()) continue;
-      let row: Record<string, unknown>;
+      if (!line.trim()) continue
+      let row: Record<string, unknown>
       try {
-        row = JSON.parse(line) as Record<string, unknown>;
+        row = JSON.parse(line) as Record<string, unknown>
       } catch {
-        continue; // une ligne illisible est une ligne de moins, pas un scan perdu
+        continue // une ligne illisible est une ligne de moins, pas un scan perdu
       }
 
-      const ts = str(row.timestamp);
+      const ts = str(row.timestamp)
       if (ts) {
-        if (!scan.firstTs || ts < scan.firstTs) scan.firstTs = ts;
-        if (ts > scan.lastTs) scan.lastTs = ts;
+        if (!scan.firstTs || ts < scan.firstTs) scan.firstTs = ts
+        if (ts > scan.lastTs) scan.lastTs = ts
       }
-      if (!scan.branch) scan.branch = str(row.gitBranch);
+      if (!scan.branch) scan.branch = str(row.gitBranch)
 
-      const type = str(row.type);
-      const msg = row.message as Record<string, unknown> | undefined;
+      const type = str(row.type)
+      const msg = row.message as Record<string, unknown> | undefined
 
       // ── Les images de la ligne, mises de côté ────────────────────────────
       eachImage(msg?.content, (source, toolUseId) => {
-        const data = str(source.data);
-        if (!data) return;
-        const size = imageSize(data, str(source.media_type, 'image/png'));
-        if (size) pendingImages.push({ toolUseId, ...size });
-      });
+        const data = str(source.data)
+        if (!data) return
+        const size = imageSize(data, str(source.media_type, 'image/png'))
+        if (size) pendingImages.push({ toolUseId, ...size })
+      })
 
       // ── Une compaction : la fenêtre est vidée ────────────────────────────
       if (type === 'system' && str(row.subtype) === 'compact_boundary') {
-        const compaction = readCompaction(row, ts ? Date.parse(ts) : 0);
+        const compaction = readCompaction(row, ts ? Date.parse(ts) : 0)
         if (compaction) {
-          scan.compactions.push(compaction);
-          seenKeys = new Set();
+          scan.compactions.push(compaction)
+          seenKeys = new Set()
         }
-        continue;
+        continue
       }
 
       // ── Ce que le harness a poussé dans la fenêtre ───────────────────────
       if (type === 'attachment') {
-        const injection = classifyAttachment(row.attachment);
-        if (!injection) continue;
+        const injection = classifyAttachment(row.attachment)
+        if (!injection) continue
         if (injection.dedupeKey) {
-          if (seenKeys.has(injection.dedupeKey)) continue;
-          seenKeys.add(injection.dedupeKey);
+          if (seenKeys.has(injection.dedupeKey)) continue
+          seenKeys.add(injection.dedupeKey)
         }
-        scan.byCategory[injection.category] += injection.tokens;
+        scan.byCategory[injection.category] += injection.tokens
         if (NAMED_CATEGORIES.has(injection.category)) {
-          const key = `${injection.category}|${injection.label}`;
-          const named = scan.injections.get(key);
+          const key = `${injection.category}|${injection.label}`
+          const named = scan.injections.get(key)
           if (named) {
-            named.tokens += injection.tokens;
-            named.count++;
+            named.tokens += injection.tokens
+            named.count++
           } else {
             scan.injections.set(key, {
               category: injection.category,
               label: injection.label,
               tokens: injection.tokens,
               count: 1,
-            });
+            })
           }
         }
-        continue;
+        continue
       }
 
-      if (!msg) continue;
+      if (!msg) continue
 
       // ── Le tour de l'utilisateur, et les résultats d'outils ──────────────
       if (type === 'user') {
-        const content = msg.content;
+        const content = msg.content
         /** Du texte que quelqu'un a tapé — ni balise du harness, ni écho d'outil. */
-        let typed = '';
-        let interrupted = false;
+        let typed = ''
+        let interrupted = false
 
         if (typeof content === 'string') {
-          scan.byCategory.userMessage += estimateTokens(content);
-          typed = content;
+          scan.byCategory.userMessage += estimateTokens(content)
+          typed = content
         } else if (Array.isArray(content)) {
           for (const b of content as Record<string, unknown>[]) {
             if (b.type === 'text') {
-              const text = str(b.text);
-              scan.byCategory.userMessage += estimateTokens(text);
-              if (!typed) typed = text;
-              if (text.includes(INTERRUPTED)) interrupted = true;
+              const text = str(b.text)
+              scan.byCategory.userMessage += estimateTokens(text)
+              if (!typed) typed = text
+              if (text.includes(INTERRUPTED)) interrupted = true
             } else if (b.type === 'tool_result') {
-              const id = str(b.tool_use_id);
-              const name = toolNames.get(id) ?? 'Outil';
-              const t = tally(scan.tools, name);
-              const text = resultToText(b.content);
-              const tokens = estimateTokens(text);
-              t.outputTokens += tokens;
-              if (text.includes(INTERRUPTED)) interrupted = true;
+              const id = str(b.tool_use_id)
+              const name = toolNames.get(id) ?? 'Outil'
+              const t = tally(scan.tools, name)
+              const text = resultToText(b.content)
+              const tokens = estimateTokens(text)
+              t.outputTokens += tokens
+              if (text.includes(INTERRUPTED)) interrupted = true
               // Une relecture pèse ce que son résultat a remis dans la fenêtre :
               // le fichier était déjà là, on le repaie en entier.
-              if (rereadIds.has(id)) scan.rereadTokens += tokens;
-              const family = familyOf(name);
-              if (family === 'exploration') scan.families.explorationTokens += tokens;
-              else if (family === 'production') scan.families.productionTokens += tokens;
+              if (rereadIds.has(id)) scan.rereadTokens += tokens
+              const family = familyOf(name)
+              if (family === 'exploration') scan.families.explorationTokens += tokens
+              else if (family === 'production') scan.families.productionTokens += tokens
               if (b.is_error) {
-                t.errors++;
-                scan.toolErrors++;
-                if (family === 'exploration') scan.families.explorationErrors++;
-                else if (family === 'production') scan.families.productionErrors++;
+                t.errors++
+                scan.toolErrors++
+                if (family === 'exploration') scan.families.explorationErrors++
+                else if (family === 'production') scan.families.productionErrors++
               }
             }
           }
         }
 
-        if (interrupted) scan.interruptions++;
+        if (interrupted) scan.interruptions++
 
         // Un tour de l'humain, et non l'un des trois autres genres de lignes qui
         // portent `type: 'user'` : l'écho d'un résultat d'outil, une injection du
         // harness (résumé de compaction, notification d'agent, sortie de hook), ou
         // la trace d'une commande locale. Même filtre que `summariseTranscript`,
         // qui décide de la même chose pour le titre d'une session.
-        const origin = row.origin as Record<string, unknown> | undefined;
-        const originKind = str(origin?.kind);
-        const injectedUser =
-          row.isCompactSummary === true ||
-          row.promptSource === 'system' ||
-          (originKind !== '' && originKind !== 'human');
-        const trimmed = typed.trimStart();
+        const origin = row.origin as Record<string, unknown> | undefined
+        const originKind = str(origin?.kind)
+        const injectedUser = row.isCompactSummary === true || row.promptSource === 'system' || (originKind !== '' && originKind !== 'human')
+        const trimmed = typed.trimStart()
         if (
           !row.isMeta &&
           !row.isSidechain &&
@@ -643,56 +629,56 @@ export async function scanFile(ref: FileRef): Promise<FileScan> {
           // une balise, qu'aucun prompt tapé ne porte en tête.
           !trimmed.startsWith('<')
         ) {
-          scan.userTurns++;
+          scan.userTurns++
         }
-        continue;
+        continue
       }
 
-      if (type !== 'assistant') continue;
+      if (type !== 'assistant') continue
 
       // ── La réponse : ses blocs, puis son usage ───────────────────────────
-      const model = str(msg.model, 'unknown');
-      scan.models.add(model);
-      if (!hiRes && isHiResVisionModel(model)) hiRes = true;
+      const model = str(msg.model, 'unknown')
+      scan.models.add(model)
+      if (!hiRes && isHiResVisionModel(model)) hiRes = true
 
       if (Array.isArray(msg.content)) {
         for (const b of msg.content as Record<string, unknown>[]) {
           if (b.type === 'text') {
-            scan.byCategory.thinking += estimateTokens(str(b.text));
+            scan.byCategory.thinking += estimateTokens(str(b.text))
           } else if (b.type === 'thinking') {
             // Claude Code n'écrit que la `signature` du raisonnement, jamais son
             // texte : ce qui est compté ici est ce qui reste sur le disque, pas
             // ce que le modèle a produit. Le manque tombe dans `unattributed`.
-            scan.byCategory.thinking += estimateTokens(str(b.thinking));
+            scan.byCategory.thinking += estimateTokens(str(b.thinking))
           } else if (b.type === 'tool_use') {
-            const name = str(b.name);
-            const id = str(b.id);
-            if (id) toolNames.set(id, name);
-            const t = tally(scan.tools, name);
-            t.calls++;
-            const inputTokens = estimateTokens(toolInputText(b.input));
-            t.inputTokens += inputTokens;
+            const name = str(b.name)
+            const id = str(b.id)
+            if (id) toolNames.set(id, name)
+            const t = tally(scan.tools, name)
+            t.calls++
+            const inputTokens = estimateTokens(toolInputText(b.input))
+            t.inputTokens += inputTokens
 
-            const family = familyOf(name);
+            const family = familyOf(name)
             if (family === 'exploration') {
-              scan.families.explorationCalls++;
-              scan.families.explorationTokens += inputTokens;
+              scan.families.explorationCalls++
+              scan.families.explorationTokens += inputTokens
             } else if (family === 'production') {
-              scan.families.productionCalls++;
-              scan.families.productionTokens += inputTokens;
+              scan.families.productionCalls++
+              scan.families.productionTokens += inputTokens
             }
 
             // Un `Read` sur un chemin déjà lu : le fichier n'a pas changé de
             // camp, il rentre une seconde fois dans la fenêtre. Le premier
             // passage, lui, est le travail de la session — il ne compte pas.
             if (name === 'Read') {
-              const path = str((b.input as Record<string, unknown> | undefined)?.file_path);
+              const path = str((b.input as Record<string, unknown> | undefined)?.file_path)
               if (path) {
                 if (readPaths.has(path)) {
-                  scan.rereadCalls++;
-                  if (id) rereadIds.add(id);
+                  scan.rereadCalls++
+                  if (id) rereadIds.add(id)
                 } else {
-                  readPaths.add(path);
+                  readPaths.add(path)
                 }
               }
             }
@@ -700,110 +686,103 @@ export async function scanFile(ref: FileRef): Promise<FileScan> {
         }
       }
 
-      const usage = msg.usage as Record<string, unknown> | undefined;
-      if (!usage) continue;
+      const usage = msg.usage as Record<string, unknown> | undefined
+      if (!usage) continue
 
       const tokens: TokenCounts = {
         input: num(usage.input_tokens),
         output: num(usage.output_tokens),
         cacheRead: num(usage.cache_read_input_tokens),
         cacheCreate: num(usage.cache_creation_input_tokens),
-      };
+      }
 
       // La fenêtre que cette réponse a reçue. Les instantanés ne font que
       // croître, donc le maximum ligne à ligne est bien celui de la réponse.
-      const context = tokens.input + tokens.cacheRead + tokens.cacheCreate;
-      if (context > scan.peakContext) scan.peakContext = context;
+      const context = tokens.input + tokens.cacheRead + tokens.cacheCreate
+      if (context > scan.peakContext) scan.peakContext = context
       if (!firstTurnSeen && context > 0) {
-        scan.firstTurnContext = context;
-        firstTurnSeen = true;
+        scan.firstTurnContext = context
+        firstTurnSeen = true
       }
 
       // Une répétition d'une réponse déjà comptée : son `usage` en est un
       // instantané plus tardif, on complète de la différence.
-      const id = str(msg.id);
-      const prior = id ? seen.get(id) : undefined;
+      const id = str(msg.id)
+      const prior = id ? seen.get(id) : undefined
       if (prior) {
-        const delta = growth(prior.counted, tokens);
-        addTokens(prior.cell, delta);
+        const delta = growth(prior.counted, tokens)
+        addTokens(prior.cell, delta)
         // Le point de cette réponse existe déjà : il grandit du même delta, au
         // même tarif. `costOf` est linéaire en tokens, donc la somme des points
         // et celle des cellules ne peuvent pas diverger.
-        const at = pointOf.get(id);
-        const point = at !== undefined ? scan.points[at] : undefined;
-        if (point) point.cost += costOf(prior.cell.model, delta, prior.cell.day) ?? 0;
-        continue;
+        const at = pointOf.get(id)
+        const point = at !== undefined ? scan.points[at] : undefined
+        if (point) point.cost += costOf(prior.cell.model, delta, prior.cell.day) ?? 0
+        continue
       }
 
-      const day = localDay(ts);
-      if (!day) continue;
+      const day = localDay(ts)
+      if (!day) continue
 
-      const key = `${day}\0${model}`;
-      let cell = cells.get(key);
+      const key = `${day}\0${model}`
+      let cell = cells.get(key)
       if (!cell) {
-        cell = { ...ZERO, day, model, turns: 0 };
-        cells.set(key, cell);
+        cell = { ...ZERO, day, model, turns: 0 }
+        cells.set(key, cell)
       }
-      cell.turns++;
-      addTokens(cell, tokens);
-      scan.turns++;
-      if (row.isSidechain) scan.sidechainTurns++;
-      if (id) seen.set(id, { cell, counted: { ...tokens } });
+      cell.turns++
+      addTokens(cell, tokens)
+      scan.turns++
+      if (row.isSidechain) scan.sidechainTurns++
+      if (id) seen.set(id, { cell, counted: { ...tokens } })
 
       // Le point de dépense de cette réponse. Une ligne sans horodatage lisible
       // n'en produit pas : un point sans date ne peut entrer dans aucune fenêtre,
       // et lui en inventer une le rangerait dans la mauvaise.
-      const at = ts ? Date.parse(ts) : NaN;
+      const at = ts ? Date.parse(ts) : NaN
       if (Number.isFinite(at)) {
-        if (id) pointOf.set(id, scan.points.length);
-        scan.points.push({ t: at, cost: costOf(model, tokens, day) ?? 0 });
+        if (id) pointOf.set(id, scan.points.length)
+        scan.points.push({ t: at, cost: costOf(model, tokens, day) ?? 0 })
       }
     }
   } finally {
-    rl.close();
+    rl.close()
   }
 
   // ── Les images, une fois le palier du fichier connu ───────────────────────
   for (const img of pendingImages) {
-    const tokens = visualTokens(img.width, img.height, hiRes);
-    scan.imageTokens += tokens;
+    const tokens = visualTokens(img.width, img.height, hiRes)
+    scan.imageTokens += tokens
     if (img.toolUseId) {
-      const t = tally(scan.tools, toolNames.get(img.toolUseId) ?? 'Outil');
-      t.outputTokens += tokens;
-      t.imageTokens += tokens;
+      const t = tally(scan.tools, toolNames.get(img.toolUseId) ?? 'Outil')
+      t.outputTokens += tokens
+      t.imageTokens += tokens
     } else {
       // Une image collée par l'utilisateur : elle pèse sur son message.
-      scan.byCategory.userMessage += tokens;
+      scan.byCategory.userMessage += tokens
     }
   }
-  scan.byCategory.tools = [...scan.tools.values()].reduce(
-    (sum, t) => sum + t.inputTokens + t.outputTokens,
-    0,
-  );
+  scan.byCategory.tools = [...scan.tools.values()].reduce((sum, t) => sum + t.inputTokens + t.outputTokens, 0)
 
   // Le relevé reste en cache : on n'y garde que les injections qui pèsent.
   if (scan.injections.size > MAX_NAMED_INJECTIONS) {
-    scan.injections = new Map(
-      [...scan.injections].sort((a, b) => b[1].tokens - a[1].tokens).slice(0, MAX_NAMED_INJECTIONS),
-    );
+    scan.injections = new Map([...scan.injections].sort((a, b) => b[1].tokens - a[1].tokens).slice(0, MAX_NAMED_INJECTIONS))
   }
 
-  scan.cells = [...cells.values()];
-  return scan;
+  scan.cells = [...cells.values()]
+  return scan
 }
 
 // ── Le recensement des fichiers ──────────────────────────────────────────────
 
 async function readAgentMeta(dir: string, agentId: string): Promise<string | null> {
   try {
-    const raw = JSON.parse(
-      await readFile(join(dir, `agent-${agentId}.meta.json`), 'utf8'),
-    ) as Record<string, unknown>;
-    return str(raw.agentType) || null;
+    const raw = JSON.parse(await readFile(join(dir, `agent-${agentId}.meta.json`), 'utf8')) as Record<string, unknown>
+    return str(raw.agentType) || null
   } catch {
     // Les anciens sidecars n'en écrivaient pas : l'agent reste anonyme, son
     // coût est compté quand même.
-    return null;
+    return null
   }
 }
 
@@ -816,22 +795,22 @@ async function readAgentMeta(dir: string, agentId: string): Promise<string | nul
  * sous-agents comptés en nombre d'appels et jamais en dollars.
  */
 async function listFiles(): Promise<FileRef[]> {
-  const root = join(CLAUDE_DIR, 'projects');
-  const out: FileRef[] = [];
-  let slugs: string[];
+  const root = join(CLAUDE_DIR, 'projects')
+  const out: FileRef[] = []
+  let slugs: string[]
   try {
-    slugs = await readdir(root);
+    slugs = await readdir(root)
   } catch {
-    return out;
+    return out
   }
 
   for (const project of slugs) {
-    const dir = join(root, project);
-    let entries: string[];
+    const dir = join(root, project)
+    let entries: string[]
     try {
-      entries = await readdir(dir);
+      entries = await readdir(dir)
     } catch {
-      continue;
+      continue
     }
 
     for (const entry of entries) {
@@ -842,39 +821,39 @@ async function listFiles(): Promise<FileRef[]> {
           project,
           agentId: null,
           agentType: null,
-        });
-        continue;
+        })
+        continue
       }
 
-      const subDir = join(dir, entry, 'subagents');
-      let agents: string[];
+      const subDir = join(dir, entry, 'subagents')
+      let agents: string[]
       try {
-        agents = await readdir(subDir);
+        agents = await readdir(subDir)
       } catch {
-        continue; // ce n'est pas un répertoire de session
+        continue // ce n'est pas un répertoire de session
       }
       for (const f of agents) {
-        if (!f.endsWith('.jsonl')) continue;
-        const agentId = f.replace(/^agent-/, '').replace(/\.jsonl$/, '');
+        if (!f.endsWith('.jsonl')) continue
+        const agentId = f.replace(/^agent-/, '').replace(/\.jsonl$/, '')
         out.push({
           path: join(subDir, f),
           sessionId: entry,
           project,
           agentId,
           agentType: await readAgentMeta(subDir, agentId),
-        });
+        })
       }
     }
   }
-  return out;
+  return out
 }
 
 // ── Cache incrémental ────────────────────────────────────────────────────────
 
 interface CacheEntry {
-  mtimeMs: number;
-  size: number;
-  scan: FileScan;
+  mtimeMs: number
+  size: number
+  scan: FileScan
 }
 
 /**
@@ -883,58 +862,58 @@ interface CacheEntry {
  * neufs. Seuls les quelques fichiers touchés depuis le dernier appel sont relus —
  * ce qui rend supportable le fait de tout analyser, ligne à ligne.
  */
-const cache = new Map<string, CacheEntry>();
+const cache = new Map<string, CacheEntry>()
 
 /** Vide le cache. Réservé aux tests et à un rechargement explicite. */
 export function resetSignalsCache(): void {
-  cache.clear();
+  cache.clear()
 }
 
 async function collect(): Promise<{ scans: FileScan[]; scanned: number }> {
-  const files = await listFiles();
-  const live = new Set<string>();
-  const scans: FileScan[] = [];
-  let scanned = 0;
+  const files = await listFiles()
+  const live = new Set<string>()
+  const scans: FileScan[] = []
+  let scanned = 0
 
   for (const ref of files) {
-    live.add(ref.path);
-    let mtimeMs: number, size: number;
+    live.add(ref.path)
+    let mtimeMs: number, size: number
     try {
-      const s = await stat(ref.path);
-      mtimeMs = s.mtimeMs;
-      size = s.size;
+      const s = await stat(ref.path)
+      mtimeMs = s.mtimeMs
+      size = s.size
     } catch {
-      continue;
+      continue
     }
 
-    const hit = cache.get(ref.path);
+    const hit = cache.get(ref.path)
     if (hit && hit.mtimeMs === mtimeMs && hit.size === size) {
-      scans.push(hit.scan);
-      continue;
+      scans.push(hit.scan)
+      continue
     }
-    const fresh = await scanFile(ref);
-    scanned++;
-    cache.set(ref.path, { mtimeMs, size, scan: fresh });
-    scans.push(fresh);
+    const fresh = await scanFile(ref)
+    scanned++
+    cache.set(ref.path, { mtimeMs, size, scan: fresh })
+    scans.push(fresh)
   }
 
-  for (const path of cache.keys()) if (!live.has(path)) cache.delete(path);
-  return { scans, scanned };
+  for (const path of cache.keys()) if (!live.has(path)) cache.delete(path)
+  return { scans, scanned }
 }
 
 // ── L'assemblage en sessions ─────────────────────────────────────────────────
 
 /** Le coût d'une liste de cellules, chacune à son propre tarif. */
 function costOfCells(cells: Cell[]): number {
-  let total = 0;
-  for (const c of cells) total += costOf(c.model, c, c.day) ?? 0;
-  return total;
+  let total = 0
+  for (const c of cells) total += costOf(c.model, c, c.day) ?? 0
+  return total
 }
 
 function foldModels(cells: Cell[]): ModelCost[] {
-  const byModel = new Map<string, ModelCost>();
+  const byModel = new Map<string, ModelCost>()
   for (const c of cells) {
-    let m = byModel.get(c.model);
+    let m = byModel.get(c.model)
     if (!m) {
       m = {
         model: c.model,
@@ -942,90 +921,79 @@ function foldModels(cells: Cell[]): ModelCost[] {
         tokens: zeroTokens(),
         cost: 0,
         priced: isPriced(c.model),
-      };
-      byModel.set(c.model, m);
+      }
+      byModel.set(c.model, m)
     }
-    m.turns += c.turns;
-    addTokens(m.tokens, c);
-    m.cost += costOf(c.model, c, c.day) ?? 0;
+    m.turns += c.turns
+    addTokens(m.tokens, c)
+    m.cost += costOf(c.model, c, c.day) ?? 0
   }
-  return [...byModel.values()].sort((a, b) => b.cost - a.cost || b.tokens.output - a.tokens.output);
+  return [...byModel.values()].sort((a, b) => b.cost - a.cost || b.tokens.output - a.tokens.output)
 }
 
 function mergeTools(scans: FileScan[]): { tools: ToolCost[]; errors: number } {
-  const merged = new Map<string, ToolTally>();
-  let errors = 0;
+  const merged = new Map<string, ToolTally>()
+  let errors = 0
   for (const s of scans) {
-    errors += s.toolErrors;
+    errors += s.toolErrors
     for (const [name, t] of s.tools) {
-      const found = tally(merged, name);
-      found.inputTokens += t.inputTokens;
-      found.outputTokens += t.outputTokens;
-      found.imageTokens += t.imageTokens;
-      found.calls += t.calls;
-      found.errors += t.errors;
+      const found = tally(merged, name)
+      found.inputTokens += t.inputTokens
+      found.outputTokens += t.outputTokens
+      found.imageTokens += t.imageTokens
+      found.calls += t.calls
+      found.errors += t.errors
     }
   }
-  const tools = [...merged.entries()]
-    .map(([name, t]) => ({ name, tokens: t.inputTokens + t.outputTokens, ...t }))
-    .sort((a, b) => b.tokens - a.tokens);
-  return { tools, errors };
+  const tools = [...merged.entries()].map(([name, t]) => ({ name, tokens: t.inputTokens + t.outputTokens, ...t })).sort((a, b) => b.tokens - a.tokens)
+  return { tools, errors }
 }
 
 /** Les injections nommées d'une session, tous ses fichiers réunis. */
 function mergeInjections(scans: FileScan[]): InjectionCost[] {
-  const merged = new Map<string, InjectionCost>();
+  const merged = new Map<string, InjectionCost>()
   for (const s of scans) {
     for (const [key, i] of s.injections) {
-      const found = merged.get(key);
+      const found = merged.get(key)
       if (found) {
-        found.tokens += i.tokens;
-        found.count += i.count;
+        found.tokens += i.tokens
+        found.count += i.count
       } else {
-        merged.set(key, { ...i });
+        merged.set(key, { ...i })
       }
     }
   }
-  return [...merged.values()].sort((a, b) => b.tokens - a.tokens);
+  return [...merged.values()].sort((a, b) => b.tokens - a.tokens)
 }
 
 /** Assemble les fichiers d'une même session en un relevé. */
 function foldSession(sessionId: string, scans: FileScan[]): SessionSignal {
-  const main = scans.filter((s) => !s.agentId);
-  const sidecars = scans.filter((s) => s.agentId);
-  const allCells = scans.flatMap((s) => s.cells);
+  const main = scans.filter((s) => !s.agentId)
+  const sidecars = scans.filter((s) => s.agentId)
+  const allCells = scans.flatMap((s) => s.cells)
 
-  const tokens = zeroTokens();
-  for (const c of allCells) addTokens(tokens, c);
+  const tokens = zeroTokens()
+  for (const c of allCells) addTokens(tokens, c)
 
-  const denominator = tokens.input + tokens.cacheRead + tokens.cacheCreate;
-  const byCategory = zeroCategories();
-  for (const s of scans) for (const c of CONTEXT_CATEGORIES) byCategory[c] += s.byCategory[c];
+  const denominator = tokens.input + tokens.cacheRead + tokens.cacheCreate
+  const byCategory = zeroCategories()
+  for (const s of scans) for (const c of CONTEXT_CATEGORIES) byCategory[c] += s.byCategory[c]
 
-  const { tools, errors } = mergeTools(scans);
-  const models = foldModels(allCells);
+  const { tools, errors } = mergeTools(scans)
+  const models = foldModels(allCells)
 
   // Les deux faces du cache, au tarif de chaque modèle et de chaque jour.
-  const cacheReadCost = allCells.reduce(
-    (sum, c) => sum + (costOf(c.model, { ...ZERO, cacheRead: c.cacheRead }, c.day) ?? 0),
-    0,
-  );
-  const cacheCreateCost = allCells.reduce(
-    (sum, c) => sum + (costOf(c.model, { ...ZERO, cacheCreate: c.cacheCreate }, c.day) ?? 0),
-    0,
-  );
-  const inputCost = allCells.reduce(
-    (sum, c) => sum + (costOf(c.model, { ...ZERO, input: c.input }, c.day) ?? 0),
-    0,
-  );
+  const cacheReadCost = allCells.reduce((sum, c) => sum + (costOf(c.model, { ...ZERO, cacheRead: c.cacheRead }, c.day) ?? 0), 0)
+  const cacheCreateCost = allCells.reduce((sum, c) => sum + (costOf(c.model, { ...ZERO, cacheCreate: c.cacheCreate }, c.day) ?? 0), 0)
+  const inputCost = allCells.reduce((sum, c) => sum + (costOf(c.model, { ...ZERO, input: c.input }, c.day) ?? 0), 0)
 
-  const timestamps = scans.map((s) => s.firstTs).filter(Boolean);
-  const firstTs = timestamps.length ? timestamps.reduce((a, b) => (a < b ? a : b)) : '';
-  const lastTs = scans.map((s) => s.lastTs).reduce((a, b) => (a > b ? a : b), '');
+  const timestamps = scans.map((s) => s.firstTs).filter(Boolean)
+  const firstTs = timestamps.length ? timestamps.reduce((a, b) => (a < b ? a : b)) : ''
+  const lastTs = scans.map((s) => s.lastTs).reduce((a, b) => (a > b ? a : b), '')
 
   // Le fil principal fait foi pour l'identité : un sidecar n'a ni la branche de
   // la session ni sa première fenêtre.
-  const head = main[0] ?? scans[0];
+  const head = main[0] ?? scans[0]
 
   const peakContext = Math.max(
     0,
@@ -1033,7 +1001,7 @@ function foldSession(sessionId: string, scans: FileScan[]): SessionSignal {
     // Une compaction prouve que la fenêtre a atteint `preTokens`, même si aucune
     // réponse relevée ne l'a montré.
     ...main.flatMap((s) => s.compactions.map((c) => c.preTokens)),
-  );
+  )
 
   return {
     sessionId,
@@ -1066,21 +1034,21 @@ function foldSession(sessionId: string, scans: FileScan[]): SessionSignal {
 
     subagents: sidecars
       .map((s) => {
-        const agentTokens = zeroTokens();
-        for (const c of s.cells) addTokens(agentTokens, c);
+        const agentTokens = zeroTokens()
+        for (const c of s.cells) addTokens(agentTokens, c)
         return {
           agentId: s.agentId ?? '',
           agentType: s.agentType,
           turns: s.turns,
           tokens: agentTokens,
           cost: costOfCells(s.cells),
-        };
+        }
       })
       .sort((a, b) => b.cost - a.cost),
 
     families: scans.reduce((acc, s) => {
-      for (const k of Object.keys(acc) as (keyof ToolFamilies)[]) acc[k] += s.families[k];
-      return acc;
+      for (const k of Object.keys(acc) as (keyof ToolFamilies)[]) acc[k] += s.families[k]
+      return acc
     }, zeroFamilies()),
     // Du fil principal seulement : dans un sidecar, une ligne `user` est
     // l'orchestrateur qui brieffe son agent, pas l'humain qui prend un tour.
@@ -1099,7 +1067,7 @@ function foldSession(sessionId: string, scans: FileScan[]): SessionSignal {
     byCategory,
     topInjections: mergeInjections(scans),
     files: scans.length,
-  };
+  }
 }
 
 // ── API publique ─────────────────────────────────────────────────────────────
@@ -1112,27 +1080,27 @@ function foldSession(sessionId: string, scans: FileScan[]): SessionSignal {
  * l'étape suivante calculera.
  */
 export async function getSignals(): Promise<SignalsReport> {
-  const { scans, scanned } = await collect();
+  const { scans, scanned } = await collect()
 
-  const bySession = new Map<string, FileScan[]>();
+  const bySession = new Map<string, FileScan[]>()
   for (const s of scans) {
-    const list = bySession.get(s.sessionId);
-    if (list) list.push(s);
-    else bySession.set(s.sessionId, [s]);
+    const list = bySession.get(s.sessionId)
+    if (list) list.push(s)
+    else bySession.set(s.sessionId, [s])
   }
 
   const signals = [...bySession.entries()]
     .map(([id, list]) => foldSession(id, list))
     .filter((s) => s.turns + s.subagentTurns > 0)
-    .sort((a, b) => b.cost - a.cost);
+    .sort((a, b) => b.cost - a.cost)
 
   // Les points de tout le parc, en ordre chronologique : c'est ce que suppose
   // toute somme mobile, et le tri se fait une fois ici plutôt qu'à chaque appel.
-  const points: CostPoint[] = [];
+  const points: CostPoint[] = []
   for (const s of scans) {
-    for (const p of s.points) points.push({ ...p, sessionId: s.sessionId });
+    for (const p of s.points) points.push({ ...p, sessionId: s.sessionId })
   }
-  points.sort((a, b) => a.t - b.t);
+  points.sort((a, b) => a.t - b.t)
 
-  return { signals, points, filesScanned: scanned };
+  return { signals, points, filesScanned: scanned }
 }

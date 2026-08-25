@@ -20,11 +20,11 @@
 // serveur, et c'est là qu'il faudra la chercher le jour où un transcript
 // existant se met à manquer à l'appel.
 
-import { realpathSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { realpathSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 export function projectSlug(cwd: string): string {
-  return cwd.replace(/[^A-Za-z0-9]/g, '-');
+  return cwd.replace(/[^A-Za-z0-9]/g, '-')
 }
 
 /**
@@ -38,8 +38,8 @@ export function projectSlug(cwd: string): string {
  */
 export function longPath(cwd: string): string {
   try {
-    return realpathSync.native(resolve(cwd));
+    return realpathSync.native(resolve(cwd))
   } catch {
-    return resolve(cwd);
+    return resolve(cwd)
   }
 }

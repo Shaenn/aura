@@ -12,13 +12,13 @@
 // is decoration on Windows: `.Credentials.json` opens the very file that
 // `.credentials.json` refuses, and NTFS hands back the same bytes.
 
-import { loadEnv } from '../env';
-import { t } from '../i18n/index.ts';
-import { realpathSync } from 'node:fs';
-import { basename, dirname, normalize, sep, join } from 'node:path';
+import { realpathSync } from 'node:fs'
+import { basename, dirname, normalize, sep, join } from 'node:path'
+import { loadEnv } from '../env'
+import { t } from '../i18n/index.ts'
 
 /** Absolute root of the managed directory (usually ~/.claude). */
-export const CLAUDE_DIR = loadEnv().claudeDir;
+export const CLAUDE_DIR = loadEnv().claudeDir
 
 /**
  * The path as the disk names it: symlinks followed, real case, 8.3 short names
@@ -29,43 +29,31 @@ export const CLAUDE_DIR = loadEnv().claudeDir;
  * can only leave the root through a directory that, itself, already exists.
  */
 export function canonicalPath(abs: string): string {
-  let head = normalize(abs);
-  const tail: string[] = [];
+  let head = normalize(abs)
+  const tail: string[] = []
   for (;;) {
     try {
-      const real = realpathSync.native(head);
-      return tail.length ? join(real, ...tail) : real;
+      const real = realpathSync.native(head)
+      return tail.length ? join(real, ...tail) : real
     } catch {
-      const parent = dirname(head);
-      if (parent === head) return normalize(abs); // volume root unreachable
-      tail.unshift(basename(head));
-      head = parent;
+      const parent = dirname(head)
+      if (parent === head) return normalize(abs) // volume root unreachable
+      tail.unshift(basename(head))
+      head = parent
     }
   }
 }
 
 /** The root under its canonical form — every prefix check compares against it. */
-const CLAUDE_ROOT = canonicalPath(CLAUDE_DIR);
+const CLAUDE_ROOT = canonicalPath(CLAUDE_DIR)
 
 /** A path (relative to CLAUDE_DIR) refused for *any* access — secrets & noise. */
 const DENY_READ: { exact: Set<string>; prefixes: string[] } = {
   // Never read, expose, back up or modify these.
   exact: new Set(['.credentials.json']),
   // Volatile / huge / private-transcript areas: hidden from the browser too.
-  prefixes: [
-    'file-history',
-    'telemetry',
-    'paste-cache',
-    'shell-snapshots',
-    'statsig',
-    'cache',
-    'sessions',
-    'session-env',
-    'tasks',
-    'jobs',
-    'daemon',
-  ],
-};
+  prefixes: ['file-history', 'telemetry', 'paste-cache', 'shell-snapshots', 'statsig', 'cache', 'sessions', 'session-env', 'tasks', 'jobs', 'daemon'],
+}
 
 /** Path prefixes (relative to CLAUDE_DIR) that MAY be written by AURA. */
 const WRITE_ALLOW: { exact: Set<string>; prefixes: string[] } = {
@@ -75,14 +63,14 @@ const WRITE_ALLOW: { exact: Set<string>; prefixes: string[] } = {
   // Lower-cased, like every entry compared here — see the header note.
   exact: new Set(['settings.json', 'claude.md']),
   prefixes: ['agents', 'skills', 'projects'],
-};
+}
 
 /** Normalise a client path to POSIX-style, root-relative, no leading slash. */
 function toRel(rel: string): string {
   return normalize(rel)
     .replace(/^([/\\])+/, '')
     .split(sep)
-    .join('/');
+    .join('/')
 }
 
 export class PathError extends Error {
@@ -90,7 +78,7 @@ export class PathError extends Error {
     message: string,
     readonly code: 'escape' | 'denied' | 'not-writable' = 'denied',
   ) {
-    super(message);
+    super(message)
   }
 }
 
@@ -99,12 +87,12 @@ export class PathError extends Error {
  * CLAUDE_DIR, or throw. Guards against `..` escapes and absolute inputs.
  */
 export function resolveSafe(rel: string): { abs: string; rel: string } {
-  const cleaned = toRel(rel);
+  const cleaned = toRel(rel)
   // Canonicalise *before* judging: the name the client sent is not necessarily
   // the name the disk uses, and only the latter says where the bytes are.
-  const abs = canonicalPath(join(CLAUDE_ROOT, cleaned));
+  const abs = canonicalPath(join(CLAUDE_ROOT, cleaned))
   if (abs !== CLAUDE_ROOT && !abs.startsWith(CLAUDE_ROOT + sep)) {
-    throw new PathError(t('guard.outsideRoot', { path: rel }), 'escape');
+    throw new PathError(t('guard.outsideRoot', { path: rel }), 'escape')
   }
   // The denylist then runs on what the disk really names, not on what was asked:
   // `agents/../.credentials.json` and a symlink to it both end up as themselves.
@@ -114,39 +102,39 @@ export function resolveSafe(rel: string): { abs: string; rel: string } {
       : abs
           .slice(CLAUDE_ROOT.length + 1)
           .split(sep)
-          .join('/');
-  return { abs, rel: real };
+          .join('/')
+  return { abs, rel: real }
 }
 
 /** True when a root-relative path is hidden from all access (secrets/caches). */
 export function isDenied(rel: string): boolean {
-  const r = toRel(rel).toLowerCase();
-  if (DENY_READ.exact.has(r)) return true;
-  return DENY_READ.prefixes.some((p) => r === p || r.startsWith(p + '/'));
+  const r = toRel(rel).toLowerCase()
+  if (DENY_READ.exact.has(r)) return true
+  return DENY_READ.prefixes.some((p) => r === p || r.startsWith(p + '/'))
 }
 
 /** True when a root-relative path is within a AURA-writable area. */
 export function isWritable(rel: string): boolean {
-  const r = toRel(rel).toLowerCase();
-  if (isDenied(r)) return false;
-  if (WRITE_ALLOW.exact.has(r)) return true;
-  return WRITE_ALLOW.prefixes.some((p) => r === p || r.startsWith(p + '/'));
+  const r = toRel(rel).toLowerCase()
+  if (isDenied(r)) return false
+  if (WRITE_ALLOW.exact.has(r)) return true
+  return WRITE_ALLOW.prefixes.some((p) => r === p || r.startsWith(p + '/'))
 }
 
 /** Resolve for reading: throws on escape or a denied (secret/cache) path. */
 export function resolveForRead(rel: string): { abs: string; rel: string } {
-  const res = resolveSafe(rel);
+  const res = resolveSafe(rel)
   // C'est une politique d'AURA, pas un refus du système : elle s'énonce donc à
   // la première personne — voir docs/voix.md.
-  if (isDenied(res.rel)) throw new PathError(`Je ne lis pas ce chemin : ${rel}`, 'denied');
-  return res;
+  if (isDenied(res.rel)) throw new PathError(`Je ne lis pas ce chemin : ${rel}`, 'denied')
+  return res
 }
 
 /** Resolve for writing: throws unless the path is within a writable area. */
 export function resolveForWrite(rel: string): { abs: string; rel: string } {
-  const res = resolveSafe(rel);
+  const res = resolveSafe(rel)
   if (!isWritable(res.rel)) {
-    throw new PathError(t('guard.notWritable', { path: rel }), 'not-writable');
+    throw new PathError(t('guard.notWritable', { path: rel }), 'not-writable')
   }
-  return res;
+  return res
 }

@@ -8,7 +8,7 @@
 // `Intl` sait déjà tout cela — séparateur décimal, place du symbole, espace
 // avant le pourcentage — et le sait pour les deux langues à la fois.
 
-import { locale } from '../i18n/index.ts';
+import { locale } from '../i18n/index.ts'
 
 /** Un montant en dollars, au prix catalogue de l'API. */
 export function usd(n: number): string {
@@ -18,7 +18,7 @@ export function usd(n: number): string {
     currencyDisplay: 'narrowSymbol',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(n);
+  }).format(n)
 }
 
 /**
@@ -31,7 +31,7 @@ export function ratio(n: number): string {
   return new Intl.NumberFormat(locale(), {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  }).format(n);
+  }).format(n)
 }
 
 /** Une part, en pourcentage entier : `78 %` / `78%`. */
@@ -39,7 +39,7 @@ export function pct(n: number): string {
   return new Intl.NumberFormat(locale(), {
     style: 'percent',
     maximumFractionDigits: 0,
-  }).format(n);
+  }).format(n)
 }
 
 /**
@@ -52,14 +52,15 @@ export function pct(n: number): string {
  * le catalogue.
  */
 export function tok(n: number): string {
-  const num = (v: number, digits: number): string =>
-    new Intl.NumberFormat(locale(), {
+  function num(v: number, digits: number): string {
+    return new Intl.NumberFormat(locale(), {
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
-    }).format(v);
-  const space = locale() === 'fr' ? ' ' : '';
+    }).format(v)
+  }
+  const space = locale() === 'fr' ? ' ' : ''
 
-  if (n >= 1_000_000) return `${num(n / 1_000_000, 1)}${space}M`;
-  if (n >= 1_000) return `${num(Math.round(n / 1_000), 0)}${space}k`;
-  return num(Math.round(n), 0);
+  if (n >= 1_000_000) return `${num(n / 1_000_000, 1)}${space}M`
+  if (n >= 1_000) return `${num(Math.round(n / 1_000), 0)}${space}k`
+  return num(Math.round(n), 0)
 }

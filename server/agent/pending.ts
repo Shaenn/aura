@@ -11,30 +11,30 @@
 // l'utilisateur, elle sert à ce que rien ne reste en l'air.
 
 export class PendingAnswer<T> {
-  readonly promise: Promise<T>;
-  private settleFn!: (value: T) => void;
-  private timer: NodeJS.Timeout;
-  private done = false;
+  readonly promise: Promise<T>
+  private settleFn!: (value: T) => void
+  private timer: NodeJS.Timeout
+  private done = false
 
   constructor(timeoutMs: number, onTimeout: () => T) {
     this.promise = new Promise<T>((resolve) => {
-      this.settleFn = resolve;
-    });
-    this.timer = setTimeout(() => this.settle(onTimeout()), timeoutMs);
+      this.settleFn = resolve
+    })
+    this.timer = setTimeout(() => this.settle(onTimeout()), timeoutMs)
     // Une attente d'humain ne doit pas, à elle seule, retenir le processus.
-    this.timer.unref?.();
+    this.timer.unref?.()
   }
 
   /** Dénoue l'attente. Rend `false` si elle l'était déjà (double clic, timeout). */
   settle(value: T): boolean {
-    if (this.done) return false;
-    this.done = true;
-    clearTimeout(this.timer);
-    this.settleFn(value);
-    return true;
+    if (this.done) return false
+    this.done = true
+    clearTimeout(this.timer)
+    this.settleFn(value)
+    return true
   }
 
   get pending(): boolean {
-    return !this.done;
+    return !this.done
   }
 }

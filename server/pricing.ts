@@ -11,17 +11,17 @@
 // that can drift apart.
 
 /** Cache-write (5-minute TTL) costs 1.25x the base input rate. */
-const CACHE_WRITE_MULTIPLIER = 1.25;
+const CACHE_WRITE_MULTIPLIER = 1.25
 /** Cache-read costs ~0.1x the base input rate. */
-const CACHE_READ_MULTIPLIER = 0.1;
+const CACHE_READ_MULTIPLIER = 0.1
 
 /** $/MTok. `introUntil` is inclusive, ISO `YYYY-MM-DD`. */
 interface Rate {
-  input: number;
-  output: number;
-  introUntil?: string;
-  introInput?: number;
-  introOutput?: number;
+  input: number
+  output: number
+  introUntil?: string
+  introInput?: number
+  introOutput?: number
 }
 
 // Longest prefix wins, so a dated id (`claude-haiku-4-5-20251001`) and a bare
@@ -47,13 +47,13 @@ const RATES: Record<string, Rate> = {
   'claude-sonnet-4-6': { input: 3, output: 15 },
   'claude-sonnet-4-5': { input: 3, output: 15 },
   'claude-haiku-4-5': { input: 1, output: 5 },
-};
+}
 
 export interface TokenCounts {
-  input: number;
-  output: number;
-  cacheRead: number;
-  cacheCreate: number;
+  input: number
+  output: number
+  cacheRead: number
+  cacheCreate: number
 }
 
 /**
@@ -64,22 +64,22 @@ export interface TokenCounts {
  * (see `unpricedModels` in `usage.ts`).
  */
 function rateFor(model: string): Rate | null {
-  let best: Rate | null = null;
-  let bestLen = 0;
+  let best: Rate | null = null
+  let bestLen = 0
   for (const [id, rate] of Object.entries(RATES)) {
     if (model === id || model.startsWith(`${id}-`)) {
       if (id.length > bestLen) {
-        best = rate;
-        bestLen = id.length;
+        best = rate
+        bestLen = id.length
       }
     }
   }
-  return best;
+  return best
 }
 
 /** Whether we can put a dollar figure on this model at all. */
 export function isPriced(model: string): boolean {
-  return rateFor(model) !== null;
+  return rateFor(model) !== null
 }
 
 /**
@@ -90,18 +90,14 @@ export function isPriced(model: string): boolean {
  * time-limited introductory rate.
  */
 export function costOf(model: string, t: TokenCounts, day: string): number | null {
-  const rate = rateFor(model);
-  if (!rate) return null;
+  const rate = rateFor(model)
+  if (!rate) return null
 
-  const intro = rate.introUntil !== undefined && day <= rate.introUntil;
-  const input = intro ? (rate.introInput ?? rate.input) : rate.input;
-  const output = intro ? (rate.introOutput ?? rate.output) : rate.output;
+  const intro = rate.introUntil !== undefined && day <= rate.introUntil
+  const input = intro ? (rate.introInput ?? rate.input) : rate.input
+  const output = intro ? (rate.introOutput ?? rate.output) : rate.output
 
   return (
-    (t.input * input +
-      t.output * output +
-      t.cacheCreate * input * CACHE_WRITE_MULTIPLIER +
-      t.cacheRead * input * CACHE_READ_MULTIPLIER) /
-    1_000_000
-  );
+    (t.input * input + t.output * output + t.cacheCreate * input * CACHE_WRITE_MULTIPLIER + t.cacheRead * input * CACHE_READ_MULTIPLIER) / 1_000_000
+  )
 }

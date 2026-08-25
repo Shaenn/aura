@@ -13,113 +13,107 @@
 // Aucun test n'envoie de tour : le runner ne lance son processus qu'au premier
 // `send()`, et ces bornes se vérifient toutes avant.
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  atCapacity,
-  countSessions,
-  createRunner,
-  IDLE_TTL_MS,
-  MAX_SESSIONS,
-  stopAll,
-  sweep,
-} from '../server/agent/registry.ts';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { atCapacity, countSessions, createRunner, IDLE_TTL_MS, MAX_SESSIONS, stopAll, sweep } from '../server/agent/registry.ts'
 
-const CWD = import.meta.dirname;
+const CWD = import.meta.dirname
 
-const open = (): ReturnType<typeof createRunner> => createRunner({ cwd: CWD });
+function open(): ReturnType<typeof createRunner> {
+  return createRunner({ cwd: CWD })
+}
 
 /** Fait passer le temps sans rien exécuter : seule l'horloge de `touchedAt` compte. */
-const laisserPasser = (ms: number): void => {
-  vi.setSystemTime(Date.now() + ms);
-};
+function laisserPasser(ms: number): void {
+  vi.setSystemTime(Date.now() + ms)
+}
 
 beforeEach(() => {
-  vi.useFakeTimers();
-});
+  vi.useFakeTimers()
+})
 
 afterEach(() => {
-  stopAll();
-  vi.useRealTimers();
-});
+  stopAll()
+  vi.useRealTimers()
+})
 
 describe('plafond du parc', () => {
   it('accepte jusqu’au plafond, et pas une de plus', () => {
-    expect(atCapacity()).toBe(false);
+    expect(atCapacity()).toBe(false)
 
-    for (let i = 0; i < MAX_SESSIONS; i++) open();
+    for (let i = 0; i < MAX_SESSIONS; i++) open()
 
-    expect(countSessions()).toBe(MAX_SESSIONS);
-    expect(atCapacity()).toBe(true);
-  });
+    expect(countSessions()).toBe(MAX_SESSIONS)
+    expect(atCapacity()).toBe(true)
+  })
 
   it('rouvre dès qu’une place se libère — c’est un plafond, pas un verrou', () => {
-    const premiers = Array.from({ length: MAX_SESSIONS }, open);
-    expect(atCapacity()).toBe(true);
+    const premiers = Array.from({ length: MAX_SESSIONS }, open)
+    expect(atCapacity()).toBe(true)
 
     // Ce que fait la route `DELETE` : le registre oublie, le runner se coupe.
-    stopAll();
+    stopAll()
 
-    expect(atCapacity()).toBe(false);
-    expect(premiers).toHaveLength(MAX_SESSIONS);
-  });
-});
+    expect(atCapacity()).toBe(false)
+    expect(premiers).toHaveLength(MAX_SESSIONS)
+  })
+})
 
 describe('balayeur d’inactivité', () => {
   it('ramasse la session que personne ne regarde plus', () => {
-    const abandonnée = open();
+    const abandonnée = open()
 
-    laisserPasser(IDLE_TTL_MS + 1);
+    laisserPasser(IDLE_TTL_MS + 1)
 
-    expect(sweep()).toEqual([abandonnée.session.runId]);
-    expect(countSessions()).toBe(0);
-  });
+    expect(sweep()).toEqual([abandonnée.session.runId])
+    expect(countSessions()).toBe(0)
+  })
 
   it('garde celle qu’un onglet regarde, si vieille soit-elle', () => {
     // Le flux protège sans réserve, et c'est assumé : un onglet d'arrière-plan
     // garde sa socket ouverte alors que le navigateur a gelé la page, et couper
     // la session de quelqu'un qui revient d'un autre onglet coûterait plus cher
     // que la place occupée — que `MAX_SESSIONS` borne, et qu'un geste libère.
-    const regardée = open();
-    regardée.subscribe(() => {});
+    const regardée = open()
+    regardée.subscribe(() => {})
 
-    laisserPasser(IDLE_TTL_MS * 100);
+    laisserPasser(IDLE_TTL_MS * 100)
 
-    expect(sweep()).toEqual([]);
-    expect(countSessions()).toBe(1);
-  });
+    expect(sweep()).toEqual([])
+    expect(countSessions()).toBe(1)
+  })
 
   it('garde celle qui travaille : un tour long n’est pas un abandon', () => {
-    const occupée = open();
+    const occupée = open()
     // Le statut qu'un `send()` poserait, sans lancer le processus qu'il lancerait.
-    occupée.session.status = 'working';
+    occupée.session.status = 'working'
 
-    laisserPasser(IDLE_TTL_MS + 1);
+    laisserPasser(IDLE_TTL_MS + 1)
 
-    expect(sweep()).toEqual([]);
-    expect(countSessions()).toBe(1);
-  });
+    expect(sweep()).toEqual([])
+    expect(countSessions()).toBe(1)
+  })
 
   it('repart de zéro quand le dernier onglet se ferme, pas quand il s’est ouvert', () => {
-    const runner = open();
-    const partir = runner.subscribe(() => {});
+    const runner = open()
+    const partir = runner.subscribe(() => {})
 
     // Une heure passée sous les yeux de quelqu'un : l'abonnement seul la protège.
-    laisserPasser(IDLE_TTL_MS * 2);
-    partir();
+    laisserPasser(IDLE_TTL_MS * 2)
+    partir()
 
     // Le départ vient de remettre l'horloge à l'heure : rien à ramasser encore.
-    expect(sweep()).toEqual([]);
+    expect(sweep()).toEqual([])
 
-    laisserPasser(IDLE_TTL_MS + 1);
-    expect(sweep()).toEqual([runner.session.runId]);
-  });
+    laisserPasser(IDLE_TTL_MS + 1)
+    expect(sweep()).toEqual([runner.session.runId])
+  })
 
   it('ne touche pas à celle dont le délai n’est pas écoulé', () => {
-    open();
+    open()
 
-    laisserPasser(IDLE_TTL_MS - 1000);
+    laisserPasser(IDLE_TTL_MS - 1000)
 
-    expect(sweep()).toEqual([]);
-    expect(countSessions()).toBe(1);
-  });
-});
+    expect(sweep()).toEqual([])
+    expect(countSessions()).toBe(1)
+  })
+})

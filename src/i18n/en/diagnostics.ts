@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../fr';
+import type { MessageSchema } from '../fr'
 
 const diagnostics: MessageSchema['diagnostics'] = {
   severity: {
@@ -6,6 +6,6 @@ const diagnostics: MessageSchema['diagnostics'] = {
     warn: 'Worth watching',
     info: 'For information',
   },
-};
+}
 
-export default diagnostics;
+export default diagnostics

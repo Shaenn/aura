@@ -14,13 +14,13 @@
 // Écrire les branches macOS et Linux reviendrait à maintenir du code que rien
 // n'exécute — et qu'on ne pourrait donc jamais vérifier.
 
-import { execFile } from 'node:child_process';
-import { t } from '../i18n/index.ts';
-import { promisify } from 'node:util';
-import { existsSync, statSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { execFile } from 'node:child_process'
+import { existsSync, statSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { promisify } from 'node:util'
+import { t } from '../i18n/index.ts'
 
-const run = promisify(execFile);
+const run = promisify(execFile)
 
 /**
  * Un point de départ que la boîte de dialogue acceptera vraiment.
@@ -36,23 +36,23 @@ const run = promisify(execFile);
  *    mieux qu'ouvrir à l'autre bout du disque.
  */
 export function normalizeStart(input?: string): string | undefined {
-  if (!input?.trim()) return undefined;
-  let path = resolve(input.trim());
+  if (!input?.trim()) return undefined
+  let path = resolve(input.trim())
   for (;;) {
     try {
-      if (existsSync(path) && statSync(path).isDirectory()) return path;
+      if (existsSync(path) && statSync(path).isDirectory()) return path
     } catch {
       /* illisible : on remonte */
     }
-    const up = dirname(path);
+    const up = dirname(path)
     // `dirname` d'une racine rend la racine : c'est la condition d'arrêt.
-    if (up === path) return undefined;
-    path = up;
+    if (up === path) return undefined
+    path = up
   }
 }
 
 /** Au-delà, c'est que personne ne regarde l'écran : on rend la main. */
-const DIALOG_TIMEOUT_MS = 3 * 60_000;
+const DIALOG_TIMEOUT_MS = 3 * 60_000
 
 export class PickerUnavailable extends Error {}
 
@@ -67,9 +67,9 @@ export async function pickFolder(startFrom?: string): Promise<string | null> {
   // un chantier à finir mais une réponse honnête, et le front retombe alors sur
   // la saisie du chemin sans rien casser.
   if (process.platform !== 'win32') {
-    throw new PickerUnavailable(t('agent.pickerUnavailable', { platform: process.platform }));
+    throw new PickerUnavailable(t('agent.pickerUnavailable', { platform: process.platform }))
   }
-  return pickWindows(normalizeStart(startFrom));
+  return pickWindows(normalizeStart(startFrom))
 }
 
 async function pickWindows(startFrom?: string): Promise<string | null> {
@@ -98,7 +98,7 @@ async function pickWindows(startFrom?: string): Promise<string | null> {
     '$top.TopMost = $true',
     'if ($d.ShowDialog($top) -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $d.SelectedPath }',
     '$top.Dispose()',
-  ].join('; ');
+  ].join('; ')
 
   // `-STA` est obligatoire : une boîte WinForms exige un appartement à fil
   // unique. `pwsh` d'abord — son .NET donne la boîte moderne d'Explorateur, là
@@ -109,14 +109,16 @@ async function pickWindows(startFrom?: string): Promise<string | null> {
       const { stdout } = await run(exe, ['-NoProfile', '-STA', '-Command', script], {
         timeout: DIALOG_TIMEOUT_MS,
         windowsHide: true,
-      });
-      return stdout.trim() || null;
+      })
+      return stdout.trim() || null
     } catch (e) {
-      if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
+      if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e
     }
   }
-  throw new PickerUnavailable(t('agent.noPowerShell'));
+  throw new PickerUnavailable(t('agent.noPowerShell'))
 }
 
 /** Une chaîne PowerShell littérale : rien n'y est interprété, les `'` sont doublés. */
-const psLiteral = (s: string): string => `'${s.replace(/'/g, "''")}'`;
+function psLiteral(s: string): string {
+  return `'${s.replace(/'/g, "''")}'`
+}

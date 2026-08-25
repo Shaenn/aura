@@ -55,8 +55,7 @@ export default {
   },
   readings: {
     same: 'Vos deux quarts font pareil ici : ce geste ne les sépare pas.',
-    exploreMore:
-      "Chez vous, le quart le plus productif explore davantage : il cherche plus qu'il ne construit, et produit quand même.",
+    exploreMore: "Chez vous, le quart le plus productif explore davantage : il cherche plus qu'il ne construit, et produit quand même.",
     exploreLess: "Chez vous, le quart le plus productif cherche moins qu'il ne construit.",
     turnsMore:
       "Chez vous, le quart le plus productif fait plus de tours par prompt — c'est le résultat qu'on n'attend pas, et une règle « trop de tours » aurait conseillé l'inverse du bon geste.",
@@ -64,10 +63,8 @@ export default {
   },
   workReading: {
     prefix: 'Sur votre parc : {parts}.',
-    explore:
-      "vos sessions les plus productives cherchent moins qu'elles ne construisent ({top} exploration par modification contre {bottom})",
-    turns:
-      "elles font {top} tours par prompt là où les autres en font {bottom} — un brief complet qu'on laisse courir, pas dix relances courtes",
+    explore: "vos sessions les plus productives cherchent moins qu'elles ne construisent ({top} exploration par modification contre {bottom})",
+    turns: "elles font {top} tours par prompt là où les autres en font {bottom} — un brief complet qu'on laisse courir, pas dix relances courtes",
     none: 'Vos deux quarts se ressemblent sur ces gestes : rien ne les sépare nettement ici.',
   },
 
@@ -86,11 +83,9 @@ export default {
   },
   currentReading: {
     none: "Rien n'a été dépensé sur cette fenêtre.",
-    fallback:
-      'Trop peu de fenêtres pour se caler sur votre parc : le repère de {threshold} est une valeur de repli.',
+    fallback: 'Trop peu de fenêtres pour se caler sur votre parc : le repère de {threshold} est une valeur de repli.',
     over: 'Au-delà de votre repère de {threshold} — max(P90 de vos fenêtres, garde-fou), comme partout ici.',
-    under:
-      'Votre repère est à {threshold} : max(P90 de vos fenêtres, garde-fou), comme partout ici.',
+    under: 'Votre repère est à {threshold} : max(P90 de vos fenêtres, garde-fou), comme partout ici.',
   },
   windows: 'Vos fenêtres de 5 h',
   windowsWhat:
@@ -104,8 +99,7 @@ export default {
     "Le plus grand nombre de sessions ouvertes en même temps, d'après le recouvrement de leurs bornes — de la première à la dernière ligne de chacune.",
   concurrencyReading:
     "Une session laissée ouverte sans qu'on y touche compte comme ouverte : c'est ce qu'elle était. Mener deux sessions de front remplit la fenêtre de 5 h deux fois plus vite.",
-  concurrencyHint:
-    'au plus — {hours} h à deux ou plus, soit {share} du temps où une session était ouverte',
+  concurrencyHint: 'au plus — {hours} h à deux ou plus, soit {share} du temps où une session était ouverte',
   paceReading:
     'Une fenêtre glissante ne connaît pas les sessions : elle compte ce qui a été dépensé dans les cinq dernières heures, toutes sessions confondues. Deux sessions menées de front la remplissent deux fois plus vite.',
 
@@ -161,10 +155,8 @@ export default {
     orphansNone: ' Aucune ne disparaît pour autant : toutes sont signalées par un autre signal.',
     orphans:
       " {n} d'entre elles ({cost}) ne sont désignées par aucun autre signal — c'est ce que ce plancher coûte vraiment ; les autres sont des doublons.",
-    guardLine:
-      '{rank} de votre parc {p} · garde-fou {guard} → on retient {which}, donc le garde-fou{silenced}. {weight}{orphans}',
-    parkLine:
-      '{rank} de votre parc {p} · garde-fou {guard} → on retient {which}, donc votre parc : {verdict}. {weight}',
+    guardLine: '{rank} de votre parc {p} · garde-fou {guard} → on retient {which}, donc le garde-fou{silenced}. {weight}{orphans}',
+    parkLine: '{rank} de votre parc {p} · garde-fou {guard} → on retient {which}, donc votre parc : {verdict}. {weight}',
     verdictSame: "les deux tombent au même endroit, et il n'y a rien entre eux à taire",
     verdictPassed: "le plancher est franchi et n'a rien à taire",
   },
@@ -179,10 +171,9 @@ export default {
       "Seulement {n} session porte ce signal, moins que les 30 qu'il faut : un percentile n'y voudrait rien dire. Le seuil est le garde-fou seul ({value}), ce qui est la position prudente — il ne sait que faire taire. | Seulement {n} sessions portent ce signal, moins que les 30 qu'il faut : un percentile n'y voudrait rien dire. Le seuil est le garde-fou seul ({value}), ce qui est la position prudente — il ne sait que faire taire.",
     percentile:
       'Seuil = {rank} de votre parc, donc 90 % de vos {n} sessions restent {side} {value}. Les {hits} cas sont ce décile-là, pas des anomalies détectées.',
-    guard:
-      "Seuil = garde-fou : le {rank} de votre parc{p} n'atteint pas ce qui vaut une action, et le plancher ({value}) prend le relais.{silenced}",
+    guard: "Seuil = garde-fou : le {rank} de votre parc{p} n'atteint pas ce qui vaut une action, et le plancher ({value}) prend le relais.{silenced}",
     guardP: ' ({p})',
     guardSilenced: ' Les {n} sessions entre les deux sont tues{cost}.',
     guardSilencedCost: ' — {cost} au total',
   },
-};
+}

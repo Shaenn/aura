@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const replay: MessageSchema['pages']['replay'] = {
   untitled: 'Session',
@@ -43,6 +43,6 @@ const replay: MessageSchema['pages']['replay'] = {
   tasks: 'Tasks',
   context: 'Context window',
   diagnostic: 'Session diagnostics',
-};
+}
 
-export default replay;
+export default replay

@@ -35,8 +35,7 @@ export default {
     head: 'Processus Claude',
     intro:
       "Le disque ne déclare pas tout : un daemon, un hôte de pseudo-terminal ou le pont de l'extension Chrome n'écrivent aucun fichier de session. Ils apparaissent ici, et nulle part ailleurs.",
-    unsupported:
-      'Je ne sais pas énumérer les processus sur ce système. La liste reste vide, ce qui ne veut pas dire que rien ne tourne.',
+    unsupported: 'Je ne sais pas énumérer les processus sur ce système. La liste reste vide, ce qui ne veut pas dire que rien ne tourne.',
     empty: 'Je ne vois aucun processus Claude, pas même le mien — ce qui est étonnant.',
     orphan: 'orphelin',
     self: 'moi',
@@ -71,4 +70,4 @@ export default {
     deleted: 'Plan supprimé.',
     deleteError: "Je n'ai pas pu supprimer ce plan",
   },
-};
+}

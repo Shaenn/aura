@@ -17,34 +17,31 @@
 // AURA continue de n'écouter que la boucle locale (`server/index.ts`), et
 // `guard.ts` n'a rien de nouveau à trancher. Aucun port ne s'ouvre pour ceci.
 
-import { Api, Bot } from 'node-telegram-bot-api';
-import type {
-  InlineKeyboardMarkup,
-  InputRichBlock as InputRichBlockLib,
-} from 'node-telegram-bot-api';
-import { MAX_RICHE, type InputRichBlock } from './riche.ts';
+import { Api, Bot } from 'node-telegram-bot-api'
+import type { InlineKeyboardMarkup, InputRichBlock as InputRichBlockLib } from 'node-telegram-bot-api'
+import { MAX_RICHE, type InputRichBlock } from './riche.ts'
 
 /** Ce qu'un message ordinaire accepte. Le riche en prend huit fois plus. */
-const MAX_TEXTE = 4_000;
+const MAX_TEXTE = 4_000
 
 /** Coupe à la borne, plutôt que de laisser l'API refuser le message entier. */
 function borne(texte: string, max: number): string {
-  return texte.length > max ? `${texte.slice(0, max - 1)}…` : texte;
+  return texte.length > max ? `${texte.slice(0, max - 1)}…` : texte
 }
 
 /** Un message reçu, réduit à ce dont la Passerelle a besoin. */
 export interface MessageEntrant {
-  chatId: number;
-  texte: string;
+  chatId: number
+  texte: string
 }
 
 /** Un bouton pressé sous un message d'AURA. */
 export interface BoutonPresse {
-  chatId: number;
+  chatId: number
   /** À renvoyer pour que Telegram cesse d'afficher l'attente sur le bouton. */
-  callbackId: string;
+  callbackId: string
   /** Ce que le bouton portait — voir `boutons()`. */
-  donnee: string;
+  donnee: string
 }
 
 /**
@@ -52,14 +49,14 @@ export interface BoutonPresse {
  * quel identifiant. Le second sert à réécrire le clavier d'un formulaire.
  */
 export interface Rendu {
-  voie: 'riche' | 'nu' | 'brut';
-  messageId: number | null;
+  voie: 'riche' | 'nu' | 'brut'
+  messageId: number | null
 }
 
 /** Un bouton : ce qu'il affiche, et ce qu'il renvoie quand on le presse. */
 export interface Bouton {
-  texte: string;
-  donnee: string;
+  texte: string
+  donnee: string
 }
 
 /**
@@ -69,12 +66,12 @@ export interface Bouton {
  * même titre que la largeur d'une rangée.
  */
 export function tronqueBouton(texte: string): string {
-  return texte.length > 32 ? `${texte.slice(0, 31)}…` : texte;
+  return texte.length > 32 ? `${texte.slice(0, 31)}…` : texte
 }
 
 /** Une rangée de boutons sous un message. */
 export function boutons(paires: Bouton[]): InlineKeyboardMarkup {
-  return { inline_keyboard: [paires.map((p) => ({ text: p.texte, callback_data: p.donnee }))] };
+  return { inline_keyboard: [paires.map((p) => ({ text: p.texte, callback_data: p.donnee }))] }
 }
 
 /**
@@ -86,7 +83,7 @@ export function boutons(paires: Bouton[]): InlineKeyboardMarkup {
  * et la seule qui fonctionne — un remplissage placé dans les **libellés** des
  * boutons n'a, lui, aucun effet, la largeur du clavier étant celle de la bulle.
  */
-const BLANC = '⠀';
+const BLANC = '⠀'
 
 /**
  * Combien de caractères ordinaires il faut pour saturer la largeur d'une bulle.
@@ -95,7 +92,7 @@ const BLANC = '⠀';
  * 50 en donnent 391, et le plafond de 480 px est atteint vers 63. Au-delà, plus
  * rien ne bouge.
  */
-const CIBLE_CARACTERES = 63;
+const CIBLE_CARACTERES = 63
 
 /**
  * Ce que vaut un blanc braille, en caractères ordinaires.
@@ -106,7 +103,7 @@ const CIBLE_CARACTERES = 63;
  * 1,6 chacun. Compter un blanc pour une lettre sous-remplissait tous les
  * en-têtes moyens, et les chemins profonds gardaient des boutons rétrécis.
  */
-const BLANC_EN_CARACTERES = 1.6;
+const BLANC_EN_CARACTERES = 1.6
 
 /**
  * Complète un texte pour que son clavier prenne toute la largeur.
@@ -123,8 +120,8 @@ const BLANC_EN_CARACTERES = 1.6;
 export function elargi(texte: string): string {
   // La largeur d'une bulle est celle de sa **ligne la plus longue**. Un texte
   // qui l'atteint déjà n'a besoin de rien.
-  const plusLongue = texte.split('\n').reduce((max, l) => Math.max(max, l.length), 0);
-  if (plusLongue >= CIBLE_CARACTERES) return texte;
+  const plusLongue = texte.split('\n').reduce((max, l) => Math.max(max, l.length), 0)
+  if (plusLongue >= CIBLE_CARACTERES) return texte
 
   // Le remplissage prend **sa propre ligne**, et ce n'est pas un détail. Collé
   // au texte, il le pousse au-delà du bord et coupe la dernière phrase en deux
@@ -136,7 +133,7 @@ export function elargi(texte: string): string {
   // elle le **remplace** dans le calcul de la largeur. Il faut donc de quoi
   // atteindre la cible à elle seule — la première version en mettait juste ce
   // qui manquait au texte, et rétrécissait les bulles au lieu de les élargir.
-  return `${texte}\n${BLANC.repeat(Math.ceil(CIBLE_CARACTERES / BLANC_EN_CARACTERES))}`;
+  return `${texte}\n${BLANC.repeat(Math.ceil(CIBLE_CARACTERES / BLANC_EN_CARACTERES))}`
 }
 
 /**
@@ -151,7 +148,7 @@ export function elargi(texte: string): string {
  * cette surface. Un écran large en supporterait plus — mais c'est le petit qui
  * décide, puisque c'est pour lui que la Passerelle existe.
  */
-const LARGEUR_RANGEE = 32;
+const LARGEUR_RANGEE = 32
 
 /**
  * Combien de boutons par rangée, au maximum.
@@ -159,7 +156,7 @@ const LARGEUR_RANGEE = 32;
  * Pas une limite de l'API mais une limite du doigt : au-delà de trois, un
  * bouton fait moins d'un tiers d'écran et devient une cible qu'on manque.
  */
-const MAX_PAR_RANGEE = 3;
+const MAX_PAR_RANGEE = 3
 
 /**
  * Range les boutons en rangées, en remplissant chacune au plus près.
@@ -177,44 +174,41 @@ const MAX_PAR_RANGEE = 3;
  * faut d'une action, qu'on ne veut pas voir se confondre avec la liste.
  */
 export function grille(cases: Bouton[], solo: Bouton[] = []): InlineKeyboardMarkup {
-  const rangees: { text: string; callback_data: string }[][] = [];
-  let rangee: Bouton[] = [];
-  let plusLong = 0;
+  const rangees: { text: string; callback_data: string }[][] = []
+  let rangee: Bouton[] = []
+  let plusLong = 0
 
-  const pose = (): void => {
-    if (!rangee.length) return;
-    rangees.push(rangee.map((b) => ({ text: b.texte, callback_data: b.donnee })));
-    rangee = [];
-    plusLong = 0;
-  };
+  function pose(): void {
+    if (!rangee.length) return
+    rangees.push(rangee.map((b) => ({ text: b.texte, callback_data: b.donnee })))
+    rangee = []
+    plusLong = 0
+  }
 
   for (const bouton of cases) {
-    const large = Math.max(plusLong, bouton.texte.length);
+    const large = Math.max(plusLong, bouton.texte.length)
     // Un bouton plus large qu'une rangée entière ne tient nulle part : il prend
     // la sienne, où il sera rogné mais lisible sur toute la largeur.
-    if (
-      rangee.length &&
-      (large * (rangee.length + 1) > LARGEUR_RANGEE || rangee.length >= MAX_PAR_RANGEE)
-    ) {
-      pose();
+    if (rangee.length && (large * (rangee.length + 1) > LARGEUR_RANGEE || rangee.length >= MAX_PAR_RANGEE)) {
+      pose()
     }
-    rangee.push(bouton);
-    plusLong = Math.max(plusLong, bouton.texte.length);
+    rangee.push(bouton)
+    plusLong = Math.max(plusLong, bouton.texte.length)
   }
-  pose();
+  pose()
 
-  for (const b of solo) rangees.push([{ text: b.texte, callback_data: b.donnee }]);
-  return { inline_keyboard: rangees };
+  for (const b of solo) rangees.push([{ text: b.texte, callback_data: b.donnee }])
+  return { inline_keyboard: rangees }
 }
 
 export class Telegram {
-  private readonly api: Api;
-  private readonly bot: Bot;
-  private stopped = false;
+  private readonly api: Api
+  private readonly bot: Bot
+  private stopped = false
 
   constructor(token: string) {
-    this.api = new Api(token);
-    this.bot = new Bot(token);
+    this.api = new Api(token)
+    this.bot = new Bot(token)
   }
 
   /**
@@ -225,10 +219,10 @@ export class Telegram {
    */
   async identite(): Promise<string | null> {
     try {
-      const moi = await this.api.getMe();
-      return moi.username || null;
+      const moi = await this.api.getMe()
+      return moi.username || null
     } catch {
-      return null;
+      return null
     }
   }
 
@@ -246,31 +240,31 @@ export class Telegram {
     surErreur: (message: string) => void,
   ): void {
     this.bot.on('message', async (ctx) => {
-      const chatId = ctx.chatId;
-      const texte = ctx.message?.text;
-      if (!chatId || !texte || !autorise(chatId)) return;
-      await surMessage({ chatId, texte });
-    });
+      const chatId = ctx.chatId
+      const texte = ctx.message?.text
+      if (!chatId || !texte || !autorise(chatId)) return
+      await surMessage({ chatId, texte })
+    })
 
     this.bot.on('callback_query', async (ctx) => {
-      const chatId = ctx.chatId;
-      const rappel = ctx.callbackQuery;
-      if (!chatId || !rappel?.data || !autorise(chatId)) return;
+      const chatId = ctx.chatId
+      const rappel = ctx.callbackQuery
+      if (!chatId || !rappel?.data || !autorise(chatId)) return
       // Accuser d'abord : sans cela le bouton tourne pendant tout le traitement.
-      await ctx.answerCallbackQuery();
-      await surBouton({ chatId, callbackId: rappel.id, donnee: rappel.data });
-    });
+      await ctx.answerCallbackQuery()
+      await surBouton({ chatId, callbackId: rappel.id, donnee: rappel.data })
+    })
 
     // Une erreur de traitement ne doit pas arrêter la boucle : la suivante
     // pourrait très bien passer.
     this.bot.catch((err) => {
-      surErreur(err instanceof Error ? err.message : String(err));
-    });
+      surErreur(err instanceof Error ? err.message : String(err))
+    })
 
     void this.bot.startPolling().catch((e: unknown) => {
-      if (this.stopped) return;
-      surErreur(e instanceof Error ? e.message : String(e));
-    });
+      if (this.stopped) return
+      surErreur(e instanceof Error ? e.message : String(e))
+    })
   }
 
   /**
@@ -285,7 +279,7 @@ export class Telegram {
         chat_id: chatId,
         text: borne(texte, MAX_TEXTE),
         ...(clavier ? { reply_markup: clavier } : {}),
-      });
+      })
     } catch {
       // Une messagerie injoignable n'est pas une panne d'AURA : le BFF continue
       // de servir l'interface et les sessions de tourner.
@@ -299,20 +293,16 @@ export class Telegram {
    * empiler un par clic : une conversation n'a pas de bouton « retour », et une
    * pile de listes mortes derrière soi est le contraire d'un fil qu'on relit.
    */
-  async envoieSuivi(
-    chatId: number,
-    texte: string,
-    clavier?: InlineKeyboardMarkup,
-  ): Promise<number | null> {
+  async envoieSuivi(chatId: number, texte: string, clavier?: InlineKeyboardMarkup): Promise<number | null> {
     try {
       const envoye = await this.api.sendMessage({
         chat_id: chatId,
         text: texte,
         ...(clavier ? { reply_markup: clavier } : {}),
-      });
-      return envoye.message_id;
+      })
+      return envoye.message_id
     } catch {
-      return null;
+      return null
     }
   }
 
@@ -340,17 +330,15 @@ export class Telegram {
           // Même conversion que `brouillon`, et pour la même raison : le
           // `RichText` de la bibliothèque n'admet pas la chaîne nue, que l'API
           // accepte pourtant — sans quoi aucun titre simple ne serait exprimable.
-          blocks: [
-            { type: 'details', summary: titre, blocks: blocs },
-          ] as unknown as InputRichBlockLib[],
+          blocks: [{ type: 'details', summary: titre, blocks: blocs }] as unknown as InputRichBlockLib[],
           skip_entity_detection: true,
         },
-      });
-      return true;
+      })
+      return true
     } catch {
       // Un repli refusé ne vaut pas de perdre le contenu : l'appelant retombe
       // sur un envoi ordinaire.
-      return false;
+      return false
     }
   }
 
@@ -361,22 +349,17 @@ export class Telegram {
    * le contenu n'a pas changé. L'appelant retombe alors sur un envoi neuf plutôt
    * que de laisser le clic sans effet visible.
    */
-  async reecrit(
-    chatId: number,
-    messageId: number,
-    texte: string,
-    clavier?: InlineKeyboardMarkup,
-  ): Promise<boolean> {
+  async reecrit(chatId: number, messageId: number, texte: string, clavier?: InlineKeyboardMarkup): Promise<boolean> {
     try {
       await this.api.editMessageText({
         chat_id: chatId,
         message_id: messageId,
         text: texte,
         ...(clavier ? { reply_markup: clavier } : {}),
-      });
-      return true;
+      })
+      return true
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -388,20 +371,16 @@ export class Telegram {
    * case d'un formulaire passe donc par ici — et c'est de toute façon ce qu'on
    * veut, la question au-dessus n'ayant aucune raison de bouger.
    */
-  async reecritClavier(
-    chatId: number,
-    messageId: number,
-    clavier: InlineKeyboardMarkup,
-  ): Promise<boolean> {
+  async reecritClavier(chatId: number, messageId: number, clavier: InlineKeyboardMarkup): Promise<boolean> {
     try {
       await this.api.editMessageReplyMarkup({
         chat_id: chatId,
         message_id: messageId,
         reply_markup: clavier,
-      });
-      return true;
+      })
+      return true
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -419,20 +398,16 @@ export class Telegram {
    * que cette machine sait faire ; la portée par conversation le réserve à qui a
    * déjà le droit de s'en servir.
    */
-  async declare(
-    commandes: { command: string; description: string }[],
-    langue?: string,
-    chatId?: number,
-  ): Promise<boolean> {
+  async declare(commandes: { command: string; description: string }[], langue?: string, chatId?: number): Promise<boolean> {
     try {
       await this.api.setMyCommands({
         commands: commandes,
         ...(chatId === undefined ? {} : { scope: { type: 'chat', chat_id: chatId } }),
         ...(langue ? { language_code: langue } : {}),
-      });
-      return true;
+      })
+      return true
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -445,10 +420,10 @@ export class Telegram {
    */
   async efface(langue?: string): Promise<boolean> {
     try {
-      await this.api.deleteMyCommands(langue ? { language_code: langue } : {});
-      return true;
+      await this.api.deleteMyCommands(langue ? { language_code: langue } : {})
+      return true
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -474,44 +449,39 @@ export class Telegram {
    * qu'on n'a pas écrits, et un seul bloc mal formé fait échouer l'envoi entier.
    * Un document laid vaut mieux qu'un document disparu.
    */
-  async envoieRendu(
-    chatId: number,
-    blocs: InputRichBlock[],
-    brut: string,
-    clavier?: InlineKeyboardMarkup,
-  ): Promise<Rendu> {
-    const markup = clavier ? { reply_markup: clavier } : {};
+  async envoieRendu(chatId: number, blocs: InputRichBlock[], brut: string, clavier?: InlineKeyboardMarkup): Promise<Rendu> {
+    const markup = clavier ? { reply_markup: clavier } : {}
 
     // Sans cela, Telegram fabrique des liens dans notre dos. Le piège est
     // propre à ce que la Passerelle affiche : `.md` est un domaine de premier
     // niveau — la Moldavie —, si bien que `0.livraison.md` devient un lien vers
     // un site qui n'existe pas. `.py`, `.pl`, `.sh`, `.io` en sont d'autres :
     // un dépôt en est plein.
-    const riche = (blocks: InputRichBlock[]) => ({
-      chat_id: chatId,
-      rich_message: { blocks, skip_entity_detection: true },
-      ...markup,
-    });
+    function riche(blocks: InputRichBlock[]) {
+      return {
+        chat_id: chatId,
+        rich_message: { blocks, skip_entity_detection: true },
+        ...markup,
+      }
+    }
 
     if (blocs.length) {
       try {
-        const envoye = await this.api.sendRichMessage(riche(blocs));
-        return { voie: 'riche', messageId: envoye.message_id };
+        const envoye = await this.api.sendRichMessage(riche(blocs))
+        return { voie: 'riche', messageId: envoye.message_id }
       } catch {
         /* la structure a été refusée ; le texte, lui, tient peut-être */
       }
     }
 
     try {
-      const envoye = await this.api.sendRichMessage(
-        riche([{ type: 'paragraph', text: borne(brut, MAX_RICHE) }]),
-      );
-      return { voie: 'nu', messageId: envoye.message_id };
+      const envoye = await this.api.sendRichMessage(riche([{ type: 'paragraph', text: borne(brut, MAX_RICHE) }]))
+      return { voie: 'nu', messageId: envoye.message_id }
     } catch {
       return {
         voie: 'brut',
         messageId: await this.envoieSuivi(chatId, borne(brut, MAX_TEXTE), clavier),
-      };
+      }
     }
   }
 
@@ -541,7 +511,7 @@ export class Telegram {
           blocks: [{ type: 'thinking', text: texte } as unknown as InputRichBlockLib],
           skip_entity_detection: true,
         },
-      });
+      })
     } catch {
       /* un signe de vie qui ne s'affiche pas ne casse rien */
     }
@@ -557,7 +527,7 @@ export class Telegram {
    */
   async saisie(chatId: number): Promise<void> {
     try {
-      await this.api.sendChatAction({ chat_id: chatId, action: 'typing' });
+      await this.api.sendChatAction({ chat_id: chatId, action: 'typing' })
     } catch {
       /* idem */
     }
@@ -565,7 +535,7 @@ export class Telegram {
 
   /** Coupe le long-polling en vol : la requête en attente est abandonnée. */
   stop(): void {
-    this.stopped = true;
-    this.bot.stop();
+    this.stopped = true
+    this.bot.stop()
   }
 }

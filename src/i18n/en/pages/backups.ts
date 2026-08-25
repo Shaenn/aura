@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const backups: MessageSchema['pages']['backups'] = {
   title: 'Backups & restore',
@@ -9,18 +9,16 @@ const backups: MessageSchema['pages']['backups'] = {
   restore: 'Restore…',
   purgeOneAria: 'Purge the {date} version',
   restored: 'Version restored.',
-  purgeMessage:
-    "I'm about to delete all {n} backups. After that, I won't be able to undo any past write.",
+  purgeMessage: "I'm about to delete all {n} backups. After that, I won't be able to undo any past write.",
   purgeOk: 'Delete all',
   purgeOneTitle: 'Delete this version',
-  purgeOneMessage:
-    "I'm about to delete the {date} version of {file}. This copy is the only one, and I won't be able to get it back.",
+  purgeOneMessage: "I'm about to delete the {date} version of {file}. This copy is the only one, and I won't be able to get it back.",
   purgeOneOk: 'Delete',
   purgedOne: 'Version deleted.',
   readError: "I couldn't read the backups",
   prepareError: "I couldn't prepare the restore",
   deleteError: "I couldn't delete this version",
   purgeError: "I couldn't purge the backups",
-};
+}
 
-export default backups;
+export default backups

@@ -18,52 +18,52 @@
  * porter la page — aujourd'hui le message riche — et non au découpage.
  */
 export function paginer(markdown: string, max: number): string[] {
-  const lignes = markdown.replace(/\r\n?/g, '\n').split('\n');
-  const pages: string[] = [];
-  let courante: string[] = [];
-  let taille = 0;
-  let dansCode = false;
-  let langue = '';
+  const lignes = markdown.replace(/\r\n?/g, '\n').split('\n')
+  const pages: string[] = []
+  let courante: string[] = []
+  let taille = 0
+  let dansCode = false
+  let langue = ''
 
-  const cloture = (): void => {
-    if (!courante.length) return;
-    if (dansCode) courante.push('```');
-    pages.push(courante.join('\n'));
-    courante = dansCode ? ['```' + langue] : [];
-    taille = courante.length ? langue.length + 4 : 0;
-  };
+  function cloture(): void {
+    if (!courante.length) return
+    if (dansCode) courante.push('```')
+    pages.push(courante.join('\n'))
+    courante = dansCode ? ['```' + langue] : []
+    taille = courante.length ? langue.length + 4 : 0
+  }
 
   for (const ligne of lignes) {
     // Une ligne à elle seule plus longue qu'une page : on la coupe, faute de
     // mieux. Rare, et toujours préférable à une page qui ne part jamais.
     for (const part of ligne.length > max ? decoupe(ligne, max) : [ligne]) {
-      const ferme = dansCode && /^\s*```/.test(part);
+      const ferme = dansCode && /^\s*```/.test(part)
       // La fermeture d'un bloc est rattachée à la page qui l'a ouvert, même si
       // elle déborde : la renvoyer à la suivante y ouvrirait un bloc vide, et
       // la page d'avant en refermerait un qu'elle vient déjà de refermer.
-      if (!ferme && taille + part.length + 1 > max) cloture();
-      courante.push(part);
-      taille += part.length + 1;
+      if (!ferme && taille + part.length + 1 > max) cloture()
+      courante.push(part)
+      taille += part.length + 1
 
       if (/^\s*```/.test(part)) {
         if (dansCode) {
-          dansCode = false;
-          langue = '';
+          dansCode = false
+          langue = ''
         } else {
-          dansCode = true;
-          langue = part.replace(/^\s*```/, '').trim();
+          dansCode = true
+          langue = part.replace(/^\s*```/, '').trim()
         }
       }
     }
   }
 
-  if (courante.length) pages.push(courante.join('\n'));
-  return pages.length ? pages : [''];
+  if (courante.length) pages.push(courante.join('\n'))
+  return pages.length ? pages : ['']
 }
 
 /** Coupe une ligne trop longue en morceaux d'au plus `max`. */
 function decoupe(ligne: string, max: number): string[] {
-  const out: string[] = [];
-  for (let i = 0; i < ligne.length; i += max) out.push(ligne.slice(i, i + max));
-  return out;
+  const out: string[] = []
+  for (let i = 0; i < ligne.length; i += max) out.push(ligne.slice(i, i + max))
+  return out
 }

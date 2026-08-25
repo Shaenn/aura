@@ -40,4 +40,4 @@ export default {
   planDeleted: 'Plan supprimé.',
   planDeleteError: "Je n'ai pas pu supprimer ce plan",
   loadError: "Je n'ai pas pu charger ce projet.",
-};
+}

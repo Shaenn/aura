@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const hooks: MessageSchema['pages']['hooks'] = {
   note: 'A hook runs an action (command, prompt, HTTP request…) at a point in the lifecycle (before or after a tool, at startup…). Advanced fields that are not shown (env, args, if…) are preserved as they are.',
@@ -60,9 +60,8 @@ const hooks: MessageSchema['pages']['hooks'] = {
     PreCompact: 'Before the context is compacted.',
     PostCompact: 'After the context is compacted.',
     Elicitation: 'When an MCP server asks for user input during a tool call.',
-    ElicitationResult:
-      'After the user answers an MCP elicitation, before it goes back to the server.',
+    ElicitationResult: 'After the user answers an MCP elicitation, before it goes back to the server.',
   },
-};
+}
 
-export default hooks;
+export default hooks

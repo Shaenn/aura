@@ -1,12 +1,11 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const mcp: MessageSchema['pages']['mcp'] = {
   connected: 'Connected · claude.ai',
   connectedNote: 'Managed in your claude.ai account — not editable here.',
   noConnected: "I don't see any connected server.",
   fileTitle: 'Configured · file',
-  fileNote:
-    'Servers declared in {path}. {global} servers are editable here; those tied to a project stay read-only.',
+  fileNote: 'Servers declared in {path}. {global} servers are editable here; those tied to a project stay read-only.',
   fileNoteGlobal: 'Global',
   noFileServer: "I don't see any server declared in the file.",
   editAria: 'Edit {name}',
@@ -36,6 +35,6 @@ const mcp: MessageSchema['pages']['mcp'] = {
   noPending: 'I have no pending change.',
   readError: "I couldn't read your MCP settings",
   reloadError: "I couldn't reload the MCP servers",
-};
+}
 
-export default mcp;
+export default mcp

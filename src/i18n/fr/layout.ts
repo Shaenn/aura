@@ -33,4 +33,4 @@ export default {
     busy: '{n} occupée | {n} occupées',
     waiting: "{n} en attente d'une action",
   },
-};
+}

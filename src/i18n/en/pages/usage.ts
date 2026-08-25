@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const usage: MessageSchema['pages']['usage'] = {
   sub: 'tokens · estimated cost · sub-agents',
@@ -38,6 +38,6 @@ const usage: MessageSchema['pages']['usage'] = {
   agents: 'Sub-agents',
   agentShare: '{pct}% of the cost',
   noAgent: "I don't see any sub-agent started in this period.",
-};
+}
 
-export default usage;
+export default usage

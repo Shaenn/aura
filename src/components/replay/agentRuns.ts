@@ -10,17 +10,17 @@
 // Injecter `null` reste valide : la carte retombe alors sur ce que l'appel dit
 // de lui-même, ce qu'elle a toujours fait.
 
-import type { InjectionKey, Ref } from 'vue';
-import type { SubagentRunSummary, TranscriptEvent } from '@/services/projects';
-import { summarise } from './tools/registry';
+import type { SubagentRunSummary, TranscriptEvent } from '@/services/projects'
+import type { InjectionKey, Ref } from 'vue'
+import { summarise } from './tools/registry'
 
 /** Un run, augmenté de ce que la carte montre en direct. */
 export interface RunView {
-  run: SubagentRunSummary;
+  run: SubagentRunSummary
   /** Le dernier outil que l'agent a appelé — vide s'il n'en a appelé aucun. */
-  lastTool: string;
+  lastTool: string
   /** Ce que cet appel visait, résumé comme le ferait sa propre carte. */
-  lastToolSummary: string;
+  lastToolSummary: string
   /**
    * Combien de fichiers distincts le run a écrits, `0` s'il n'a fait que lire.
    *
@@ -29,14 +29,14 @@ export interface RunView {
    * les 334 autres n'ont fait que chercher. Deux cents lignes de piste séparent
    * ces deux cas, alors qu'ils n'engagent pas du tout la même relecture.
    */
-  filesWritten: number;
+  filesWritten: number
 }
 
 /** Par `toolUseId` de l'appel `Agent` : le run qui lui répond. */
-export const AGENT_RUNS: InjectionKey<Ref<Map<string, RunView>>> = Symbol('agent-runs');
+export const AGENT_RUNS: InjectionKey<Ref<Map<string, RunView>>> = Symbol('agent-runs')
 
 /** Ouvrir la piste d'un run. Absent quand la page n'a pas de pistes. */
-export const OPEN_TRACK: InjectionKey<((agentId: string) => void) | null> = Symbol('open-track');
+export const OPEN_TRACK: InjectionKey<((agentId: string) => void) | null> = Symbol('open-track')
 
 /**
  * Indexer les runs par l'appel qui les a lancés, dernier outil compris.
@@ -48,40 +48,37 @@ export const OPEN_TRACK: InjectionKey<((agentId: string) => void) | null> = Symb
  * Un run sans `toolUseId` n'entre pas dans la carte : rien ne le rattache à un
  * appel, donc aucune carte ne peut le montrer. Sa piste, elle, existe toujours.
  */
-export function indexRuns(
-  events: readonly TranscriptEvent[],
-  runs: readonly SubagentRunSummary[],
-): Map<string, RunView> {
-  if (!runs.length) return new Map();
+export function indexRuns(events: readonly TranscriptEvent[], runs: readonly SubagentRunSummary[]): Map<string, RunView> {
+  if (!runs.length) return new Map()
 
   /** Par `agentId`, le dernier `tool_use` vu — le flux étant dans l'ordre. */
-  const lastByAgent = new Map<string, { name: string; input: unknown }>();
+  const lastByAgent = new Map<string, { name: string; input: unknown }>()
   /** Par `agentId`, les chemins écrits — un `Set`, un même fichier se réédite. */
-  const writtenByAgent = new Map<string, Set<string>>();
+  const writtenByAgent = new Map<string, Set<string>>()
   for (const ev of events) {
-    if (!ev.agentId) continue;
+    if (!ev.agentId) continue
     for (const b of ev.blocks) {
-      if (b.kind !== 'tool_use' || !b.name) continue;
-      lastByAgent.set(ev.agentId, { name: b.name, input: b.input });
-      if (b.name !== 'Edit' && b.name !== 'Write') continue;
-      const p = (b.input as Record<string, unknown> | null)?.file_path;
-      if (typeof p !== 'string' || !p) continue;
-      let set = writtenByAgent.get(ev.agentId);
-      if (!set) writtenByAgent.set(ev.agentId, (set = new Set()));
-      set.add(p);
+      if (b.kind !== 'tool_use' || !b.name) continue
+      lastByAgent.set(ev.agentId, { name: b.name, input: b.input })
+      if (b.name !== 'Edit' && b.name !== 'Write') continue
+      const p = (b.input as Record<string, unknown> | null)?.file_path
+      if (typeof p !== 'string' || !p) continue
+      let set = writtenByAgent.get(ev.agentId)
+      if (!set) writtenByAgent.set(ev.agentId, (set = new Set()))
+      set.add(p)
     }
   }
 
-  const out = new Map<string, RunView>();
+  const out = new Map<string, RunView>()
   for (const run of runs) {
-    if (!run.toolUseId) continue;
-    const last = lastByAgent.get(run.agentId);
+    if (!run.toolUseId) continue
+    const last = lastByAgent.get(run.agentId)
     out.set(run.toolUseId, {
       run,
       lastTool: last?.name ?? '',
       lastToolSummary: last ? summarise(last.name, last.input) : '',
       filesWritten: writtenByAgent.get(run.agentId)?.size ?? 0,
-    });
+    })
   }
-  return out;
+  return out
 }

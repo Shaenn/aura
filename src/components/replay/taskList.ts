@@ -6,8 +6,8 @@
 // le fil et recoller les morceaux à la main. On rejoue donc la suite ici, une
 // fois, pour en tirer la liste telle qu'elle est maintenant.
 
-import type { InjectionKey, Ref } from 'vue';
-import type { Block, TranscriptEvent } from 'shared/transcript';
+import type { Block, TranscriptEvent } from 'shared/transcript'
+import type { InjectionKey, Ref } from 'vue'
 
 /**
  * Le sujet de chaque tâche, par identifiant.
@@ -19,7 +19,7 @@ import type { Block, TranscriptEvent } from 'shared/transcript';
  *
  * Injecter `null` reste valide : le jalon retombe alors sur le numéro seul.
  */
-export const TASK_INDEX: InjectionKey<Ref<Map<string, string>>> = Symbol('task-index');
+export const TASK_INDEX: InjectionKey<Ref<Map<string, string>>> = Symbol('task-index')
 
 /**
  * L'index sujet-par-identifiant d'un plan rejoué.
@@ -29,20 +29,20 @@ export const TASK_INDEX: InjectionKey<Ref<Map<string, string>>> = Symbol('task-i
  * son sujet comme les autres.
  */
 export function taskIndex(progress: TaskProgress): Map<string, string> {
-  return new Map(progress.all.map((t) => [t.id, t.subject]));
+  return new Map(progress.all.map((t) => [t.id, t.subject]))
 }
 
 /** Les états que le harness écrit ; tout autre libellé est gardé tel quel. */
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | (string & {});
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | (string & {})
 
 export interface TrackedTask {
   /** L'identifiant attribué par le harness (`"1"`, `"2"`, …). */
-  id: string;
-  subject: string;
-  description: string;
+  id: string
+  subject: string
+  description: string
   /** La forme active du sujet — « Extraction du navigateur ». */
-  activeForm: string;
-  status: TaskStatus;
+  activeForm: string
+  status: TaskStatus
   /**
    * Le tour où le travail sur cette tâche a commencé — son passage à
    * `in_progress`, ou sa naissance si elle n'a jamais démarré.
@@ -52,11 +52,11 @@ export interface TrackedTask {
    * Un redémarrage écrase la valeur : c'est la reprise en cours qui intéresse,
    * pas une tentative abandonnée.
    */
-  startUuid: string;
+  startUuid: string
   /** Le tour où la tâche a bougé pour la dernière fois. */
-  uuid: string;
+  uuid: string
   /** Horodatage de ce dernier mouvement. */
-  at: number;
+  at: number
 }
 
 /**
@@ -70,32 +70,32 @@ export interface TrackedTask {
  */
 export interface TaskWave {
   /** Le rang du plan dans la session, à partir de 1. */
-  index: number;
-  tasks: TrackedTask[];
-  done: number;
+  index: number
+  tasks: TrackedTask[]
+  done: number
 }
 
 export interface TaskProgress {
   /** Le plan tel qu'il est maintenant : sans les tâches supprimées. */
-  tasks: TrackedTask[];
+  tasks: TrackedTask[]
   /**
    * Tout ce qui a été créé, suppressions comprises, dans l'ordre de création.
    *
    * Seul l'index s'en sert : le fil garde le jalon d'une suppression, et ce
    * jalon doit pouvoir nommer la tâche qu'il retire.
    */
-  all: TrackedTask[];
+  all: TrackedTask[]
   /** Les plans successifs, du plus ancien au plus récent. */
-  waves: TaskWave[];
+  waves: TaskWave[]
   /** Le dernier plan posé — celui qu'on regarde en direct. */
-  currentWave: TaskWave | null;
-  done: number;
+  currentWave: TaskWave | null
+  done: number
   /** La tâche en cours, quand il y en a une — c'est ce qu'on cherche en direct. */
-  current: TrackedTask | null;
+  current: TrackedTask | null
 }
 
 function str(v: unknown): string {
-  return typeof v === 'string' ? v : '';
+  return typeof v === 'string' ? v : ''
 }
 
 /**
@@ -108,14 +108,14 @@ function str(v: unknown): string {
  * besoin de déplier.
  */
 export function isTaskMarker(block: Block): boolean {
-  if (block.kind !== 'tool_use') return false;
-  if (block.name !== 'TaskCreate' && block.name !== 'TaskUpdate') return false;
-  return block.result?.isError !== true;
+  if (block.kind !== 'tool_use') return false
+  if (block.name !== 'TaskCreate' && block.name !== 'TaskUpdate') return false
+  return block.result?.isError !== true
 }
 
 /** Ce bloc pose une tâche de plus au plan. */
 export function isTaskCreate(block: Block): boolean {
-  return isTaskMarker(block) && block.name === 'TaskCreate';
+  return isTaskMarker(block) && block.name === 'TaskCreate'
 }
 
 /**
@@ -127,24 +127,24 @@ export function isTaskCreate(block: Block): boolean {
  */
 export interface PlanItem {
   /** `uuid` du tour où la tâche est née — l'ancre du panneau de contexte. */
-  uuid: string;
-  id: string;
-  subject: string;
+  uuid: string
+  id: string
+  subject: string
 }
 
 /** Le regroupement des séries de créations, tel que le tour doit le rendre. */
 export interface PlanGroups {
   /** Clé du bloc qui ouvre une série → la série entière. */
-  starts: Map<string, PlanItem[]>;
+  starts: Map<string, PlanItem[]>
   /** Clés des blocs qu'une série rend à la place du jalon individuel. */
-  absorbed: Set<string>;
+  absorbed: Set<string>
   /** `uuid` des jalons de tour qu'une série enjambe. */
-  marks: Set<string>;
+  marks: Set<string>
 }
 
 /** La clé d'un bloc dans un tour — la même que celle du `v-for` du gabarit. */
 export function blockKey(ei: number, bi: number): string {
-  return `${ei}-${bi}`;
+  return `${ei}-${bi}`
 }
 
 /**
@@ -161,82 +161,79 @@ export function blockKey(ei: number, bi: number): string {
  * Une série d'un seul élément n'est pas un groupe : une liste d'une ligne pèse
  * plus que la ligne qu'elle remplace.
  */
-export function groupTaskPlans(
-  events: readonly TranscriptEvent[],
-  breaks: (ev: TranscriptEvent) => boolean,
-): PlanGroups {
-  const out: PlanGroups = { starts: new Map(), absorbed: new Set(), marks: new Set() };
+export function groupTaskPlans(events: readonly TranscriptEvent[], breaks: (ev: TranscriptEvent) => boolean): PlanGroups {
+  const out: PlanGroups = { starts: new Map(), absorbed: new Set(), marks: new Set() }
 
-  let key = '';
-  let items: PlanItem[] = [];
-  let keys: string[] = [];
-  let marks: string[] = [];
+  let key = ''
+  let items: PlanItem[] = []
+  let keys: string[] = []
+  let marks: string[] = []
   /** Le jalon de l'événement en cours, absorbable seulement s'il porte une création. */
-  let pending = '';
+  let pending = ''
 
   function flush(): void {
     if (items.length > 1) {
-      out.starts.set(key, items);
-      for (const k of keys.slice(1)) out.absorbed.add(k);
-      for (const m of marks) out.marks.add(m);
+      out.starts.set(key, items)
+      for (const k of keys.slice(1)) out.absorbed.add(k)
+      for (const m of marks) out.marks.add(m)
     }
-    key = '';
-    items = [];
-    keys = [];
-    marks = [];
+    key = ''
+    items = []
+    keys = []
+    marks = []
   }
 
   events.forEach((ev, ei) => {
-    if (breaks(ev)) flush();
-    pending = ev.uuid;
+    if (breaks(ev)) flush()
+    pending = ev.uuid
 
     ev.blocks.forEach((b, bi) => {
       if (!isTaskCreate(b)) {
-        flush();
-        pending = '';
-        return;
+        flush()
+        pending = ''
+        return
       }
-      const k = blockKey(ei, bi);
+      const k = blockKey(ei, bi)
       if (!items.length) {
         // Le jalon qui ouvre la série reste : il dit où le plan a été posé.
-        key = k;
+        key = k
       } else if (pending) {
-        marks.push(pending);
+        marks.push(pending)
       }
-      pending = '';
-      const call = readTaskCall(b);
-      items.push({ uuid: ev.uuid, id: call.id, subject: call.subject });
-      keys.push(k);
-    });
-  });
-  flush();
+      pending = ''
+      const call = readTaskCall(b)
+      items.push({ uuid: ev.uuid, id: call.id, subject: call.subject })
+      keys.push(k)
+    })
+  })
+  flush()
 
-  return out;
+  return out
 }
 
 /** Ce qu'un appel `TaskCreate` / `TaskUpdate` dit de sa tâche. */
 export interface TaskCall {
-  create: boolean;
+  create: boolean
   /** Vide quand l'appel n'a pas reçu de réponse — le numéro n'existe qu'après. */
-  id: string;
-  subject: string;
-  description: string;
+  id: string
+  subject: string
+  description: string
   /** Vide sur une création : la tâche naît « à faire ». */
-  status: string;
+  status: string
 }
 
 export function readTaskCall(block: Block): TaskCall {
-  const input = (block.input ?? {}) as Record<string, unknown>;
-  const create = block.name === 'TaskCreate';
+  const input = (block.input ?? {}) as Record<string, unknown>
+  const create = block.name === 'TaskCreate'
   // À la création, le numéro est dans la réponse ; à la mise à jour, dans l'appel.
-  const task = (block.result?.meta?.task ?? {}) as Record<string, unknown>;
+  const task = (block.result?.meta?.task ?? {}) as Record<string, unknown>
   return {
     create,
     id: create ? str(task.id) : str(input.taskId) || str(input.task_id),
     subject: str(input.subject) || str(task.subject),
     description: str(input.description),
     status: create ? '' : str(input.status),
-  };
+  }
 }
 
 /**
@@ -260,20 +257,20 @@ export function readTaskCall(block: Block): TaskCall {
  * plus : le harness pose parfois un même plan en deux temps.
  */
 export function trackTasks(events: readonly TranscriptEvent[]): TaskProgress {
-  const byId = new Map<string, TrackedTask>();
-  const waves: TrackedTask[][] = [];
+  const byId = new Map<string, TrackedTask>()
+  const waves: TrackedTask[][] = []
 
   for (const ev of events) {
-    if (ev.isSidechain) continue;
+    if (ev.isSidechain) continue
     for (const b of ev.blocks) {
-      if (b.kind !== 'tool_use') continue;
-      if (b.name !== 'TaskCreate' && b.name !== 'TaskUpdate') continue;
+      if (b.kind !== 'tool_use') continue
+      if (b.name !== 'TaskCreate' && b.name !== 'TaskUpdate') continue
 
-      const input = (b.input ?? {}) as Record<string, unknown>;
+      const input = (b.input ?? {}) as Record<string, unknown>
 
       if (b.name === 'TaskCreate') {
-        const task = (b.result?.meta?.task ?? {}) as Record<string, unknown>;
-        const id = str(task.id) || String(byId.size + 1);
+        const task = (b.result?.meta?.task ?? {}) as Record<string, unknown>
+        const id = str(task.id) || String(byId.size + 1)
         const tracked: TrackedTask = {
           id,
           subject: str(input.subject) || str(task.subject),
@@ -283,33 +280,32 @@ export function trackTasks(events: readonly TranscriptEvent[]): TaskProgress {
           startUuid: ev.uuid,
           uuid: ev.uuid,
           at: ev.timestamp,
-        };
-        byId.set(id, tracked);
-        const open = waves[waves.length - 1];
+        }
+        byId.set(id, tracked)
+        const open = waves[waves.length - 1]
         // Une tâche supprimée ne retient pas le plan ouvert : elle n'est plus du
         // travail en cours, et la laisser bloquer collerait le plan suivant au
         // précédent.
-        if (!open || open.every((t) => t.status === 'completed' || t.status === 'deleted'))
-          waves.push([]);
-        waves[waves.length - 1]!.push(tracked);
-        continue;
+        if (!open || open.every((t) => t.status === 'completed' || t.status === 'deleted')) waves.push([])
+        waves[waves.length - 1]!.push(tracked)
+        continue
       }
 
-      const id = str(input.taskId) || str(input.task_id);
-      const task = byId.get(id);
+      const id = str(input.taskId) || str(input.task_id)
+      const task = byId.get(id)
       // Un `TaskUpdate` sur une tâche qu'on n'a pas vue naître ne s'invente pas :
       // il n'aurait ni sujet ni description, donc rien à afficher.
-      if (!task) continue;
-      const status = str(input.status);
-      if (status) task.status = status;
+      if (!task) continue
+      const status = str(input.status)
+      if (status) task.status = status
       // Le passage à « en cours » est le début du travail : c'est là que le
       // panneau renvoie. Une reprise déplace le repère sur la reprise.
-      if (status === 'in_progress') task.startUuid = ev.uuid;
-      if (str(input.subject)) task.subject = str(input.subject);
-      if (str(input.description)) task.description = str(input.description);
-      if (str(input.activeForm)) task.activeForm = str(input.activeForm);
-      task.uuid = ev.uuid;
-      task.at = ev.timestamp;
+      if (status === 'in_progress') task.startUuid = ev.uuid
+      if (str(input.subject)) task.subject = str(input.subject)
+      if (str(input.description)) task.description = str(input.description)
+      if (str(input.activeForm)) task.activeForm = str(input.activeForm)
+      task.uuid = ev.uuid
+      task.at = ev.timestamp
     }
   }
 
@@ -326,22 +322,24 @@ export function trackTasks(events: readonly TranscriptEvent[]): TaskProgress {
     au tour où la décision a été prise. C'est la colonne de droite qui dit le
     plan tel qu'il est maintenant, et il n'y est plus.
   */
-  const kept = (t: TrackedTask): boolean => t.status !== 'deleted';
+  function kept(t: TrackedTask): boolean {
+    return t.status !== 'deleted'
+  }
   const grouped: TaskWave[] = waves
     .map((all, i) => {
-      const tasks = all.filter(kept);
-      return { index: i + 1, tasks, done: tasks.filter((t) => t.status === 'completed').length };
+      const tasks = all.filter(kept)
+      return { index: i + 1, tasks, done: tasks.filter((t) => t.status === 'completed').length }
     })
     // Un plan entièrement supprimé n'a plus rien à montrer, et sa ligne vide se
     // lirait comme un affichage cassé.
-    .filter((w) => w.tasks.length > 0);
-  const tasks = grouped.flatMap((w) => w.tasks);
+    .filter((w) => w.tasks.length > 0)
+  const tasks = grouped.flatMap((w) => w.tasks)
 
   // Le plus récent des « en cours », et non le premier : un plan abandonné en
   // cours de route laisse derrière lui une tâche qui ne s'est jamais close, et
   // c'est le travail d'aujourd'hui qu'on cherche, pas celui d'hier.
-  const live = tasks.filter((t) => t.status === 'in_progress');
-  const current = live.reduce<TrackedTask | null>((a, t) => (a && a.at >= t.at ? a : t), null);
+  const live = tasks.filter((t) => t.status === 'in_progress')
+  const current = live.reduce<TrackedTask | null>((a, t) => (a && a.at >= t.at ? a : t), null)
 
   return {
     tasks,
@@ -350,5 +348,5 @@ export function trackTasks(events: readonly TranscriptEvent[]): TaskProgress {
     currentWave: grouped[grouped.length - 1] ?? null,
     done: tasks.filter((t) => t.status === 'completed').length,
     current,
-  };
+  }
 }

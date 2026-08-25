@@ -1,4 +1,4 @@
-import type { MessageSchema } from '../../fr';
+import type { MessageSchema } from '../../fr'
 
 const memory: MessageSchema['pages']['memory'] = {
   sub: 'Global memory (CLAUDE.md), index and structured per-project memories.',
@@ -24,10 +24,8 @@ const memory: MessageSchema['pages']['memory'] = {
   deleteNote: 'A timestamped backup is taken before deleting.',
   types: {
     user: 'Who the user is: role, expertise, lasting preferences.',
-    feedback:
-      'Guidance on how to work — corrections as well as confirmed approaches. States the why.',
-    project:
-      'Ongoing work, goals or constraints not derivable from the code or the git history. Absolute dates.',
+    feedback: 'Guidance on how to work — corrections as well as confirmed approaches. States the why.',
+    project: 'Ongoing work, goals or constraints not derivable from the code or the git history. Absolute dates.',
     reference: 'Pointers to external resources: URLs, dashboards, tickets.',
   },
   discard: 'Discard the changes you have not applied?',
@@ -44,8 +42,7 @@ const memory: MessageSchema['pages']['memory'] = {
   readError: "I couldn't read your memories",
   openError: "I couldn't open this file",
   deleteError: "I couldn't delete this memory",
-  bodyPlaceholder:
-    'The fact, plainly. Link neighbouring memories with [[their-name]]. Dates in absolute form.',
-};
+  bodyPlaceholder: 'The fact, plainly. Link neighbouring memories with [[their-name]]. Dates in absolute form.',
+}
 
-export default memory;
+export default memory

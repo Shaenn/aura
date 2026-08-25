@@ -8,22 +8,10 @@
 // pairing every `tool_use` with its matching `tool_result` so the UI can render
 // a tool call and its output as a single unit.
 
-import { readFile, stat, readdir } from 'node:fs/promises';
-import { t } from './i18n/index.ts';
-import { existsSync } from 'node:fs';
-import { str, num } from './json.ts';
-import { costOf } from './pricing.ts';
-import { growth } from './tokens.ts';
-import { dirname, join } from 'node:path';
-import { ContextAccumulator, classifyAttachment, readCompaction, settleTurn } from './context.ts';
-import type { TurnContext } from '../shared/context.ts';
-import { configuredLongWindow } from './claude/model.ts';
-
-// ── Normalised model ─────────────────────────────────────────────────────────
-//
-// Defined once in `shared/` and re-exported here: the SPA renders exactly these
-// shapes, so a change must break both typechecks, not just one.
-
+import { existsSync } from 'node:fs'
+import { readFile, stat, readdir } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import type { TurnContext } from '../shared/context.ts'
 import type {
   Block,
   HookRun,
@@ -40,7 +28,18 @@ import type {
   TranscriptStats,
   TranscriptSummary,
   Usage,
-} from '../shared/transcript.ts';
+} from '../shared/transcript.ts'
+import { configuredLongWindow } from './claude/model.ts'
+import { ContextAccumulator, classifyAttachment, readCompaction, settleTurn } from './context.ts'
+import { t } from './i18n/index.ts'
+import { str, num } from './json.ts'
+import { costOf } from './pricing.ts'
+import { growth } from './tokens.ts'
+
+// ── Normalised model ─────────────────────────────────────────────────────────
+//
+// Defined once in `shared/` and re-exported here: the SPA renders exactly these
+// shapes, so a change must break both typechecks, not just one.
 
 export type {
   Block,
@@ -58,7 +57,7 @@ export type {
   TranscriptStats,
   TranscriptSummary,
   Usage,
-};
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -79,38 +78,35 @@ export type {
  * emplacements confondus : c'est lui qui, avec l'`uuid`, adresse l'image, et
  * l'ordre doit donc être le même ici et à la relecture.
  */
-export function eachImage(
-  content: unknown,
-  visit: (source: Record<string, unknown>, toolUseId: string, index: number) => void,
-): void {
-  if (!Array.isArray(content)) return;
-  let index = 0;
+export function eachImage(content: unknown, visit: (source: Record<string, unknown>, toolUseId: string, index: number) => void): void {
+  if (!Array.isArray(content)) return
+  let index = 0
   for (const b of content as Record<string, unknown>[]) {
     if (b.type === 'image') {
-      visit(rec(b.source), '', index++);
+      visit(rec(b.source), '', index++)
     } else if (b.type === 'tool_result' && Array.isArray(b.content)) {
       for (const c of b.content as Record<string, unknown>[]) {
-        if (c.type === 'image') visit(rec(c.source), str(b.tool_use_id), index++);
+        if (c.type === 'image') visit(rec(c.source), str(b.tool_use_id), index++)
       }
     }
   }
 }
 
 function rec(v: unknown): Record<string, unknown> {
-  return v && typeof v === 'object' ? (v as Record<string, unknown>) : {};
+  return v && typeof v === 'object' ? (v as Record<string, unknown>) : {}
 }
 
 /** 4 caractères de base64 valent 3 octets ; le `=` final n'en code aucun. */
 function decodedBytes(data: string): number {
-  const pad = data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0;
-  return Math.max(0, Math.floor((data.length * 3) / 4) - pad);
+  const pad = data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0
+  return Math.max(0, Math.floor((data.length * 3) / 4) - pad)
 }
 
 /** Décoder le début du base64, sans matérialiser l'image entière. */
 function head(data: string, bytes: number): Buffer {
   // Un groupe base64 fait 4 caractères pour 3 octets : couper ailleurs
   // décalerait tout ce qui suit.
-  return Buffer.from(data.slice(0, Math.ceil(bytes / 3) * 4), 'base64');
+  return Buffer.from(data.slice(0, Math.ceil(bytes / 3) * 4), 'base64')
 }
 
 /**
@@ -125,48 +121,39 @@ function head(data: string, bytes: number): Buffer {
  * segment `SOF`, qu'il faut atteindre en sautant de marqueur en marqueur. WebP
  * n'est pas lu : Claude Code n'en écrit pas, et l'appelant sait rendre l'absence.
  */
-export function imageSize(
-  data: string,
-  mediaType: string,
-): { width: number; height: number } | null {
+export function imageSize(data: string, mediaType: string): { width: number; height: number } | null {
   if (mediaType === 'image/png') {
-    const b = head(data, 24);
+    const b = head(data, 24)
     // 8 octets de signature, puis le chunk IHDR : longueur, type, largeur, hauteur.
-    if (b.length < 24 || b.toString('ascii', 12, 16) !== 'IHDR') return null;
-    return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) };
+    if (b.length < 24 || b.toString('ascii', 12, 16) !== 'IHDR') return null
+    return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) }
   }
 
   if (mediaType === 'image/gif') {
-    const b = head(data, 10);
-    if (b.length < 10) return null;
-    return { width: b.readUInt16LE(6), height: b.readUInt16LE(8) };
+    const b = head(data, 10)
+    if (b.length < 10) return null
+    return { width: b.readUInt16LE(6), height: b.readUInt16LE(8) }
   }
 
   if (mediaType === 'image/jpeg') {
     // Les segments précédant l'image (EXIF, vignette, table de Huffman) peuvent
     // être volumineux ; 64 Ko couvrent les cas réels sans tout décoder.
-    const b = head(data, 64 * 1024);
-    let i = 2; // après le SOI `FF D8`
+    const b = head(data, 64 * 1024)
+    let i = 2 // après le SOI `FF D8`
     while (i + 9 < b.length) {
-      if (b[i] !== 0xff) return null; // désynchronisé : on ne devine pas
-      const marker = b[i + 1] ?? 0;
-      const length = b.readUInt16BE(i + 2);
+      if (b[i] !== 0xff) return null // désynchronisé : on ne devine pas
+      const marker = b[i + 1] ?? 0
+      const length = b.readUInt16BE(i + 2)
       // Les SOF0…SOF15 portent les dimensions ; DHT (C4), JPG (C8) et DAC (CC)
       // partagent leur plage sans les porter.
-      if (
-        marker >= 0xc0 &&
-        marker <= 0xcf &&
-        marker !== 0xc4 &&
-        marker !== 0xc8 &&
-        marker !== 0xcc
-      ) {
-        return { width: b.readUInt16BE(i + 7), height: b.readUInt16BE(i + 5) };
+      if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+        return { width: b.readUInt16BE(i + 7), height: b.readUInt16BE(i + 5) }
       }
-      i += 2 + length;
+      i += 2 + length
     }
   }
 
-  return null;
+  return null
 }
 
 /**
@@ -183,15 +170,15 @@ export function imageSize(
  * 1 568 pour une image 16:9 en palier standard). Un demi-pourcent d'écart, sur
  * une estimation déjà annoncée comme telle.
  */
-const PATCH = 28;
+const PATCH = 28
 
 export function visualTokens(width: number, height: number, hiRes: boolean): number {
-  const maxEdge = hiRes ? 2576 : 1568;
-  const maxTokens = hiRes ? 4784 : 1568;
-  const scale = Math.min(1, maxEdge / Math.max(width, height));
-  const w = Math.max(1, Math.round(width * scale));
-  const h = Math.max(1, Math.round(height * scale));
-  return Math.min(maxTokens, Math.ceil(w / PATCH) * Math.ceil(h / PATCH));
+  const maxEdge = hiRes ? 2576 : 1568
+  const maxTokens = hiRes ? 4784 : 1568
+  const scale = Math.min(1, maxEdge / Math.max(width, height))
+  const w = Math.max(1, Math.round(width * scale))
+  const h = Math.max(1, Math.round(height * scale))
+  return Math.min(maxTokens, Math.ceil(w / PATCH) * Math.ceil(h / PATCH))
 }
 
 /**
@@ -203,59 +190,56 @@ export function visualTokens(width: number, height: number, hiRes: boolean): num
  * session qui a changé de modèle en route est comptée au palier le plus large :
  * c'est le seul qui ne sous-estime aucune de ses images.
  */
-const HI_RES_MODEL = /opus-(4-[789]|[5-9])|sonnet-[5-9]|haiku-[5-9]|fable|mythos/;
+const HI_RES_MODEL = /opus-(4-[789]|[5-9])|sonnet-[5-9]|haiku-[5-9]|fable|mythos/
 
 /** Ce modèle lit-il les images au palier haute résolution ? */
 export function isHiResVisionModel(model: string): boolean {
-  return HI_RES_MODEL.test(model);
+  return HI_RES_MODEL.test(model)
 }
 
 /** Le coût total d'un lot d'images, les non chiffrables comptant pour zéro. */
 export function imageTokens(images: TranscriptImage[] | undefined): number {
-  return (images ?? []).reduce((sum, img) => sum + (img.tokens ?? 0), 0);
+  return (images ?? []).reduce((sum, img) => sum + (img.tokens ?? 0), 0)
 }
 
 function hasHiResVision(rows: Record<string, unknown>[]): boolean {
   return rows.some((r) => {
-    const model = (r.message as Record<string, unknown> | undefined)?.model;
-    return typeof model === 'string' && isHiResVisionModel(model);
-  });
+    const model = (r.message as Record<string, unknown> | undefined)?.model
+    return typeof model === 'string' && isHiResVisionModel(model)
+  })
 }
 
 interface RowImages {
   /** Par `tool_use_id` : les images que cet outil a rendues. */
-  byTool: Map<string, TranscriptImage[]>;
+  byTool: Map<string, TranscriptImage[]>
   /** Les images posées directement dans la ligne, dans l'ordre. */
-  loose: TranscriptImage[];
+  loose: TranscriptImage[]
 }
 
 /** Les adresses des images d'une ligne, rangées par propriétaire. */
 function rowImages(row: Record<string, unknown>, hiRes: boolean): RowImages {
-  const uuid = str(row.uuid);
-  const agentId = str(row.agentId);
-  const byTool = new Map<string, TranscriptImage[]>();
-  const loose: TranscriptImage[] = [];
-  if (!uuid) return { byTool, loose }; // sans `uuid`, rien ne l'adresse
+  const uuid = str(row.uuid)
+  const agentId = str(row.agentId)
+  const byTool = new Map<string, TranscriptImage[]>()
+  const loose: TranscriptImage[] = []
+  if (!uuid) return { byTool, loose } // sans `uuid`, rien ne l'adresse
 
-  eachImage(
-    (row.message as Record<string, unknown> | undefined)?.content,
-    (source, toolUseId, index) => {
-      const data = str(source.data);
-      const mediaType = str(source.media_type, 'image/png');
-      const size = data ? imageSize(data, mediaType) : null;
-      const img: TranscriptImage = {
-        uuid,
-        index,
-        ...(agentId ? { agentId } : {}),
-        mediaType,
-        bytes: decodedBytes(data),
-        ...(size ? { ...size, tokens: visualTokens(size.width, size.height, hiRes) } : {}),
-      };
-      if (!toolUseId) loose.push(img);
-      else byTool.set(toolUseId, [...(byTool.get(toolUseId) ?? []), img]);
-    },
-  );
-  return { byTool, loose };
+  eachImage((row.message as Record<string, unknown> | undefined)?.content, (source, toolUseId, index) => {
+    const data = str(source.data)
+    const mediaType = str(source.media_type, 'image/png')
+    const size = data ? imageSize(data, mediaType) : null
+    const img: TranscriptImage = {
+      uuid,
+      index,
+      ...(agentId ? { agentId } : {}),
+      mediaType,
+      bytes: decodedBytes(data),
+      ...(size ? { ...size, tokens: visualTokens(size.width, size.height, hiRes) } : {}),
+    }
+    if (!toolUseId) loose.push(img)
+    else byTool.set(toolUseId, [...(byTool.get(toolUseId) ?? []), img])
+  })
+  return { byTool, loose }
 }
 
 /*
@@ -265,18 +249,18 @@ function rowImages(row: Record<string, unknown>, hiRes: boolean): RowImages {
  * transcripts the same folded rendering as Claude's — holding, this time, the
  * text Claude itself no longer keeps.
  */
-const INLINE_REASONING = /^\s*<(think|thinking)>([\s\S]*?)<\/\1>/;
+const INLINE_REASONING = /^\s*<(think|thinking)>([\s\S]*?)<\/\1>/
 
 function splitInlineReasoning(text: string): Block[] {
-  const m = INLINE_REASONING.exec(text);
+  const m = INLINE_REASONING.exec(text)
   // An unclosed tag means a truncated turn: nothing reliable to split on.
-  if (!m) return [{ kind: 'text', text }];
-  const out: Block[] = [];
-  const reasoning = (m[2] ?? '').trim();
-  if (reasoning) out.push({ kind: 'thinking', text: reasoning });
-  const rest = text.slice(m[0].length).trim();
-  if (rest) out.push({ kind: 'text', text: rest });
-  return out;
+  if (!m) return [{ kind: 'text', text }]
+  const out: Block[] = []
+  const reasoning = (m[2] ?? '').trim()
+  if (reasoning) out.push({ kind: 'thinking', text: reasoning })
+  const rest = text.slice(m[0].length).trim()
+  if (rest) out.push({ kind: 'text', text: rest })
+  return out
 }
 
 /**
@@ -286,34 +270,26 @@ function splitInlineReasoning(text: string): Block[] {
  */
 function toBlocks(content: unknown, images?: RowImages, inlineReasoning = false): Block[] {
   if (typeof content === 'string') {
-    return content.trim() ? [{ kind: 'text', text: content }] : [];
+    return content.trim() ? [{ kind: 'text', text: content }] : []
   }
-  if (!Array.isArray(content)) return [];
-  const out: Block[] = [];
-  const loose = [...(images?.loose ?? [])];
+  if (!Array.isArray(content)) return []
+  const out: Block[] = []
+  const loose = [...(images?.loose ?? [])]
   for (const b of content as Record<string, unknown>[]) {
     switch (b.type) {
       case 'text':
         if (typeof b.text === 'string' && b.text.length) {
-          out.push(
-            ...(inlineReasoning
-              ? splitInlineReasoning(b.text)
-              : [{ kind: 'text', text: b.text } as Block]),
-          );
+          out.push(...(inlineReasoning ? splitInlineReasoning(b.text) : [{ kind: 'text', text: b.text } as Block]))
         }
-        break;
+        break
       case 'thinking':
         // Claude Code strips the reasoning text before writing to disk and keeps
         // only the opaque `signature`. There is nothing to render, but the block
         // still tells us Claude reasoned here.
         if (typeof b.thinking === 'string') {
-          out.push(
-            b.thinking.length
-              ? { kind: 'thinking', text: b.thinking }
-              : { kind: 'thinking', text: '', redacted: true },
-          );
+          out.push(b.thinking.length ? { kind: 'thinking', text: b.thinking } : { kind: 'thinking', text: '', redacted: true })
         }
-        break;
+        break
       case 'tool_use':
         out.push({
           kind: 'tool_use',
@@ -321,30 +297,30 @@ function toBlocks(content: unknown, images?: RowImages, inlineReasoning = false)
           name: str(b.name, 'tool'),
           input: b.input ?? {},
           result: null,
-        });
-        break;
+        })
+        break
       case 'tool_result': {
-        const id = str(b.tool_use_id);
-        const shots = images?.byTool.get(id);
+        const id = str(b.tool_use_id)
+        const shots = images?.byTool.get(id)
         out.push({
           kind: 'tool_result',
           toolUseId: id,
           content: resultToText(b.content),
           isError: Boolean(b.is_error),
           ...(shots?.length ? { images: shots } : {}),
-        });
-        break;
+        })
+        break
       }
       case 'image': {
-        const img = loose.shift();
-        out.push({ kind: 'image', ...(img ? { images: [img] } : {}) });
-        break;
+        const img = loose.shift()
+        out.push({ kind: 'image', ...(img ? { images: [img] } : {}) })
+        break
       }
       default:
-        break;
+        break
     }
   }
-  return out;
+  return out
 }
 
 /**
@@ -356,20 +332,20 @@ function toBlocks(content: unknown, images?: RowImages, inlineReasoning = false)
  * exact, tout son résultat est l'image.
  */
 export function resultToText(content: unknown): string {
-  if (typeof content === 'string') return content;
+  if (typeof content === 'string') return content
   if (Array.isArray(content)) {
     return content
       .map((c) => str((c as Record<string, unknown>).text))
       .filter(Boolean)
-      .join('\n');
+      .join('\n')
   }
-  return '';
+  return ''
 }
 
 /** Pull the inner text of a `<tag>…</tag>` from a task-notification blob. */
 function xmlTag(src: string, name: string): string | undefined {
-  const m = src.match(new RegExp(`<${name}>([\\s\\S]*?)</${name}>`));
-  return m?.[1]?.trim();
+  const m = src.match(new RegExp(`<${name}>([\\s\\S]*?)</${name}>`))
+  return m?.[1]?.trim()
 }
 
 /**
@@ -397,7 +373,7 @@ export function parseTaskNotification(raw: string): Block {
     // known — see the identity pass at the end of `parseTranscript`.
     taskId: xmlTag(raw, 'task-id'),
     text: xmlTag(raw, 'result') ?? '',
-  };
+  }
 }
 
 // ── Messages reçus d'un équipier ─────────────────────────────────────────────
@@ -411,8 +387,8 @@ export function parseTaskNotification(raw: string): Block {
 //
 // 100 blocs, 61 messages et 39 signaux de service, chez 4 expéditeurs.
 
-const TEAMMATE = /<teammate-message\b([^>]*)>([\s\S]*?)<\/teammate-message>/g;
-const ATTRIBUTE = /(\w+)="([^"]*)"/g;
+const TEAMMATE = /<teammate-message\b([^>]*)>([\s\S]*?)<\/teammate-message>/g
+const ATTRIBUTE = /(\w+)="([^"]*)"/g
 
 /**
  * Les signaux que le harnais fait passer par le même canal que la parole. Leur
@@ -420,12 +396,7 @@ const ATTRIBUTE = /(\w+)="([^"]*)"/g;
  * — horodatage, identifiant de requête, identifiant de panneau tmux — est de la
  * plomberie. Ils sont rendus comme un état, pas comme un message.
  */
-const NOTICES = new Set([
-  'idle_notification',
-  'shutdown_request',
-  'shutdown_approved',
-  'teammate_terminated',
-]);
+const NOTICES = new Set(['idle_notification', 'shutdown_request', 'shutdown_approved', 'teammate_terminated'])
 
 /**
  * Les `<teammate-message>` d'un texte, ou `null` s'il n'en porte pas.
@@ -435,56 +406,56 @@ const NOTICES = new Set([
  * une fois les blocs retirés est gardé comme un bloc de texte à sa place.
  */
 function teammateBlocks(text: string): Block[] | null {
-  const found = [...text.matchAll(TEAMMATE)];
-  if (!found.length) return null;
+  const found = [...text.matchAll(TEAMMATE)]
+  if (!found.length) return null
 
-  const out: Block[] = [];
-  let at = 0;
+  const out: Block[] = []
+  let at = 0
   for (const m of found) {
-    const before = text.slice(at, m.index).trim();
-    if (before) out.push({ kind: 'text', text: before });
-    at = (m.index ?? 0) + m[0].length;
+    const before = text.slice(at, m.index).trim()
+    if (before) out.push({ kind: 'text', text: before })
+    at = (m.index ?? 0) + m[0].length
 
-    const attrs: Record<string, string> = {};
-    for (const a of (m[1] ?? '').matchAll(ATTRIBUTE)) attrs[a[1] ?? ''] = a[2] ?? '';
-    const body = (m[2] ?? '').trim();
+    const attrs: Record<string, string> = {}
+    for (const a of (m[1] ?? '').matchAll(ATTRIBUTE)) attrs[a[1] ?? ''] = a[2] ?? ''
+    const body = (m[2] ?? '').trim()
 
-    const block: Block = { kind: 'teammate_message', text: body };
-    if (attrs.teammate_id) block.from = attrs.teammate_id;
-    if (attrs.color) block.color = attrs.color;
-    if (attrs.summary) block.summary = attrs.summary;
+    const block: Block = { kind: 'teammate_message', text: body }
+    if (attrs.teammate_id) block.from = attrs.teammate_id
+    if (attrs.color) block.color = attrs.color
+    if (attrs.summary) block.summary = attrs.summary
 
     if (body.startsWith('{')) {
-      let signal: unknown;
+      let signal: unknown
       try {
-        signal = JSON.parse(body);
+        signal = JSON.parse(body)
       } catch {
-        signal = null;
+        signal = null
       }
-      const type = str((signal as Record<string, unknown> | null)?.type);
+      const type = str((signal as Record<string, unknown> | null)?.type)
       if (NOTICES.has(type)) {
-        const fields = signal as Record<string, unknown>;
-        block.notice = type;
-        block.text = '';
+        const fields = signal as Record<string, unknown>
+        block.notice = type
+        block.text = ''
         // Ce que le signal apprend en propre, et que son type ne dit pas :
         // `idle_notification` porte parfois le résumé de ce que l'équipier vient
         // de finir (13 fois sur 22), `shutdown_request` la raison de l'arrêt
         // (7 fois sur 7). Le reste — horodatage, identifiant de requête,
         // identifiant de panneau tmux — ne se lit pas.
-        const said = str(fields.summary) || str(fields.reason);
-        if (said && !block.summary) block.summary = said;
+        const said = str(fields.summary) || str(fields.reason)
+        if (said && !block.summary) block.summary = said
         // `teammate_terminated` arrive au nom de `system` : c'est le harnais qui
         // parle, pas l'agent. Seule sa phrase — « rf has shut down. » — dit de
         // qui il s'agit, et sans elle le rejeu annonce un arrêt sans arrêté.
-        const who = /^(\S+) has shut down\.$/.exec(str(fields.message));
-        if (who) block.from = who[1];
+        const who = /^(\S+) has shut down\.$/.exec(str(fields.message))
+        if (who) block.from = who[1]
       }
     }
-    out.push(block);
+    out.push(block)
   }
-  const after = text.slice(at).trim();
-  if (after) out.push({ kind: 'text', text: after });
-  return out;
+  const after = text.slice(at).trim()
+  if (after) out.push({ kind: 'text', text: after })
+  return out
 }
 
 // ── Session titles ───────────────────────────────────────────────────────────
@@ -500,39 +471,39 @@ function teammateBlocks(text: string): Block[] | null {
  * current title, not the first.
  */
 export class TitleAccumulator {
-  private custom = '';
-  private ai = '';
+  private custom = ''
+  private ai = ''
 
   /** Feed every parsed row; cheap enough to call unconditionally. */
   push(row: Record<string, unknown>): void {
     if (row.type === 'custom-title') {
-      const t = str(row.customTitle).trim();
-      if (t) this.custom = t;
+      const t = str(row.customTitle).trim()
+      if (t) this.custom = t
     } else if (row.type === 'ai-title') {
-      const t = str(row.aiTitle).trim();
-      if (t) this.ai = t;
+      const t = str(row.aiTitle).trim()
+      if (t) this.ai = t
     }
   }
 
   get title(): string {
-    return this.custom || this.ai;
+    return this.custom || this.ai
   }
 
   get source(): TitleSource {
-    if (this.custom) return 'custom';
-    if (this.ai) return 'ai';
-    return '';
+    if (this.custom) return 'custom'
+    if (this.ai) return 'ai'
+    return ''
   }
 }
 
 function normUsage(u: Record<string, unknown> | undefined): Usage | undefined {
-  if (!u) return undefined;
+  if (!u) return undefined
   return {
     input: Number(u.input_tokens ?? 0),
     output: Number(u.output_tokens ?? 0),
     cacheRead: Number(u.cache_read_input_tokens ?? 0),
     cacheCreate: Number(u.cache_creation_input_tokens ?? 0),
-  };
+  }
 }
 
 // `growth` vient de `tokens.ts`, comme pour `usage.ts` et le diagnostic. Il en
@@ -545,9 +516,9 @@ function normUsage(u: Record<string, unknown> | undefined): Usage | undefined {
 
 /** Keep only the non-blank strings of a value that should be `string[]`. */
 function strList(v: unknown): string[] {
-  if (typeof v === 'string') return v.trim() ? [v] : [];
-  if (!Array.isArray(v)) return [];
-  return v.filter((s): s is string => typeof s === 'string' && s.trim().length > 0);
+  if (typeof v === 'string') return v.trim() ? [v] : []
+  if (!Array.isArray(v)) return []
+  return v.filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
 }
 
 /**
@@ -555,13 +526,13 @@ function strList(v: unknown): string[] {
  * from it and feeds that back to Claude. Anything else in there is bookkeeping.
  */
 function contextFromStdout(stdout: string): string[] {
-  if (!stdout) return [];
+  if (!stdout) return []
   try {
-    const j = JSON.parse(stdout) as Record<string, unknown>;
-    const specific = j.hookSpecificOutput as Record<string, unknown> | undefined;
-    return strList(specific?.additionalContext);
+    const j = JSON.parse(stdout) as Record<string, unknown>
+    const specific = j.hookSpecificOutput as Record<string, unknown> | undefined
+    return strList(specific?.additionalContext)
   } catch {
-    return []; // not JSON → nothing to extract
+    return [] // not JSON → nothing to extract
   }
 }
 
@@ -577,11 +548,11 @@ function contextFromStdout(stdout: string): string[] {
  * runs per row over transcripts we do not control.
  */
 function errorMessage(value: unknown, depth = 0): string {
-  if (!value || typeof value !== 'object' || depth > 3) return '';
-  const o = value as Record<string, unknown>;
-  const own = str(o.message);
-  if (own) return own;
-  return errorMessage(o.error, depth + 1);
+  if (!value || typeof value !== 'object' || depth > 3) return ''
+  const o = value as Record<string, unknown>
+  const own = str(o.message)
+  if (own) return own
+  return errorMessage(o.error, depth + 1)
 }
 
 /**
@@ -597,26 +568,24 @@ function errorMessage(value: unknown, depth = 0): string {
  * `/clear` says `<local-command-stdout></local-command-stdout>` — it ran, it had
  * nothing to say — and falling through would print that markup verbatim.
  */
-function localCommandSystem(
-  r: Record<string, unknown>,
-): { blocks: Block[]; origin: string } | null {
-  const content = typeof r.content === 'string' ? r.content : '';
-  const kind = content ? classifyLocalCommand(content) : null;
-  if (!kind) return null;
+function localCommandSystem(r: Record<string, unknown>): { blocks: Block[]; origin: string } | null {
+  const content = typeof r.content === 'string' ? r.content : ''
+  const kind = content ? classifyLocalCommand(content) : null
+  if (!kind) return null
 
   if (kind === 'command' || kind === 'bash') {
-    const block = kind === 'bash' ? bashInputBlock(content) : slashCommandBlock(content);
-    return { blocks: block ? [block] : [], origin: 'slash-command' };
+    const block = kind === 'bash' ? bashInputBlock(content) : slashCommandBlock(content)
+    return { blocks: block ? [block] : [], origin: 'slash-command' }
   }
   if (kind === 'stdout') {
-    const out = commandOutput(content);
-    return { blocks: out ? [{ kind: 'text', text: out }] : [], origin: 'command-output' };
+    const out = commandOutput(content)
+    return { blocks: out ? [{ kind: 'text', text: out }] : [], origin: 'command-output' }
   }
   if (kind === 'reminder') {
-    const inner = content.replace(/<\/?system-reminder>/g, '').trim();
-    return { blocks: inner ? [{ kind: 'text', text: inner }] : [], origin: 'system' };
+    const inner = content.replace(/<\/?system-reminder>/g, '').trim()
+    return { blocks: inner ? [{ kind: 'text', text: inner }] : [], origin: 'system' }
   }
-  return { blocks: [], origin: 'system' }; // caveat: boilerplate the CLI writes for itself.
+  return { blocks: [], origin: 'system' } // caveat: boilerplate the CLI writes for itself.
 }
 
 /**
@@ -629,27 +598,27 @@ function localCommandSystem(
  * the timeline drop them instead of drawing an empty row.
  */
 function systemBlocks(r: Record<string, unknown>): Block[] {
-  if (typeof r.content === 'string' && r.content) return [{ kind: 'text', text: r.content }];
+  if (typeof r.content === 'string' && r.content) return [{ kind: 'text', text: r.content }]
 
-  const error = r.error;
-  if (!error || typeof error !== 'object') return [];
-  const status = num((error as Record<string, unknown>).status);
-  const message = errorMessage(error);
-  const text = message || (status ? `Erreur HTTP ${status}` : '');
-  if (!text) return [];
+  const error = r.error
+  if (!error || typeof error !== 'object') return []
+  const status = num((error as Record<string, unknown>).status)
+  const message = errorMessage(error)
+  const text = message || (status ? `Erreur HTTP ${status}` : '')
+  if (!text) return []
 
   // The first shape already prefixes its status; do not print it twice.
-  const prefixed = status && !text.startsWith(String(status)) ? `HTTP ${status} — ${text}` : text;
-  return [{ kind: 'text', text: prefixed }];
+  const prefixed = status && !text.startsWith(String(status)) ? `HTTP ${status} — ${text}` : text
+  return [{ kind: 'text', text: prefixed }]
 }
 
 // Colour and cursor codes a terminal wrote into a captured stdout. The escape
 // byte is required: without it this would also eat `[2]` out of ordinary prose.
 // eslint-disable-next-line no-control-regex
-const ANSI = /\x1b\[[0-9;]*[A-Za-z]/g;
+const ANSI = /\x1b\[[0-9;]*[A-Za-z]/g
 
 /** What a `user` row really is, when it opens with harness markup. */
-type LocalRow = 'caveat' | 'command' | 'bash' | 'stdout' | 'reminder' | 'teammate';
+type LocalRow = 'caveat' | 'command' | 'bash' | 'stdout' | 'reminder' | 'teammate'
 
 /**
  * A `user` row the CLI wrote about itself, not one the human typed.
@@ -666,37 +635,37 @@ type LocalRow = 'caveat' | 'command' | 'bash' | 'stdout' | 'reminder' | 'teammat
  * and a side question arrives wrapped in `<system-reminder>`.
  */
 function classifyLocalCommand(text: string): LocalRow | null {
-  const t = text.trimStart();
-  if (t.startsWith('<local-command-caveat>')) return 'caveat';
-  if (t.startsWith('<bash-input>')) return 'bash';
+  const t = text.trimStart()
+  if (t.startsWith('<local-command-caveat>')) return 'caveat'
+  if (t.startsWith('<bash-input>')) return 'bash'
   if (
     t.startsWith('<local-command-stdout>') ||
     t.startsWith('<local-command-stderr>') ||
     t.startsWith('<bash-stdout>') ||
     t.startsWith('<bash-stderr>')
   ) {
-    return 'stdout';
+    return 'stdout'
   }
-  if (t.startsWith('<command-name>') || t.startsWith('<command-message>')) return 'command';
-  if (t.startsWith('<system-reminder>')) return 'reminder';
-  return null;
+  if (t.startsWith('<command-name>') || t.startsWith('<command-message>')) return 'command'
+  if (t.startsWith('<system-reminder>')) return 'reminder'
+  return null
 }
 
 function tag(text: string, name: string): string {
-  return new RegExp(`<${name}>([\\s\\S]*?)</${name}>`).exec(text)?.[1]?.trim() ?? '';
+  return new RegExp(`<${name}>([\\s\\S]*?)</${name}>`).exec(text)?.[1]?.trim() ?? ''
 }
 
 /** Turn a `<command-name>` row into one block; `null` when it names nothing. */
 function slashCommandBlock(text: string): Block | null {
-  const name = tag(text, 'command-name');
-  if (!name) return null;
-  return { kind: 'slash_command', name, text: tag(text, 'command-args') };
+  const name = tag(text, 'command-name')
+  if (!name) return null
+  return { kind: 'slash_command', name, text: tag(text, 'command-args') }
 }
 
 /** A `!cmd` the user ran straight from the prompt. */
 function bashInputBlock(text: string): Block | null {
-  const command = tag(text, 'bash-input');
-  return command ? { kind: 'slash_command', name: '!', text: command } : null;
+  const command = tag(text, 'bash-input')
+  return command ? { kind: 'slash_command', name: '!', text: command } : null
 }
 
 /** The CLI's own stdout, stripped of tags and terminal codes. Empty → nothing said. */
@@ -704,25 +673,20 @@ function commandOutput(text: string): string {
   return text
     .replace(/<\/?(local-command|bash)-std(out|err)>/g, '')
     .replace(ANSI, '')
-    .trim();
+    .trim()
 }
 
 /** Who a `user` row came from. A slash command is the CLI, not the human. */
-function userOrigin(
-  injected: boolean,
-  originKind: string | undefined,
-  localRow: LocalRow | null,
-  compactSummary: boolean,
-): string {
-  if (localRow === 'command' || localRow === 'bash') return 'slash-command';
-  if (localRow === 'stdout') return 'command-output';
+function userOrigin(injected: boolean, originKind: string | undefined, localRow: LocalRow | null, compactSummary: boolean): string {
+  if (localRow === 'command' || localRow === 'bash') return 'slash-command'
+  if (localRow === 'stdout') return 'command-output'
   // Un équipier, pas l'humain. Sans cette origine la ligne s'affiche en « Vous ».
-  if (localRow === 'teammate') return 'teammate';
+  if (localRow === 'teammate') return 'teammate'
   // The history a compaction kept, re-sent as a `user` row. Nobody typed it.
-  if (compactSummary) return 'compact-summary';
-  if (localRow === 'reminder') return 'system';
-  if (injected) return originKind ?? 'system';
-  return 'human';
+  if (compactSummary) return 'compact-summary'
+  if (localRow === 'reminder') return 'system'
+  if (injected) return originKind ?? 'system'
+  return 'human'
 }
 
 /**
@@ -739,12 +703,12 @@ function userOrigin(
  * mensonge que pour une ligne `user` injectée.
  */
 function queuedHumanPrompt(value: unknown): string {
-  if (!value || typeof value !== 'object') return '';
-  const a = value as Record<string, unknown>;
-  if (str(a.type) !== 'queued_command') return '';
-  const origin = a.origin as Record<string, unknown> | undefined;
-  if (str(origin?.kind) !== 'human') return '';
-  return str(a.prompt).trim();
+  if (!value || typeof value !== 'object') return ''
+  const a = value as Record<string, unknown>
+  if (str(a.type) !== 'queued_command') return ''
+  const origin = a.origin as Record<string, unknown> | undefined
+  if (str(origin?.kind) !== 'human') return ''
+  return str(a.prompt).trim()
 }
 
 /**
@@ -762,11 +726,11 @@ function queuedHumanPrompt(value: unknown): string {
  * fini, rapport compris.
  */
 function queuedTaskNotification(value: unknown): string {
-  if (!value || typeof value !== 'object') return '';
-  const a = value as Record<string, unknown>;
-  if (str(a.type) !== 'queued_command') return '';
-  if (str(a.commandMode) !== 'task-notification') return '';
-  return str(a.prompt).trim();
+  if (!value || typeof value !== 'object') return ''
+  const a = value as Record<string, unknown>
+  if (str(a.type) !== 'queued_command') return ''
+  if (str(a.commandMode) !== 'task-notification') return ''
+  return str(a.prompt).trim()
 }
 
 /**
@@ -783,20 +747,14 @@ function queuedTaskNotification(value: unknown): string {
  * amont.
  */
 function planModeMark(value: unknown): PlanModeMark | null {
-  if (!value || typeof value !== 'object') return null;
-  const a = value as Record<string, unknown>;
+  if (!value || typeof value !== 'object') return null
+  const a = value as Record<string, unknown>
   const phase =
-    str(a.type) === 'plan_mode'
-      ? 'enter'
-      : str(a.type) === 'plan_mode_exit'
-        ? 'exit'
-        : str(a.type) === 'plan_mode_reentry'
-          ? 'reentry'
-          : null;
-  if (!phase) return null;
-  const mark: PlanModeMark = { phase, planFilePath: str(a.planFilePath) };
-  if (typeof a.planExists === 'boolean') mark.planExists = a.planExists;
-  return mark;
+    str(a.type) === 'plan_mode' ? 'enter' : str(a.type) === 'plan_mode_exit' ? 'exit' : str(a.type) === 'plan_mode_reentry' ? 'reentry' : null
+  if (!phase) return null
+  const mark: PlanModeMark = { phase, planFilePath: str(a.planFilePath) }
+  if (typeof a.planExists === 'boolean') mark.planExists = a.planExists
+  return mark
 }
 
 /**
@@ -817,16 +775,16 @@ function planModeMark(value: unknown): PlanModeMark | null {
  * cours, et la traiter comme une ouverture couperait la portée en deux.
  */
 function markPlanMode(events: TranscriptEvent[]): void {
-  let open: PlanModeMark | null = null;
-  let turns = 0;
+  let open: PlanModeMark | null = null
+  let turns = 0
   /** Les rappels redondants, retirés du fil une fois la passe finie. */
-  const drop = new Set<TranscriptEvent>();
+  const drop = new Set<TranscriptEvent>()
 
   for (const ev of events) {
     // Un sous-agent a son propre régime, qui n'est pas celui de la session.
-    if (ev.isSidechain) continue;
+    if (ev.isSidechain) continue
 
-    const phase = ev.planMode?.phase;
+    const phase = ev.planMode?.phase
     if (phase === 'enter') {
       // Le CLI réémet le rappel à l'intérieur d'un régime déjà ouvert : 4 fois
       // au parc, toujours pour le même fichier de plan, entre 66 et 249 lignes
@@ -835,29 +793,29 @@ function markPlanMode(events: TranscriptEvent[]): void {
       // La ligne ne porte rien d'autre, donc elle sort du fil : la garder vidée
       // la ferait tomber dans le bloc « Système » générique.
       if (open) {
-        drop.add(ev);
-        continue;
+        drop.add(ev)
+        continue
       }
-      open = ev.planMode ?? null;
-      turns = 0;
-      continue;
+      open = ev.planMode ?? null
+      turns = 0
+      continue
     }
     if (phase === 'exit') {
-      if (open) open.turns = turns;
-      open = null;
-      continue;
+      if (open) open.turns = turns
+      open = null
+      continue
     }
-    if (phase === 'reentry') continue;
+    if (phase === 'reentry') continue
 
-    if (!open) continue;
-    ev.inPlanMode = true;
-    if (ev.kind === 'assistant') turns++;
+    if (!open) continue
+    ev.inPlanMode = true
+    if (ev.kind === 'assistant') turns++
   }
   // Régime encore ouvert à la dernière ligne : les tours sont marqués, mais
   // aucun total n'est annoncé — il n'est pas clos.
 
   for (let i = events.length - 1; i >= 0; i--) {
-    if (drop.has(events[i]!)) events.splice(i, 1);
+    if (drop.has(events[i]!)) events.splice(i, 1)
   }
 }
 
@@ -867,11 +825,11 @@ function summaryEvent(subtype: string): string {
     .split('_')
     .filter(Boolean)
     .map((w) => w[0]!.toUpperCase() + w.slice(1))
-    .join('');
+    .join('')
 }
 
 function isHookSummary(subtype: string | undefined): boolean {
-  return typeof subtype === 'string' && subtype.endsWith('_hook_summary');
+  return typeof subtype === 'string' && subtype.endsWith('_hook_summary')
 }
 
 /**
@@ -879,63 +837,60 @@ function isHookSummary(subtype: string | undefined): boolean {
  * Claude could act on. Its only trace worth keeping is that it ran, and how long.
  */
 function isSilent(run: HookRun): boolean {
-  return run.status === 'ok' && !run.context?.length && !run.stderr;
+  return run.status === 'ok' && !run.context?.length && !run.stderr
 }
 
 /** An `attachment.hook_*` payload → a run, or `null` if it carries nothing. */
 function hookRunFromAttachment(a: Record<string, unknown>): HookRun | null {
-  const type = str(a.type);
-  if (!type.startsWith('hook_')) return null;
+  const type = str(a.type)
+  if (!type.startsWith('hook_')) return null
 
-  const name = str(a.hookName);
+  const name = str(a.hookName)
   const run: HookRun = {
     event: str(a.hookEvent, name.split(':')[0] ?? 'hook'),
     name: name || 'hook',
     status: 'ok',
-  };
-  if (typeof a.toolUseID === 'string' && a.toolUseID) run.toolUseId = a.toolUseID;
-  if (typeof a.command === 'string' && a.command) run.command = a.command;
-  if (typeof a.durationMs === 'number') run.durationMs = a.durationMs;
-  if (typeof a.exitCode === 'number') run.exitCode = a.exitCode;
+  }
+  if (typeof a.toolUseID === 'string' && a.toolUseID) run.toolUseId = a.toolUseID
+  if (typeof a.command === 'string' && a.command) run.command = a.command
+  if (typeof a.durationMs === 'number') run.durationMs = a.durationMs
+  if (typeof a.exitCode === 'number') run.exitCode = a.exitCode
 
-  const stdout = typeof a.stdout === 'string' ? a.stdout.trim() : '';
-  const stderr = typeof a.stderr === 'string' ? a.stderr.trim() : '';
-  if (stdout) run.stdout = stdout;
-  if (stderr) run.stderr = stderr;
+  const stdout = typeof a.stdout === 'string' ? a.stdout.trim() : ''
+  const stderr = typeof a.stderr === 'string' ? a.stderr.trim() : ''
+  if (stdout) run.stdout = stdout
+  if (stderr) run.stderr = stderr
 
   switch (type) {
     case 'hook_blocking_error': {
-      const be = a.blockingError;
-      const msg =
-        typeof be === 'string'
-          ? be
-          : str((be as Record<string, unknown> | undefined)?.blockingError);
-      run.status = 'blocked';
-      run.error = msg.trim() || stderr || 'Le hook a interrompu le tour.';
-      return run;
+      const be = a.blockingError
+      const msg = typeof be === 'string' ? be : str((be as Record<string, unknown> | undefined)?.blockingError)
+      run.status = 'blocked'
+      run.error = msg.trim() || stderr || 'Le hook a interrompu le tour.'
+      return run
     }
     case 'hook_non_blocking_error': {
-      run.status = 'error';
-      run.error = stderr || t('hooks.failed', { code: run.exitCode ?? '?' });
-      return run;
+      run.status = 'error'
+      run.error = stderr || t('hooks.failed', { code: run.exitCode ?? '?' })
+      return run
     }
     case 'hook_success': {
-      const ctx = contextFromStdout(stdout);
+      const ctx = contextFromStdout(stdout)
       if (ctx.length) {
-        run.context = ctx;
-        run.status = 'context';
+        run.context = ctx
+        run.status = 'context'
       }
-      return run;
+      return run
     }
     case 'hook_additional_context': {
-      const ctx = strList(a.content);
-      if (!ctx.length) return null;
-      run.context = ctx;
-      run.status = 'context';
-      return run;
+      const ctx = strList(a.content)
+      if (!ctx.length) return null
+      run.context = ctx
+      run.status = 'context'
+      return run
     }
     default:
-      return null;
+      return null
   }
 }
 
@@ -945,53 +900,53 @@ function hookRunFromAttachment(a: Record<string, unknown>): HookRun | null {
  * whole, so they are pinned onto the first run.
  */
 function hookRunsFromSummary(r: Record<string, unknown>): HookRun[] {
-  const event = summaryEvent(str(r.subtype)) || 'Hook';
-  const infos = Array.isArray(r.hookInfos) ? (r.hookInfos as Record<string, unknown>[]) : [];
-  const errors = strList(r.hookErrors);
-  const context = strList(r.hookAdditionalContext);
-  const prevented = Boolean(r.preventedContinuation);
-  const stopReason = typeof r.stopReason === 'string' ? r.stopReason.trim() : '';
+  const event = summaryEvent(str(r.subtype)) || 'Hook'
+  const infos = Array.isArray(r.hookInfos) ? (r.hookInfos as Record<string, unknown>[]) : []
+  const errors = strList(r.hookErrors)
+  const context = strList(r.hookAdditionalContext)
+  const prevented = Boolean(r.preventedContinuation)
+  const stopReason = typeof r.stopReason === 'string' ? r.stopReason.trim() : ''
 
-  const list = infos.length ? infos : [{}];
+  const list = infos.length ? infos : [{}]
   return list.map((info, i) => {
-    const run: HookRun = { event, name: event, status: 'ok' };
-    if (typeof info.command === 'string' && info.command) run.command = info.command;
-    if (typeof info.durationMs === 'number') run.durationMs = info.durationMs;
-    if (i !== 0) return run;
+    const run: HookRun = { event, name: event, status: 'ok' }
+    if (typeof info.command === 'string' && info.command) run.command = info.command
+    if (typeof info.durationMs === 'number') run.durationMs = info.durationMs
+    if (i !== 0) return run
 
     if (context.length) {
-      run.context = context;
-      run.status = 'context';
+      run.context = context
+      run.status = 'context'
     }
     if (errors.length) {
-      run.status = 'error';
-      run.error = errors.join('\n');
+      run.status = 'error'
+      run.error = errors.join('\n')
     }
     if (prevented) {
-      run.status = 'blocked';
-      run.error = stopReason || errors.join('\n') || t('hooks.blocked');
+      run.status = 'blocked'
+      run.error = stopReason || errors.join('\n') || t('hooks.blocked')
     }
-    return run;
-  });
+    return run
+  })
 }
 
 /** Accumulates the silent runs into a per-command tally. */
 class SilentHookTally {
-  private readonly byCommand = new Map<string, SilentHookGroup>();
-  private count = 0;
-  private durationMs = 0;
+  private readonly byCommand = new Map<string, SilentHookGroup>()
+  private count = 0
+  private durationMs = 0
 
   add(run: HookRun): void {
-    const command = run.command ?? run.name;
-    const ms = run.durationMs ?? 0;
-    this.count++;
-    this.durationMs += ms;
-    const g = this.byCommand.get(command);
+    const command = run.command ?? run.name
+    const ms = run.durationMs ?? 0
+    this.count++
+    this.durationMs += ms
+    const g = this.byCommand.get(command)
     if (g) {
-      g.count++;
-      g.durationMs += ms;
+      g.count++
+      g.durationMs += ms
     } else {
-      this.byCommand.set(command, { command, count: 1, durationMs: ms });
+      this.byCommand.set(command, { command, count: 1, durationMs: ms })
     }
   }
 
@@ -1000,7 +955,7 @@ class SilentHookTally {
       count: this.count,
       durationMs: this.durationMs,
       groups: [...this.byCommand.values()].sort((a, b) => b.count - a.count),
-    };
+    }
   }
 }
 
@@ -1013,13 +968,13 @@ class SilentHookTally {
  * this is not a rounding error.
  */
 function toolInputText(input: unknown): string {
-  if (input === undefined || input === null) return '';
-  if (typeof input === 'string') return input;
+  if (input === undefined || input === null) return ''
+  if (typeof input === 'string') return input
   try {
-    return JSON.stringify(input);
+    return JSON.stringify(input)
   } catch {
     // Cyclic input cannot have come from JSONL, but a parser must not throw.
-    return '';
+    return ''
   }
 }
 
@@ -1088,44 +1043,41 @@ const STRUCTURED_RESULT: Record<string, readonly string[]> = {
   // il se lit dans `STRUCTURED_DERIVED`. L'entrée doit exister quand même —
   // c'est elle qui autorise l'outil à être lu du tout.
   Skill: [],
-};
+}
 
 /**
  * Champs *dérivés* — quand ce qu'on veut est enfoui sous une clé qu'on ne veut
  * pas retenir entière. La liste blanche plate ne sait pas l'exprimer ; ces
  * fonctions si, sans pour autant rouvrir `flatMap` à l'imbrication.
  */
-const STRUCTURED_DERIVED: Record<
-  string,
-  (source: Record<string, unknown>) => Record<string, unknown> | null
-> = {
+const STRUCTURED_DERIVED: Record<string, (source: Record<string, unknown>) => Record<string, unknown> | null> = {
   // `annotations` est une carte question → `{ preview?, notes? }`. Le `preview`
   // n'est que l'écho de l'option choisie, que le bloc porte déjà, et c'est lui
   // qui pèse ; les `notes` sont de la parole d'utilisateur, qu'on ne lit nulle
   // part ailleurs. Les notes sont rares, et il arrive que la note *soit* la
   // réponse — `answers` n'y porte alors que le marqueur `(notes only)`.
   AskUserQuestion: (source) => {
-    const a = source.annotations;
-    if (!a || typeof a !== 'object' || Array.isArray(a)) return null;
-    const notes: Record<string, string> = {};
+    const a = source.annotations
+    if (!a || typeof a !== 'object' || Array.isArray(a)) return null
+    const notes: Record<string, string> = {}
     for (const [question, ann] of Object.entries(a as Record<string, unknown>)) {
-      if (!ann || typeof ann !== 'object' || Array.isArray(ann)) continue;
-      const n = (ann as Record<string, unknown>).notes;
-      if (typeof n === 'string' && n) notes[question] = n;
+      if (!ann || typeof ann !== 'object' || Array.isArray(ann)) continue
+      const n = (ann as Record<string, unknown>).notes
+      if (typeof n === 'string' && n) notes[question] = n
     }
-    return Object.keys(notes).length ? { notes } : null;
+    return Object.keys(notes).length ? { notes } : null
   },
   // `matches` est la liste des outils que la recherche a effectivement chargés —
   // le seul retour de `ToolSearch`, puisque son texte est vide dans 357 des 365
   // appels du parc. Un tableau de chaînes que la liste blanche plate refuse ;
   // c'est pourtant tout ce que la vue a à montrer. Onze noms au maximum mesuré.
   ToolSearch: (source) => {
-    const m = source.matches;
-    if (!Array.isArray(m)) return null;
-    const names = m.filter((x): x is string => typeof x === 'string' && Boolean(x));
+    const m = source.matches
+    if (!Array.isArray(m)) return null
+    const names = m.filter((x): x is string => typeof x === 'string' && Boolean(x))
     // Une liste vide compte : elle dit que rien n'a été chargé, ce qui n'est pas
     // la même chose qu'un résultat absent. On la retient donc telle quelle.
-    return { matches: names };
+    return { matches: names }
   },
   // Un skill peut restreindre les outils de la session le temps où il s'applique,
   // et c'est la seule trace de cette restriction : ni l'entrée ni le texte du
@@ -1137,15 +1089,15 @@ const STRUCTURED_DERIVED: Record<
   // `success` n'est pas retenu (`true` 16 fois sur 16, l'échec passant par
   // `is_error`), ni `commandName`, écho exact du `skill` de l'entrée.
   Skill: (source) => {
-    const a = source.allowedTools;
-    if (!Array.isArray(a)) return null;
-    const names = a.filter((x): x is string => typeof x === 'string' && Boolean(x));
-    return names.length ? { allowedTools: names } : null;
+    const a = source.allowedTools
+    if (!Array.isArray(a)) return null
+    const names = a.filter((x): x is string => typeof x === 'string' && Boolean(x))
+    return names.length ? { allowedTools: names } : null
   },
-};
+}
 
 /** Taille au-delà de laquelle on renonce, quoi que dise la liste blanche. */
-const MAX_STRUCTURED_BYTES = 8_192;
+const MAX_STRUCTURED_BYTES = 8_192
 
 /**
  * Le résultat structuré d'un outil, réduit à ce qu'on sait afficher.
@@ -1153,43 +1105,40 @@ const MAX_STRUCTURED_BYTES = 8_192;
  * Rend `null` dès que quelque chose ne va pas — outil hors liste, valeur qui
  * n'est pas un objet, taille aberrante. Un affichage vaut mieux vide qu'inventé.
  */
-function structuredResult(
-  toolName: string | undefined,
-  value: unknown,
-): Record<string, unknown> | null {
-  if (!toolName) return null;
-  const keep = STRUCTURED_RESULT[toolName];
-  if (!keep) return null;
-  const derive = STRUCTURED_DERIVED[toolName];
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+function structuredResult(toolName: string | undefined, value: unknown): Record<string, unknown> | null {
+  if (!toolName) return null
+  const keep = STRUCTURED_RESULT[toolName]
+  if (!keep) return null
+  const derive = STRUCTURED_DERIVED[toolName]
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
 
-  const source = value as Record<string, unknown>;
-  const out: Record<string, unknown> = {};
+  const source = value as Record<string, unknown>
+  const out: Record<string, unknown> = {}
   for (const key of keep) {
-    const v = source[key];
-    if (v === undefined || v === null) continue;
+    const v = source[key]
+    if (v === undefined || v === null) continue
     if (typeof v !== 'object') {
-      out[key] = v;
-      continue;
+      out[key] = v
+      continue
     }
     // Une carte plate — les réponses d'un AskUserQuestion, par exemple. On
     // s'arrête là : c'est par l'imbrication qu'un sidecar explose en volume, et
     // rien de ce qu'on affiche n'en a besoin.
-    const flat = flatMap(v);
-    if (flat) out[key] = flat;
+    const flat = flatMap(v)
+    if (flat) out[key] = flat
   }
-  Object.assign(out, derive?.(source) ?? {});
-  if (!Object.keys(out).length) return null;
-  return JSON.stringify(out).length > MAX_STRUCTURED_BYTES ? null : out;
+  Object.assign(out, derive?.(source) ?? {})
+  if (!Object.keys(out).length) return null
+  return JSON.stringify(out).length > MAX_STRUCTURED_BYTES ? null : out
 }
 
 /** L'objet s'il n'est qu'une carte de valeurs simples ; `null` sinon. */
 function flatMap(value: object): Record<string, unknown> | null {
-  if (Array.isArray(value)) return null;
-  const entries = Object.entries(value as Record<string, unknown>);
-  if (!entries.length) return null;
-  if (entries.some(([, v]) => v !== null && typeof v === 'object')) return null;
-  return Object.fromEntries(entries);
+  if (Array.isArray(value)) return null
+  const entries = Object.entries(value as Record<string, unknown>)
+  if (!entries.length) return null
+  if (entries.some(([, v]) => v !== null && typeof v === 'object')) return null
+  return Object.fromEntries(entries)
 }
 
 // ── Sub-agent sidecars ───────────────────────────────────────────────────────
@@ -1201,31 +1150,31 @@ function flatMap(value: object): Record<string, unknown> | null {
 // so without reading these sidecars the replay never shows what the agent did.
 
 interface SubagentRun {
-  agentId: string;
+  agentId: string
   /** The agent that ran, when anything on disk could name it. */
-  agentType?: string;
+  agentType?: string
   /** The `Agent` tool_use this run answers to — the anchor for its rows. */
-  toolUseId?: string;
+  toolUseId?: string
   /** The call's one-line description; the anchor of last resort before time. */
-  description?: string;
+  description?: string
   /** When the run's first row was written — used to place an unanchored run. */
-  startedAt: number;
+  startedAt: number
   /** 1 for a top-level agent; deeper when an agent spawned another. */
-  spawnDepth: number;
-  rows: Record<string, unknown>[];
+  spawnDepth: number
+  rows: Record<string, unknown>[]
 }
 
 function parseJsonl(raw: string): Record<string, unknown>[] {
-  const out: Record<string, unknown>[] = [];
+  const out: Record<string, unknown>[] = []
   for (const l of raw.split('\n')) {
-    if (!l.trim()) continue;
+    if (!l.trim()) continue
     try {
-      out.push(JSON.parse(l) as Record<string, unknown>);
+      out.push(JSON.parse(l) as Record<string, unknown>)
     } catch {
       /* skip malformed line */
     }
   }
-  return out;
+  return out
 }
 
 /** Every `tool_use` id in these rows, mapped to the block's own `input`. */
@@ -1234,14 +1183,14 @@ function eachToolUse(
   visit: (id: string, name: string, input: Record<string, unknown>, rowIndex: number) => void,
 ): void {
   rows.forEach((r, i) => {
-    const msg = r.message as Record<string, unknown> | undefined;
-    if (!msg || !Array.isArray(msg.content)) return;
+    const msg = r.message as Record<string, unknown> | undefined
+    if (!msg || !Array.isArray(msg.content)) return
     for (const b of msg.content as Record<string, unknown>[]) {
       if (b.type === 'tool_use' && typeof b.id === 'string') {
-        visit(b.id, str(b.name), (b.input ?? {}) as Record<string, unknown>, i);
+        visit(b.id, str(b.name), (b.input ?? {}) as Record<string, unknown>, i)
       }
     }
-  });
+  })
 }
 
 /**
@@ -1250,17 +1199,17 @@ function eachToolUse(
  * missing (older runs wrote none), so mine it before falling back to nothing.
  */
 function agentIdToToolUse(rows: Record<string, unknown>[]): Map<string, string> {
-  const out = new Map<string, string>();
+  const out = new Map<string, string>()
   for (const r of rows) {
-    const msg = r.message as Record<string, unknown> | undefined;
-    if (!msg || !Array.isArray(msg.content)) continue;
+    const msg = r.message as Record<string, unknown> | undefined
+    if (!msg || !Array.isArray(msg.content)) continue
     for (const b of msg.content as Record<string, unknown>[]) {
-      if (b.type !== 'tool_result' || typeof b.tool_use_id !== 'string') continue;
-      const m = /agentId:\s*([a-f0-9]+)/.exec(resultToText(b.content));
-      if (m?.[1]) out.set(m[1], b.tool_use_id);
+      if (b.type !== 'tool_result' || typeof b.tool_use_id !== 'string') continue
+      const m = /agentId:\s*([a-f0-9]+)/.exec(resultToText(b.content))
+      if (m?.[1]) out.set(m[1], b.tool_use_id)
     }
   }
-  return out;
+  return out
 }
 
 /**
@@ -1270,17 +1219,14 @@ function agentIdToToolUse(rows: Record<string, unknown>[]): Map<string, string> 
  * rattacherait silencieusement un run au mauvais appel : mieux vaut un run sans
  * appel qu'un run mal attribué. Une description vide ne désigne rien.
  */
-function toolUseByDescription(
-  rows: Record<string, unknown>[],
-  description: string,
-): string | undefined {
-  if (!description) return undefined;
-  const hits: string[] = [];
+function toolUseByDescription(rows: Record<string, unknown>[], description: string): string | undefined {
+  if (!description) return undefined
+  const hits: string[] = []
   eachToolUse(rows, (id, name, input) => {
-    if (name !== 'Agent' && name !== 'Task') return;
-    if (input.description === description) hits.push(id);
-  });
-  return hits.length === 1 ? hits[0] : undefined;
+    if (name !== 'Agent' && name !== 'Task') return
+    if (input.description === description) hits.push(id)
+  })
+  return hits.length === 1 ? hits[0] : undefined
 }
 
 /**
@@ -1295,51 +1241,44 @@ function toolUseByDescription(
  * A run nobody can name still gets its rows and its `agentId`, which is enough
  * to color it apart from its siblings.
  */
-async function readSubagentRuns(
-  abs: string,
-  id: string,
-  mainRows: Record<string, unknown>[],
-): Promise<SubagentRun[]> {
-  const dir = join(dirname(abs), id, 'subagents');
-  if (!existsSync(dir)) return [];
+async function readSubagentRuns(abs: string, id: string, mainRows: Record<string, unknown>[]): Promise<SubagentRun[]> {
+  const dir = join(dirname(abs), id, 'subagents')
+  if (!existsSync(dir)) return []
 
-  const spawnedBy = agentIdToToolUse(mainRows);
-  const subagentTypeOf = new Map<string, string>();
+  const spawnedBy = agentIdToToolUse(mainRows)
+  const subagentTypeOf = new Map<string, string>()
   eachToolUse(mainRows, (toolUseId, name, input) => {
     if ((name === 'Agent' || name === 'Task') && typeof input.subagent_type === 'string') {
-      subagentTypeOf.set(toolUseId, input.subagent_type);
+      subagentTypeOf.set(toolUseId, input.subagent_type)
     }
-  });
+  })
 
-  let files: string[];
+  let files: string[]
   try {
-    files = (await readdir(dir)).filter((f) => f.endsWith('.jsonl'));
+    files = (await readdir(dir)).filter((f) => f.endsWith('.jsonl'))
   } catch {
-    return [];
+    return []
   }
 
-  const runs: SubagentRun[] = [];
+  const runs: SubagentRun[] = []
   for (const file of files) {
-    const agentId = file.replace(/^agent-/, '').replace(/\.jsonl$/, '');
-    let rows: Record<string, unknown>[];
+    const agentId = file.replace(/^agent-/, '').replace(/\.jsonl$/, '')
+    let rows: Record<string, unknown>[]
     try {
-      rows = parseJsonl(await readFile(join(dir, file), 'utf8'));
+      rows = parseJsonl(await readFile(join(dir, file), 'utf8'))
     } catch {
-      continue; // a sidecar we cannot read is a sub-agent we cannot show
+      continue // a sidecar we cannot read is a sub-agent we cannot show
     }
-    if (!rows.length) continue;
+    if (!rows.length) continue
 
-    let meta: Record<string, unknown> = {};
+    let meta: Record<string, unknown> = {}
     try {
-      meta = JSON.parse(await readFile(join(dir, `agent-${agentId}.meta.json`), 'utf8')) as Record<
-        string,
-        unknown
-      >;
+      meta = JSON.parse(await readFile(join(dir, `agent-${agentId}.meta.json`), 'utf8')) as Record<string, unknown>
     } catch {
       /* older runs wrote no meta — the fallbacks below cover them */
     }
 
-    const description = typeof meta.description === 'string' ? meta.description : '';
+    const description = typeof meta.description === 'string' ? meta.description : ''
     const toolUseId =
       (typeof meta.toolUseId === 'string' ? meta.toolUseId : undefined) ??
       spawnedBy.get(agentId) ??
@@ -1347,21 +1286,21 @@ async function readSubagentRuns(
       // s'en sert déjà pour *placer* le run ; l'identité en a le même besoin, et
       // sans elle un run parfaitement lisible n'a plus d'appel à qui se
       // rattacher — donc pas de statut, et aucune carte pour le montrer.
-      toolUseByDescription(mainRows, description);
-    const attributed = rows.find((r) => typeof r.attributionAgent === 'string');
+      toolUseByDescription(mainRows, description)
+    const attributed = rows.find((r) => typeof r.attributionAgent === 'string')
     const agentType =
       (typeof meta.agentType === 'string' ? meta.agentType : undefined) ??
       (toolUseId ? subagentTypeOf.get(toolUseId) : undefined) ??
-      (attributed?.attributionAgent as string | undefined);
+      (attributed?.attributionAgent as string | undefined)
 
     // Stamp every row so the event loop can carry the identity through without
     // knowing the file it came from.
     for (const r of rows) {
-      r.agentId = agentId;
-      if (agentType) r.agentType = agentType;
+      r.agentId = agentId
+      if (agentType) r.agentType = agentType
     }
 
-    const firstTs = str(rows[0]?.timestamp);
+    const firstTs = str(rows[0]?.timestamp)
 
     runs.push({
       agentId,
@@ -1371,12 +1310,12 @@ async function readSubagentRuns(
       startedAt: firstTs ? Date.parse(firstTs) : 0,
       spawnDepth: typeof meta.spawnDepth === 'number' ? meta.spawnDepth : 1,
       rows,
-    });
+    })
   }
 
   // Shallow runs first: a nested agent anchors to a tool_use that only exists
   // once its parent's rows have been spliced in.
-  return runs.sort((a, b) => a.spawnDepth - b.spawnDepth);
+  return runs.sort((a, b) => a.spawnDepth - b.spawnDepth)
 }
 
 /**
@@ -1396,37 +1335,37 @@ async function readSubagentRuns(
  */
 function anchorIndex(rows: Record<string, unknown>[], run: SubagentRun): number {
   if (run.toolUseId) {
-    let at = -1;
+    let at = -1
     eachToolUse(rows, (id, _name, _input, rowIndex) => {
-      if (id === run.toolUseId && at === -1) at = rowIndex;
-    });
-    if (at !== -1) return at;
+      if (id === run.toolUseId && at === -1) at = rowIndex
+    })
+    if (at !== -1) return at
   }
 
   if (run.description) {
-    const hits: number[] = [];
+    const hits: number[] = []
     eachToolUse(rows, (_id, name, input, rowIndex) => {
-      if (name !== 'Agent' && name !== 'Task') return;
-      if (input.description !== run.description) return;
-      const type = input.subagent_type;
-      if (run.agentType && typeof type === 'string' && type !== run.agentType) return;
-      hits.push(rowIndex);
-    });
-    if (hits.length === 1) return hits[0] as number;
+      if (name !== 'Agent' && name !== 'Task') return
+      if (input.description !== run.description) return
+      const type = input.subagent_type
+      if (run.agentType && typeof type === 'string' && type !== run.agentType) return
+      hits.push(rowIndex)
+    })
+    if (hits.length === 1) return hits[0] as number
   }
 
   // Chronological: after the last row written before this run began.
   if (run.startedAt) {
-    let at = -1;
+    let at = -1
     rows.forEach((r, i) => {
-      if (r.agentId) return; // never anchor inside another run's rows
-      const ts = str(r.timestamp);
-      if (ts && Date.parse(ts) <= run.startedAt) at = i;
-    });
-    if (at !== -1) return at;
+      if (r.agentId) return // never anchor inside another run's rows
+      const ts = str(r.timestamp)
+      if (ts && Date.parse(ts) <= run.startedAt) at = i
+    })
+    if (at !== -1) return at
   }
 
-  return -1;
+  return -1
 }
 
 /**
@@ -1439,14 +1378,14 @@ function anchorIndex(rows: Record<string, unknown>[], run: SubagentRun): number 
  */
 function spliceSubagentRuns(rows: Record<string, unknown>[], runs: SubagentRun[]): void {
   for (const run of runs) {
-    const at = anchorIndex(rows, run);
-    if (at === -1) rows.push(...run.rows);
-    else rows.splice(at + 1, 0, ...run.rows);
+    const at = anchorIndex(rows, run)
+    if (at === -1) rows.push(...run.rows)
+    else rows.splice(at + 1, 0, ...run.rows)
   }
 }
 
 /** Les mots par lesquels une notification dit que le run a mal fini. */
-const FAILED_STATUS = /^(fail|error|abort|cancel|interrupt)/i;
+const FAILED_STATUS = /^(fail|error|abort|cancel|interrupt)/i
 
 /**
  * Où en est un run, par ordre décroissant de fiabilité du signal.
@@ -1466,21 +1405,21 @@ function runStatus(notif: Block | undefined, call: Block | undefined): SubagentR
     // Le corpus n'a jamais écrit autre chose que `completed`, mais le champ est
     // libre : on ne reconnaît l'échec qu'à des mots qui le disent, et tout le
     // reste est une fin sans erreur signalée — jamais l'inverse.
-    return FAILED_STATUS.test(notif.status ?? '') ? 'failed' : 'completed';
+    return FAILED_STATUS.test(notif.status ?? '') ? 'failed' : 'completed'
   }
-  if (!call) return 'unknown';
-  const result = call.result;
-  if (!result) return 'running';
-  if (result.isError) return 'failed';
-  return result.content.trimStart().startsWith('Async agent launched') ? 'running' : 'completed';
+  if (!call) return 'unknown'
+  const result = call.result
+  if (!result) return 'running'
+  if (result.isError) return 'failed'
+  return result.content.trimStart().startsWith('Async agent launched') ? 'running' : 'completed'
 }
 
 // ── Parser ───────────────────────────────────────────────────────────────────
 
 /** Parse a whole transcript file into the normalised replay model. */
 export async function parseTranscript(abs: string, id: string): Promise<ParsedTranscript> {
-  const raw = await readFile(abs, 'utf8');
-  const rows = parseJsonl(raw);
+  const raw = await readFile(abs, 'utf8')
+  const rows = parseJsonl(raw)
 
   // Before anything reads `rows`: a sub-agent's tool calls must be indexed with
   // the session's own, and its turns must already sit in the stream.
@@ -1489,15 +1428,15 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
   // `toolUseId`, `description` et `spawnDepth` ne se lisent que sur le disque, et
   // le client en a besoin pour nommer ses pistes et rattacher chaque run à
   // l'appel qui l'a lancé.
-  const subagentRuns = await readSubagentRuns(abs, id, rows);
-  spliceSubagentRuns(rows, subagentRuns);
+  const subagentRuns = await readSubagentRuns(abs, id, rows)
+  spliceSubagentRuns(rows, subagentRuns)
 
   /** Ce que la boucle d'événements ajoutera à chaque run, à mesure. */
   interface RunTally {
-    turns: number;
-    events: number;
-    tokens: Usage;
-    lastActivityAt: number;
+    turns: number
+    events: number
+    tokens: Usage
+    lastActivityAt: number
   }
   const tallyByAgentId = new Map<string, RunTally>(
     subagentRuns.map((run) => [
@@ -1509,52 +1448,52 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
         lastActivityAt: run.startedAt,
       },
     ]),
-  );
+  )
 
   // Pass 1 — index every tool_result by its tool_use_id so tool calls can carry
   // their output inline (results live in the *next* user message, keyed by id).
   // Collect the tool_use ids too: a hook is tied to a tool call only if its
   // `toolUseID` names one (lifecycle hooks carry an unrelated uuid there).
-  const resultsById = new Map<string, ToolResult>();
-  const toolUseIds = new Set<string>();
+  const resultsById = new Map<string, ToolResult>()
+  const toolUseIds = new Set<string>()
   /** Par `tool_use_id`, le nom de l'outil — connu avant son résultat, qui suit. */
-  const toolNameById = new Map<string, string>();
+  const toolNameById = new Map<string, string>()
   // Le palier de vision vaut pour toute la session : il se lit une fois, sur
   // l'ensemble des lignes, avant que la moindre image soit chiffrée.
-  const hiRes = hasHiResVision(rows);
+  const hiRes = hasHiResVision(rows)
   for (const r of rows) {
-    const msg = r.message as Record<string, unknown> | undefined;
-    if (!msg || !Array.isArray(msg.content)) continue;
-    const blocks = msg.content as Record<string, unknown>[];
-    const shotsByTool = rowImages(r, hiRes).byTool;
+    const msg = r.message as Record<string, unknown> | undefined
+    if (!msg || !Array.isArray(msg.content)) continue
+    const blocks = msg.content as Record<string, unknown>[]
+    const shotsByTool = rowImages(r, hiRes).byTool
     // `toolUseResult` est porté par la *ligne*, pas par le bloc : il n'a de sens
     // que s'il n'y a qu'un résultat à qui l'attribuer. En pratique c'est toujours
     // le cas — aucune exception rencontrée —, mais deviner serait pire que se taire.
-    const soleResult = blocks.filter((b) => b.type === 'tool_result').length === 1;
+    const soleResult = blocks.filter((b) => b.type === 'tool_result').length === 1
     for (const b of blocks) {
       if (b.type === 'tool_result') {
-        const id = str(b.tool_use_id);
-        const shots = shotsByTool.get(id);
-        const meta = soleResult ? structuredResult(toolNameById.get(id), r.toolUseResult) : null;
+        const id = str(b.tool_use_id)
+        const shots = shotsByTool.get(id)
+        const meta = soleResult ? structuredResult(toolNameById.get(id), r.toolUseResult) : null
         resultsById.set(id, {
           content: resultToText(b.content),
           isError: Boolean(b.is_error),
           ...(shots?.length ? { images: shots } : {}),
           ...(meta ? { meta } : {}),
-        });
+        })
       } else if (b.type === 'tool_use' && typeof b.id === 'string') {
-        toolUseIds.add(b.id);
-        toolNameById.set(b.id, str(b.name));
+        toolUseIds.add(b.id)
+        toolNameById.set(b.id, str(b.name))
       }
     }
   }
 
   // Pass 1b — gather every hook run, before the event stream is built, so a run
   // can be attached to its tool call whichever line came first.
-  const silent = new SilentHookTally();
-  const hooksByToolUse = new Map<string, HookRun[]>();
+  const silent = new SilentHookTally()
+  const hooksByToolUse = new Map<string, HookRun[]>()
   /** Runs with no tool call to hang off, keyed by the row that produced them. */
-  const looseHooks = new Map<string, HookRun[]>();
+  const looseHooks = new Map<string, HookRun[]>()
   /**
    * `hook_success` then `hook_additional_context` describe one run: the first
    * carries the command and timing, the second repeats the injected text. Merge
@@ -1565,105 +1504,104 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
    * event — a `SessionStart` pair writes `toolUseID` as a uuid on one line and
    * as the literal `"SessionStart"` on the other — so the event is the key.
    */
-  const mergeKey = (run: HookRun): string =>
-    run.toolUseId && toolUseIds.has(run.toolUseId)
-      ? `tool:${run.toolUseId}|${run.name}`
-      : `lifecycle:${run.event}`;
-  const runByKey = new Map<string, HookRun>();
+  function mergeKey(run: HookRun): string {
+    return run.toolUseId && toolUseIds.has(run.toolUseId) ? `tool:${run.toolUseId}|${run.name}` : `lifecycle:${run.event}`
+  }
+  const runByKey = new Map<string, HookRun>()
   /**
    * Rewinding a session replays earlier lines verbatim, so the same run can be
    * written twice. A tool call fires a given hook once — a second identical
    * record is that replay, not a second execution. (Summaries are exempt: their
    * command repeats every turn by design.)
    */
-  const seenRuns = new Set<string>();
+  const seenRuns = new Set<string>()
 
   // Collect and merge first — a run is only classified once every line that can
   // still change it has been read.
-  const collected: { rowUuid: string; run: HookRun }[] = [];
+  const collected: { rowUuid: string; run: HookRun }[] = []
   for (const r of rows) {
-    const type = str(r.type);
-    const rowUuid = str(r.uuid);
+    const type = str(r.type)
+    const rowUuid = str(r.uuid)
 
     if (type === 'attachment') {
-      const a = r.attachment as Record<string, unknown> | undefined;
-      if (!a) continue;
-      const run = hookRunFromAttachment(a);
-      if (!run) continue;
+      const a = r.attachment as Record<string, unknown> | undefined
+      if (!a) continue
+      const run = hookRunFromAttachment(a)
+      if (!run) continue
 
-      const key = mergeKey(run);
-      const previous = runByKey.get(key);
+      const key = mergeKey(run)
+      const previous = runByKey.get(key)
       if (previous && a.type === 'hook_additional_context') {
         if (!previous.context?.length) {
-          previous.context = run.context;
-          if (previous.status === 'ok') previous.status = 'context';
+          previous.context = run.context
+          if (previous.status === 'ok') previous.status = 'context'
         }
-        continue; // folded into the run already collected
+        continue // folded into the run already collected
       }
 
       // Keyed on the raw `toolUseID`, not on `key`: two genuine SessionStarts
       // share an event but not a uuid, and must both survive.
-      const identity = `${run.toolUseId ?? ''}|${run.name}|${run.command ?? ''}|${run.status}|${run.exitCode ?? ''}`;
-      if (seenRuns.has(identity)) continue; // replayed by a rewind
-      seenRuns.add(identity);
+      const identity = `${run.toolUseId ?? ''}|${run.name}|${run.command ?? ''}|${run.status}|${run.exitCode ?? ''}`
+      if (seenRuns.has(identity)) continue // replayed by a rewind
+      seenRuns.add(identity)
 
-      runByKey.set(key, run);
-      collected.push({ rowUuid, run });
+      runByKey.set(key, run)
+      collected.push({ rowUuid, run })
     } else if (type === 'system' && isHookSummary(r.subtype as string | undefined)) {
-      for (const run of hookRunsFromSummary(r)) collected.push({ rowUuid, run });
+      for (const run of hookRunsFromSummary(r)) collected.push({ rowUuid, run })
     }
   }
 
   for (const { rowUuid, run } of collected) {
     if (isSilent(run)) {
-      silent.add(run);
-      continue;
+      silent.add(run)
+      continue
     }
-    const tid = run.toolUseId;
+    const tid = run.toolUseId
     if (tid && toolUseIds.has(tid)) {
-      const list = hooksByToolUse.get(tid);
-      if (list) list.push(run);
-      else hooksByToolUse.set(tid, [run]);
+      const list = hooksByToolUse.get(tid)
+      if (list) list.push(run)
+      else hooksByToolUse.set(tid, [run])
     } else {
-      const list = looseHooks.get(rowUuid);
-      if (list) list.push(run);
-      else looseHooks.set(rowUuid, [run]);
+      const list = looseHooks.get(rowUuid)
+      if (list) list.push(run)
+      else looseHooks.set(rowUuid, [run])
     }
   }
 
   // Pass 2 — build the ordered event stream.
-  const events: TranscriptEvent[] = [];
-  const tools: Record<string, number> = {};
-  const models = new Set<string>();
-  let tokensIn = 0;
-  let tokensOut = 0;
-  let cacheRead = 0;
-  let cacheCreate = 0;
-  let costUsd = 0;
+  const events: TranscriptEvent[] = []
+  const tools: Record<string, number> = {}
+  const models = new Set<string>()
+  let tokensIn = 0
+  let tokensOut = 0
+  let cacheRead = 0
+  let cacheCreate = 0
+  let costUsd = 0
   /** A response ran on a model we have no price for: `costUsd` is then a floor. */
-  let costPartial = false;
-  let toolCalls = 0;
-  let userTurns = 0;
-  let assistantTurns = 0;
-  let firstPrompt = '';
-  let cwd = '';
-  let gitBranch = '';
-  let version = '';
-  let sessionId = '';
-  let hasSidechain = false;
-  let startedAt = 0;
-  let endedAt = 0;
+  let costPartial = false
+  let toolCalls = 0
+  let userTurns = 0
+  let assistantTurns = 0
+  let firstPrompt = ''
+  let cwd = ''
+  let gitBranch = ''
+  let version = ''
+  let sessionId = ''
+  let hasSidechain = false
+  let startedAt = 0
+  let endedAt = 0
   // Claude Code writes one row per content block, so a single API response is
   // spread over several rows repeating the same `message.id`. Count each
   // response as one turn, or assistant turns inflate by the number of blocks it
   // produced. Their `usage` tallies are *not* identical: `output_tokens` grows
   // as the response streams, so the tokens of a response are the per-field
   // maximum over its rows — `countedById` tracks what each has contributed.
-  const seenAssistantIds = new Set<string>();
-  const countedById = new Map<string, Usage>();
+  const seenAssistantIds = new Set<string>()
+  const countedById = new Map<string, Usage>()
   /** Per `message.id`: index of the one event that shows the response's tally. */
-  const usageEventIdx = new Map<string, number>();
-  const titles = new TitleAccumulator();
+  const usageEventIdx = new Map<string, number>()
+  const titles = new TitleAccumulator()
   /**
    * Le nom du skill qu'un appel `Skill` a lancé, par identifiant d'appel.
    *
@@ -1675,53 +1613,50 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
    * Les lignes qui portent un `sourceToolUseID` désignent toutes un appel
    * `Skill` — aucun autre outil n'en produit.
    */
-  const skillCalls = new Map<string, string>();
+  const skillCalls = new Map<string, string>()
 
-  const context = new ContextAccumulator();
+  const context = new ContextAccumulator()
   /** Per `message.id`: the turn awaiting its exact total, known only after the fold. */
-  const pendingTurns = new Map<string, TurnContext>();
+  const pendingTurns = new Map<string, TurnContext>()
 
   for (const r of rows) {
-    titles.push(r);
-    const type = str(r.type);
-    const rawTs = str(r.timestamp);
-    const ts = rawTs ? Date.parse(rawTs) : 0;
+    titles.push(r)
+    const type = str(r.type)
+    const rawTs = str(r.timestamp)
+    const ts = rawTs ? Date.parse(rawTs) : 0
     if (ts) {
-      if (!startedAt) startedAt = ts;
-      endedAt = ts;
+      if (!startedAt) startedAt = ts
+      endedAt = ts
     }
-    if (typeof r.cwd === 'string' && r.cwd) cwd = r.cwd;
-    if (typeof r.gitBranch === 'string' && r.gitBranch) gitBranch = r.gitBranch;
-    if (typeof r.version === 'string' && r.version) version = r.version;
-    if (typeof r.sessionId === 'string' && r.sessionId) sessionId = r.sessionId;
-    const isSidechain = Boolean(r.isSidechain);
-    if (isSidechain) hasSidechain = true;
-    const isMeta = Boolean(r.isMeta);
+    if (typeof r.cwd === 'string' && r.cwd) cwd = r.cwd
+    if (typeof r.gitBranch === 'string' && r.gitBranch) gitBranch = r.gitBranch
+    if (typeof r.version === 'string' && r.version) version = r.version
+    if (typeof r.sessionId === 'string' && r.sessionId) sessionId = r.sessionId
+    const isSidechain = Boolean(r.isSidechain)
+    if (isSidechain) hasSidechain = true
+    const isMeta = Boolean(r.isMeta)
     // A `user` row is a genuine typed prompt only when it originates from a
     // human. Harness-injected rows (task-notifications, hook output, …) also
     // carry `type:'user'` but come from `origin.kind` other than 'human' /
     // `promptSource:'system'`. Older transcripts lack both fields → treat as
     // human (unchanged behaviour).
-    const originObj = r.origin as Record<string, unknown> | undefined;
-    const originKind = typeof originObj?.kind === 'string' ? originObj.kind : undefined;
+    const originObj = r.origin as Record<string, unknown> | undefined
+    const originKind = typeof originObj?.kind === 'string' ? originObj.kind : undefined
     // After a compaction the harness re-sends the summarised history as a plain
     // `user` row. It carries no `origin`, so without this flag it reads as the
     // human opening the next turn with "This session is being continued from…".
-    const isCompactSummary = type === 'user' && r.isCompactSummary === true;
+    const isCompactSummary = type === 'user' && r.isCompactSummary === true
     const isInjectedUser =
-      type === 'user' &&
-      (isCompactSummary ||
-        r.promptSource === 'system' ||
-        (originKind !== undefined && originKind !== 'human'));
+      type === 'user' && (isCompactSummary || r.promptSource === 'system' || (originKind !== undefined && originKind !== 'human'))
 
     if (type === 'user' || type === 'assistant') {
-      const msg = (r.message ?? {}) as Record<string, unknown>;
-      let blocks = toBlocks(msg.content, rowImages(r, hiRes), type === 'assistant');
-      if (!blocks.length) continue;
+      const msg = (r.message ?? {}) as Record<string, unknown>
+      let blocks = toBlocks(msg.content, rowImages(r, hiRes), type === 'assistant')
+      if (!blocks.length) continue
 
       for (const b of blocks) {
         if (b.kind === 'tool_use' && b.name === 'Skill' && b.id) {
-          skillCalls.set(b.id, str(((b.input ?? {}) as Record<string, unknown>).skill));
+          skillCalls.set(b.id, str(((b.input ?? {}) as Record<string, unknown>).skill))
         }
       }
 
@@ -1729,110 +1664,107 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
       // them for what they are, or the timeline shows the human saying
       // "<command-name>/compact</command-name>". Keyed off the row's first text
       // block: `/init` puts `<command-message>` ahead of `<command-name>`.
-      let localRow: LocalRow | null = null;
-      const lead = blocks.find((b) => b.kind === 'text' && (b.text ?? '').trim())?.text ?? '';
+      let localRow: LocalRow | null = null
+      const lead = blocks.find((b) => b.kind === 'text' && (b.text ?? '').trim())?.text ?? ''
       // Un message d'équipier arrive dans une ligne `user` que rien ne marque.
       // Il faut le reconnaître au texte, et seulement quand la ligne s'ouvre
       // dessus : un rapport d'agent qui *cite* la balise n'en est pas un.
-      const teammate =
-        type === 'user' && lead.trimStart().startsWith('<teammate-message')
-          ? teammateBlocks(lead)
-          : null;
+      const teammate = type === 'user' && lead.trimStart().startsWith('<teammate-message') ? teammateBlocks(lead) : null
       if (teammate) {
-        localRow = 'teammate';
-        blocks = teammate;
+        localRow = 'teammate'
+        blocks = teammate
       } else if (type === 'user' && lead) {
-        localRow = classifyLocalCommand(lead);
-        if (localRow === 'caveat') continue; // Boilerplate addressed to the model.
+        localRow = classifyLocalCommand(lead)
+        if (localRow === 'caveat') continue // Boilerplate addressed to the model.
         if (localRow === 'command' || localRow === 'bash') {
-          const block = localRow === 'bash' ? bashInputBlock(lead) : slashCommandBlock(lead);
-          if (!block) continue;
-          blocks = [block];
+          const block = localRow === 'bash' ? bashInputBlock(lead) : slashCommandBlock(lead)
+          if (!block) continue
+          blocks = [block]
         } else if (localRow === 'stdout') {
-          const out = commandOutput(lead);
-          if (!out) continue; // The command printed nothing.
-          blocks = [{ kind: 'text', text: out }];
+          const out = commandOutput(lead)
+          if (!out) continue // The command printed nothing.
+          blocks = [{ kind: 'text', text: out }]
         } else if (localRow === 'reminder') {
           // Shown as injected context; the wrapper itself says nothing.
-          const inner = lead.replace(/<\/?system-reminder>/g, '').trim();
-          if (!inner) continue;
-          blocks = [{ kind: 'text', text: inner }];
+          const inner = lead.replace(/<\/?system-reminder>/g, '').trim()
+          if (!inner) continue
+          blocks = [{ kind: 'text', text: inner }]
         }
       }
 
       // A task-notification is a single XML blob — parse it into a structured
       // block the UI can render as an agent report card.
       if (isInjectedUser && originKind === 'task-notification') {
-        blocks = [parseTaskNotification(blocks.map((b) => b.text ?? '').join('\n'))];
+        blocks = [parseTaskNotification(blocks.map((b) => b.text ?? '').join('\n'))]
       }
 
       // Attach tool_result to tool_use; a user message that is *only* tool
       // results is a harness echo — drop it (its output already lives inline).
-      const meaningful: Block[] = [];
+      const meaningful: Block[] = []
       for (const b of blocks) {
         if (b.kind === 'tool_use' && b.id) {
-          b.result = resultsById.get(b.id) ?? null;
-          const hooks = hooksByToolUse.get(b.id);
-          if (hooks?.length) b.hooks = hooks;
-          toolCalls++;
-          tools[b.name ?? 'tool'] = (tools[b.name ?? 'tool'] ?? 0) + 1;
-          meaningful.push(b);
+          b.result = resultsById.get(b.id) ?? null
+          const hooks = hooksByToolUse.get(b.id)
+          if (hooks?.length) b.hooks = hooks
+          toolCalls++
+          tools[b.name ?? 'tool'] = (tools[b.name ?? 'tool'] ?? 0) + 1
+          meaningful.push(b)
         } else if (b.kind === 'tool_result') {
           // Swallowed — surfaced under its tool_use. Keep only if orphaned.
-          if (!b.toolUseId || !hasToolUse(rows, b.toolUseId)) meaningful.push(b);
+          if (!b.toolUseId || !hasToolUse(rows, b.toolUseId)) meaningful.push(b)
         } else {
-          meaningful.push(b);
+          meaningful.push(b)
         }
       }
-      if (!meaningful.length) continue;
+      if (!meaningful.length) continue
 
       // Rows lacking an id (older transcripts, user rows) can't be deduped —
       // count them, since they carry at most one usage payload each.
-      const msgId = typeof msg.id === 'string' ? msg.id : undefined;
-      const firstSeen = !msgId || !seenAssistantIds.has(msgId);
-      if (msgId) seenAssistantIds.add(msgId);
+      const msgId = typeof msg.id === 'string' ? msg.id : undefined
+      const firstSeen = !msgId || !seenAssistantIds.has(msgId)
+      if (msgId) seenAssistantIds.add(msgId)
 
-      const model = typeof msg.model === 'string' ? msg.model : undefined;
-      if (model) models.add(model);
+      const model = typeof msg.model === 'string' ? msg.model : undefined
+      if (model) models.add(model)
 
       // Ce que cette ligne doit à son run, s'il y en a un. Les compteurs du run
       // sont tenus ici, dans la boucle qui sait déjà dédupliquer une réponse
       // écrite sur plusieurs lignes ; les refaire après coup demanderait de
       // reproduire cette arithmétique, et donc de la faire dériver un jour.
-      const runTally = typeof r.agentId === 'string' ? tallyByAgentId.get(r.agentId) : undefined;
-      if (runTally && ts) runTally.lastActivityAt = Math.max(runTally.lastActivityAt, ts);
-      if (runTally && type === 'assistant' && firstSeen) runTally.turns++;
+      const runTally = typeof r.agentId === 'string' ? tallyByAgentId.get(r.agentId) : undefined
+      if (runTally && ts) runTally.lastActivityAt = Math.max(runTally.lastActivityAt, ts)
+      if (runTally && type === 'assistant' && firstSeen) runTally.turns++
 
-      const usage = normUsage(msg.usage as Record<string, unknown> | undefined);
+      const usage = normUsage(msg.usage as Record<string, unknown> | undefined)
       if (usage) {
         // Rows without an id carry at most one payload each, so they count in
         // full. A repeat of a known id tops the totals up by however much its
         // later snapshot grew.
-        const counted = msgId ? countedById.get(msgId) : undefined;
-        const delta = counted ? growth(counted, usage) : usage;
-        tokensIn += delta.input;
-        tokensOut += delta.output;
-        cacheRead += delta.cacheRead;
-        cacheCreate += delta.cacheCreate;
-        if (msgId && !counted) countedById.set(msgId, { ...usage });
+        const counted = msgId ? countedById.get(msgId) : undefined
+        const delta = counted ? growth(counted, usage) : usage
+        tokensIn += delta.input
+        tokensOut += delta.output
+        cacheRead += delta.cacheRead
+        cacheCreate += delta.cacheCreate
+        if (msgId && !counted) countedById.set(msgId, { ...usage })
 
         // Le run paie la même croissance que la session, jamais l'`usage` brut :
         // une réponse écrite sur cinq lignes serait sinon comptée cinq fois.
         if (runTally) {
-          runTally.tokens.input += delta.input;
-          runTally.tokens.output += delta.output;
-          runTally.tokens.cacheRead += delta.cacheRead;
-          runTally.tokens.cacheCreate += delta.cacheCreate;
+          runTally.tokens.input += delta.input
+          runTally.tokens.output += delta.output
+          runTally.tokens.cacheRead += delta.cacheRead
+          runTally.tokens.cacheCreate += delta.cacheCreate
         }
 
         // Cost is summed per response, at that response's own model and rate — a
         // session that switched models cannot be priced from its totals alone. A
         // model we have no price for (a local one, `<synthetic>`) leaves the
         // figure a floor, flagged so the panel can say "au moins".
-        const day = ts ? new Date(ts).toISOString().slice(0, 10) : '';
-        const c = model ? costOf(model, delta, day) : null;
-        if (c === null) costPartial = true;
-        else costUsd += c;
+        const day = ts ? new Date(ts).toISOString().slice(0, 10) : ''
+        const c = model ? costOf(model, delta, day) : null
+        if (c === null) costPartial = true
+        else costUsd += c
       }
 
       // Sub-agent rows are excluded here and nowhere else. A `user` row inside a
@@ -1841,13 +1773,13 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
       // tallies below *do* count them: that work happened, and the timeline now
       // shows it.
       if (type === 'user' && !isMeta && !isInjectedUser && !localRow && !isSidechain) {
-        userTurns++;
+        userTurns++
         if (!firstPrompt) {
-          const t = (meaningful.find((b) => b.kind === 'text')?.text ?? '').trim();
-          if (t && !t.startsWith('<')) firstPrompt = t.replace(/\s+/g, ' ').slice(0, 200);
+          const t = (meaningful.find((b) => b.kind === 'text')?.text ?? '').trim()
+          if (t && !t.startsWith('<')) firstPrompt = t.replace(/\s+/g, ' ').slice(0, 200)
         }
       } else if (type === 'assistant' && firstSeen && !isSidechain) {
-        assistantTurns++;
+        assistantTurns++
       }
 
       // A sub-agent runs in a context window of its own — a few thousand tokens,
@@ -1863,13 +1795,13 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
         // they only weigh on the turns that follow, which is why they are added
         // after the snapshot, never before.
         if (type === 'assistant' && firstSeen && msgId) {
-          pendingTurns.set(msgId, context.beginTurn(str(r.uuid), ts));
+          pendingTurns.set(msgId, context.beginTurn(str(r.uuid), ts))
         }
-        const turnIndex = context.currentTurnIndex();
+        const turnIndex = context.currentTurnIndex()
         for (const b of meaningful) {
           if (b.kind === 'thinking' || (b.kind === 'text' && type === 'assistant')) {
-            const kind = b.kind === 'thinking' ? 'thinking' : 'text';
-            context.addThinking(turnIndex, kind, b.text ?? '');
+            const kind = b.kind === 'thinking' ? 'thinking' : 'text'
+            context.addThinking(turnIndex, kind, b.text ?? '')
           } else if (b.kind === 'tool_use') {
             // Both directions. A tool's arguments are context too — the model is
             // billed for the file it hands `Write` exactly as for the one `Read`
@@ -1882,28 +1814,15 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
               b.result?.content ?? '',
               b.result?.isError ?? false,
               imageTokens(b.result?.images),
-            );
+            )
           } else if (b.kind === 'tool_result') {
             // A result whose call could not be paired: its input, and the name of
             // the tool that made it, are already lost.
-            context.addToolCall(
-              turnIndex,
-              '',
-              '',
-              b.content ?? '',
-              b.isError ?? false,
-              imageTokens(b.images),
-            );
-          } else if (
-            b.kind === 'text' &&
-            type === 'user' &&
-            !isInjectedUser &&
-            !isMeta &&
-            !localRow
-          ) {
+            context.addToolCall(turnIndex, '', '', b.content ?? '', b.isError ?? false, imageTokens(b.images))
+          } else if (b.kind === 'text' && type === 'user' && !isInjectedUser && !isMeta && !localRow) {
             // Only what the human actually typed. Harness-injected `user` rows are
             // bookkeeping, and counting them as "your message" would be a lie.
-            context.addText('userMessage', b.text ?? '', turnIndex);
+            context.addText('userMessage', b.text ?? '', turnIndex)
           }
         }
       }
@@ -1912,10 +1831,10 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
       // token badge, and it carries the consolidated tally (set after the loop,
       // once every row of the response has been folded in).
       if (msgId && usage) {
-        const prevIdx = usageEventIdx.get(msgId);
-        const prevEvent = prevIdx === undefined ? undefined : events[prevIdx];
-        if (prevEvent) prevEvent.usage = undefined;
-        usageEventIdx.set(msgId, events.length);
+        const prevIdx = usageEventIdx.get(msgId)
+        const prevEvent = prevIdx === undefined ? undefined : events[prevIdx]
+        if (prevEvent) prevEvent.usage = undefined
+        usageEventIdx.set(msgId, events.length)
       }
 
       events.push({
@@ -1926,20 +1845,14 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
         timestamp: ts,
         isSidechain,
         isMeta,
-        origin:
-          type === 'user'
-            ? userOrigin(isInjectedUser, originKind, localRow, isCompactSummary)
-            : undefined,
+        origin: type === 'user' ? userOrigin(isInjectedUser, originKind, localRow, isCompactSummary) : undefined,
         model,
         usage,
         gitBranch: typeof r.gitBranch === 'string' ? r.gitBranch : undefined,
         skill: skillCalls.get(str(r.sourceToolUseID)),
         blocks: meaningful,
-      });
-    } else if (
-      type === 'attachment' ||
-      (type === 'system' && isHookSummary(r.subtype as string | undefined))
-    ) {
+      })
+    } else if (type === 'attachment' || (type === 'system' && isHookSummary(r.subtype as string | undefined))) {
       // An attachment row is how the harness records what it pushed into the
       // context window — a CLAUDE.md layer, the skill listing, an @-mentioned
       // file. That text never reaches the timeline (it is not something anyone
@@ -1947,8 +1860,8 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
       // …of *this* session. A sub-agent's own attachments (276 rows across the
       // corpus) entered its window, never the parent's.
       if (type === 'attachment' && !isSidechain) {
-        const injection = classifyAttachment(r.attachment);
-        if (injection) context.add(injection);
+        const injection = classifyAttachment(r.attachment)
+        if (injection) context.add(injection)
 
         // Sauf une : celle-ci porte bien quelque chose que quelqu'un a dit. Elle
         // devient un tour à part entière, ce qui coupe en deux le tour qu'elle a
@@ -1961,7 +1874,7 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
         // Le rapport d'un agent asynchrone, quand la file l'a apporté. Même
         // événement que sur le chemin `user` — même origine, même bloc — pour
         // qu'il se rende et se compte pareil des deux côtés.
-        const notified = queuedTaskNotification(r.attachment);
+        const notified = queuedTaskNotification(r.attachment)
         if (notified) {
           events.push({
             uuid: str(r.uuid),
@@ -1973,11 +1886,11 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
             isMeta,
             origin: 'task-notification',
             blocks: [parseTaskNotification(notified)],
-          });
-          continue;
+          })
+          continue
         }
 
-        const queued = queuedHumanPrompt(r.attachment);
+        const queued = queuedHumanPrompt(r.attachment)
         if (queued) {
           events.push({
             uuid: str(r.uuid),
@@ -1989,15 +1902,15 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
             isMeta,
             origin: 'queued',
             blocks: [{ kind: 'text', text: queued }],
-          });
-          continue;
+          })
+          continue
         }
 
         // Et une autre encore : le changement de régime. Ces lignes ne portent
         // aucun texte — `classifyAttachment` a raison de les laisser hors du
         // compte du contexte — mais elles disent quand la session est passée en
         // lecture seule, ce qu'aucune autre ligne ne dit.
-        const mark = planModeMark(r.attachment);
+        const mark = planModeMark(r.attachment)
         if (mark) {
           events.push({
             uuid: str(r.uuid),
@@ -2008,15 +1921,15 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
             isMeta,
             planMode: mark,
             blocks: [],
-          });
-          continue;
+          })
+          continue
         }
       }
       // Otherwise these rows hold no renderable text of their own: both reach the
       // timeline only through the hook runs they produced, and only when those
       // runs said something.
-      const runs = looseHooks.get(str(r.uuid));
-      if (!runs?.length) continue;
+      const runs = looseHooks.get(str(r.uuid))
+      if (!runs?.length) continue
       for (const hook of runs) {
         events.push({
           uuid: `${str(r.uuid)}:${hook.name}:${events.length}`,
@@ -2027,16 +1940,16 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
           isMeta,
           hook,
           blocks: [],
-        });
+        })
       }
     } else if (type === 'system' && r.subtype === 'compact_boundary') {
       // The window was collapsed here. The harness records what it cost exactly
       // (`preTokens` → `postTokens`), so this deserves a first-class event rather
       // than the generic "Conversation compacted" system line it would otherwise
       // render as. Everything accumulated so far is gone from the model's view.
-      const compaction = readCompaction(r, ts);
+      const compaction = readCompaction(r, ts)
       if (compaction) {
-        context.compact(compaction);
+        context.compact(compaction)
         events.push({
           uuid: str(r.uuid),
           parentUuid: (r.parentUuid as string) ?? null,
@@ -2046,12 +1959,12 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
           isMeta,
           compaction,
           blocks: [],
-        });
+        })
       }
     } else if (type === 'system') {
-      const command = localCommandSystem(r);
-      const blocks = command ? command.blocks : systemBlocks(r);
-      if (!blocks.length) continue; // Pure telemetry: turn_duration, bridge_status, …
+      const command = localCommandSystem(r)
+      const blocks = command ? command.blocks : systemBlocks(r)
+      if (!blocks.length) continue // Pure telemetry: turn_duration, bridge_status, …
       events.push({
         uuid: str(r.uuid),
         parentUuid: (r.parentUuid as string) ?? null,
@@ -2063,7 +1976,7 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
         subtype: typeof r.subtype === 'string' ? r.subtype : undefined,
         level: typeof r.level === 'string' ? r.level : undefined,
         blocks,
-      });
+      })
     } else if (type === 'summary') {
       events.push({
         uuid: str(r.uuid, str(r.leafUuid)),
@@ -2073,7 +1986,7 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
         isSidechain,
         isMeta,
         blocks: typeof r.summary === 'string' ? [{ kind: 'text', text: r.summary }] : [],
-      });
+      })
     }
     // file-history-snapshot / last-prompt / mode → noise, skipped. The `*-title`
     // rows carry no event of their own but feed `titles` above.
@@ -2082,54 +1995,54 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
   // Give each response's surviving event the folded tally rather than whatever
   // partial snapshot its own row happened to hold.
   for (const [msgId, idx] of usageEventIdx) {
-    const total = countedById.get(msgId);
-    const event = events[idx];
-    if (total && event) event.usage = { ...total };
+    const total = countedById.get(msgId)
+    const event = events[idx]
+    if (total && event) event.usage = { ...total }
   }
 
-  markPlanMode(events);
+  markPlanMode(events)
 
   // Anchor each turn on the exact size of the context that produced it. Only now
   // is it known: it is the folded usage, not any single row's snapshot.
   for (const [msgId, turn] of pendingTurns) {
-    const usage = countedById.get(msgId);
-    if (usage) settleTurn(turn, usage.input + usage.cacheRead + usage.cacheCreate);
+    const usage = countedById.get(msgId)
+    if (usage) settleTurn(turn, usage.input + usage.cacheRead + usage.cacheCreate)
   }
 
   // Carry the sub-agent identity from the spliced-in rows onto their events. A
   // single pass keyed by uuid, rather than five spread-in fields at each of the
   // `events.push` sites — the rows are the only place the identity was stamped.
-  const identityByUuid = new Map<string, { agentId: string; agentType?: string }>();
-  const typeByAgentId = new Map<string, string>();
+  const identityByUuid = new Map<string, { agentId: string; agentType?: string }>()
+  const typeByAgentId = new Map<string, string>()
   for (const r of rows) {
-    if (typeof r.agentId !== 'string') continue;
-    const agentType = typeof r.agentType === 'string' ? r.agentType : undefined;
-    identityByUuid.set(str(r.uuid), { agentId: r.agentId, ...(agentType ? { agentType } : {}) });
-    if (agentType) typeByAgentId.set(r.agentId, agentType);
+    if (typeof r.agentId !== 'string') continue
+    const agentType = typeof r.agentType === 'string' ? r.agentType : undefined
+    identityByUuid.set(str(r.uuid), { agentId: r.agentId, ...(agentType ? { agentType } : {}) })
+    if (agentType) typeByAgentId.set(r.agentId, agentType)
   }
   /** Les rapports de fin, par `taskId` — le signal explicite d'un agent asynchrone. */
-  const notifByTaskId = new Map<string, Block>();
+  const notifByTaskId = new Map<string, Block>()
   /** Les appels d'outil, par id — pour retrouver l'appel `Agent` d'un run. */
-  const callById = new Map<string, Block>();
+  const callById = new Map<string, Block>()
 
   for (const event of events) {
-    const identity = identityByUuid.get(event.uuid);
+    const identity = identityByUuid.get(event.uuid)
     if (identity) {
-      event.agentId = identity.agentId;
-      if (identity.agentType) event.agentType = identity.agentType;
+      event.agentId = identity.agentId
+      if (identity.agentType) event.agentType = identity.agentType
       // Compté ici et pas dans la boucle : c'est le seul endroit qui connaisse
       // les événements réellement émis, une ligne pouvant n'en produire aucun.
-      const tally = tallyByAgentId.get(identity.agentId);
-      if (tally) tally.events++;
+      const tally = tallyByAgentId.get(identity.agentId)
+      if (tally) tally.events++
     }
     // A report sits on the main thread, so it never carries the run's identity —
     // but it names it in `<task-id>`. Resolve it here, where the runs are known.
     for (const b of event.blocks) {
-      if (b.kind === 'tool_use' && b.id) callById.set(b.id, b);
-      if (b.kind !== 'task_notification' || !b.taskId) continue;
-      notifByTaskId.set(b.taskId, b);
-      const agentType = typeByAgentId.get(b.taskId);
-      if (agentType) b.agentType = agentType;
+      if (b.kind === 'tool_use' && b.id) callById.set(b.id, b)
+      if (b.kind !== 'task_notification' || !b.taskId) continue
+      notifByTaskId.set(b.taskId, b)
+      const agentType = typeByAgentId.get(b.taskId)
+      if (agentType) b.agentType = agentType
     }
   }
 
@@ -2140,17 +2053,17 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
   // cette passe, le même `rf` est vert quand il parle et d'une autre teinte
   // quand il s'arrête, parce qu'il retombe sur le hachage de son nom. C'est le
   // transcript lui-même qui porte la réponse : il suffit de la lire une fois.
-  const hueByTeammate = new Map<string, string>();
+  const hueByTeammate = new Map<string, string>()
   for (const event of events) {
     for (const b of event.blocks) {
-      if (b.kind === 'teammate_message' && b.from && b.color) hueByTeammate.set(b.from, b.color);
+      if (b.kind === 'teammate_message' && b.from && b.color) hueByTeammate.set(b.from, b.color)
     }
   }
   for (const event of events) {
     for (const b of event.blocks) {
-      if (b.kind !== 'teammate_message' || b.color || !b.from) continue;
-      const hue = hueByTeammate.get(b.from);
-      if (hue) b.color = hue;
+      if (b.kind !== 'teammate_message' || b.color || !b.from) continue
+      const hue = hueByTeammate.get(b.from)
+      if (hue) b.color = hue
     }
   }
 
@@ -2159,13 +2072,10 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
   // `spawnDepth`, et c'est lui qui a permis l'insertion.
   const subagents: SubagentRunSummary[] = subagentRuns
     .map((run) => {
-      const tally = tallyByAgentId.get(run.agentId);
-      const status = runStatus(
-        notifByTaskId.get(run.agentId),
-        run.toolUseId ? callById.get(run.toolUseId) : undefined,
-      );
-      const terminal = status === 'completed' || status === 'failed';
-      const lastActivityAt = tally?.lastActivityAt ?? run.startedAt;
+      const tally = tallyByAgentId.get(run.agentId)
+      const status = runStatus(notifByTaskId.get(run.agentId), run.toolUseId ? callById.get(run.toolUseId) : undefined)
+      const terminal = status === 'completed' || status === 'failed'
+      const lastActivityAt = tally?.lastActivityAt ?? run.startedAt
       return {
         agentId: run.agentId,
         ...(run.agentType ? { agentType: run.agentType } : {}),
@@ -2179,17 +2089,17 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
         turns: tally?.turns ?? 0,
         events: tally?.events ?? 0,
         tokens: tally?.tokens ?? { input: 0, output: 0, cacheRead: 0, cacheCreate: 0 },
-      };
+      }
     })
     // Un run dont pas une ligne n'a survécu à la boucle — de la télémétrie, un
     // sidecar illisible — n'a rien à montrer : lui donner une piste, ce serait
     // promettre un flux vide au clic.
     .filter((run) => run.events > 0)
-    .sort((a, b) => a.startedAt - b.startedAt);
+    .sort((a, b) => a.startedAt - b.startedAt)
 
   // Le modèle configuré dit la fenêtre avant que la session ne l'ait prouvée —
   // c'est ce qui évite qu'une session jeune, suivie en direct, s'affiche sur 200k.
-  const configuredLong = await configuredLongWindow(cwd);
+  const configuredLong = await configuredLongWindow(cwd)
 
   return {
     id,
@@ -2222,19 +2132,19 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
     silentHooks: silent.result(),
     events,
     context: context.result(models, configuredLong),
-  };
+  }
 }
 
 /** True if any row holds a tool_use with this id (to detect orphan results). */
 function hasToolUse(rows: Record<string, unknown>[], id: string): boolean {
   for (const r of rows) {
-    const msg = r.message as Record<string, unknown> | undefined;
-    if (!msg || !Array.isArray(msg.content)) continue;
+    const msg = r.message as Record<string, unknown> | undefined
+    if (!msg || !Array.isArray(msg.content)) continue
     for (const b of msg.content as Record<string, unknown>[]) {
-      if (b.type === 'tool_use' && String(b.id) === id) return true;
+      if (b.type === 'tool_use' && String(b.id) === id) return true
     }
   }
-  return false;
+  return false
 }
 
 // ── Listing (session summaries for a project) ────────────────────────────────
@@ -2249,39 +2159,35 @@ function hasToolUse(rows: Record<string, unknown>[], id: string): boolean {
  * liste viennent donc du relevé de diagnostic, joint par `getProjectDetail`.
  */
 export async function summariseTranscript(abs: string, id: string): Promise<TranscriptSummary> {
-  const s = await stat(abs);
-  let firstPrompt = '';
-  let gitBranch = '';
-  let hasSidechain = false;
-  const titles = new TitleAccumulator();
+  const s = await stat(abs)
+  let firstPrompt = ''
+  let gitBranch = ''
+  let hasSidechain = false
+  const titles = new TitleAccumulator()
   try {
-    const raw = await readFile(abs, 'utf8');
+    const raw = await readFile(abs, 'utf8')
     for (const l of raw.split('\n')) {
-      if (!l.trim()) continue;
-      let j: Record<string, unknown>;
+      if (!l.trim()) continue
+      let j: Record<string, unknown>
       try {
-        j = JSON.parse(l) as Record<string, unknown>;
+        j = JSON.parse(l) as Record<string, unknown>
       } catch {
-        continue;
+        continue
       }
-      const t = j.type;
-      titles.push(j);
-      if (j.isSidechain) hasSidechain = true;
-      if (!gitBranch && typeof j.gitBranch === 'string') gitBranch = j.gitBranch;
+      const t = j.type
+      titles.push(j)
+      if (j.isSidechain) hasSidechain = true
+      if (!gitBranch && typeof j.gitBranch === 'string') gitBranch = j.gitBranch
       if (!firstPrompt && t === 'user' && !j.isMeta) {
-        const msg = j.message as Record<string, unknown> | undefined;
-        const c = msg?.content;
+        const msg = j.message as Record<string, unknown> | undefined
+        const c = msg?.content
         const text =
           typeof c === 'string'
             ? c
             : Array.isArray(c)
-              ? (((
-                  c.find((b) => (b as Record<string, unknown>).type === 'text') as
-                    Record<string, unknown> | undefined
-                )?.text as string) ?? '')
-              : '';
-        if (text && !text.startsWith('<'))
-          firstPrompt = text.replace(/\s+/g, ' ').trim().slice(0, 160);
+              ? (((c.find((b) => (b as Record<string, unknown>).type === 'text') as Record<string, unknown> | undefined)?.text as string) ?? '')
+              : ''
+        if (text && !text.startsWith('<')) firstPrompt = text.replace(/\s+/g, ' ').trim().slice(0, 160)
       }
     }
   } catch {
@@ -2296,7 +2202,7 @@ export async function summariseTranscript(abs: string, id: string): Promise<Tran
     hasSidechain,
     title: titles.title,
     titleSource: titles.source,
-  };
+  }
 }
 
 // `listTranscripts` vit dans `transcript-cache.ts` : lister, c'est résumer tout

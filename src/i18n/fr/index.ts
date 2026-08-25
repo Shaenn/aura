@@ -1,17 +1,17 @@
-import agent from './agent';
-import cli from './cli';
-import common from './common';
-import diagnostics from './diagnostics';
-import diff from './diff';
-import formats from './formats';
-import frontmatter from './frontmatter';
-import layout from './layout';
-import nav from './nav';
-import pages from './pages';
-import replay from './replay';
-import resources from './resources';
-import rules from './rules';
-import tools from './tools';
+import agent from './agent'
+import cli from './cli'
+import common from './common'
+import diagnostics from './diagnostics'
+import diff from './diff'
+import formats from './formats'
+import frontmatter from './frontmatter'
+import layout from './layout'
+import nav from './nav'
+import pages from './pages'
+import replay from './replay'
+import resources from './resources'
+import rules from './rules'
+import tools from './tools'
 
 const fr = {
   agent,
@@ -28,7 +28,7 @@ const fr = {
   resources,
   rules,
   tools,
-};
+}
 
 /**
  * La forme d'un catalogue, dérivée du français.
@@ -39,6 +39,6 @@ const fr = {
  * même principe que `shared/` — une divergence casse le typecheck plutôt que de
  * passer en silence jusqu'à l'écran.
  */
-export type MessageSchema = typeof fr;
+export type MessageSchema = typeof fr
 
-export default fr;
+export default fr

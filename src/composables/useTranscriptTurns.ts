@@ -12,8 +12,8 @@
 //
 // Nothing here calls the BFF. It is a pure view over `ParsedTranscript.events`.
 
-import { computed, type ComputedRef, type MaybeRefOrGetter, toValue } from 'vue';
-import type { TranscriptEvent } from '@/services/projects';
+import type { TranscriptEvent } from '@/services/projects'
+import { computed, type ComputedRef, type MaybeRefOrGetter, toValue } from 'vue'
 
 /**
  * Which sub-agent run a node belongs to. Both are absent on the main thread.
@@ -21,54 +21,54 @@ import type { TranscriptEvent } from '@/services/projects';
  * names it, and is missing when nothing on disk could.
  */
 export interface AgentIdentity {
-  agentId?: string;
-  agentType?: string;
+  agentId?: string
+  agentType?: string
 }
 
 export interface AssistantTurn extends AgentIdentity {
-  kind: 'turn';
-  uuid: string;
-  isSidechain: boolean;
+  kind: 'turn'
+  uuid: string
+  isSidechain: boolean
   /** Segment de compaction où le nœud se trouve. Voir `assignPhases`. */
-  phase: number;
-  events: TranscriptEvent[];
-  model: string;
-  startedAt: number;
-  endedAt: number;
-  durationMs: number;
+  phase: number
+  events: TranscriptEvent[]
+  model: string
+  startedAt: number
+  endedAt: number
+  durationMs: number
   /** Tokens Claude generated across every response in the turn. Exact. */
-  outputTokens: number;
+  outputTokens: number
   /** Largest context window any response in the turn was handed. Exact. */
-  contextPeak: number;
-  toolCount: number;
-  thinkingCount: number;
+  contextPeak: number
+  toolCount: number
+  thinkingCount: number
 }
 
 export interface UserNode extends AgentIdentity {
-  kind: 'user';
-  uuid: string;
-  isSidechain: boolean;
-  phase: number;
-  event: TranscriptEvent;
+  kind: 'user'
+  uuid: string
+  isSidechain: boolean
+  phase: number
+  event: TranscriptEvent
 }
 
 /** Hook, compaction, summary: rendered on its own, between the cards. */
 export interface LooseNode extends AgentIdentity {
-  kind: 'event';
-  uuid: string;
-  isSidechain: boolean;
-  phase: number;
-  event: TranscriptEvent;
+  kind: 'event'
+  uuid: string
+  isSidechain: boolean
+  phase: number
+  event: TranscriptEvent
 }
 
-export type TimelineNode = UserNode | AssistantTurn | LooseNode;
+export type TimelineNode = UserNode | AssistantTurn | LooseNode
 
 /** The identity fields of an event, ready to spread onto a node. */
 function identityOf(ev: TranscriptEvent): AgentIdentity {
   return {
     ...(ev.agentId ? { agentId: ev.agentId } : {}),
     ...(ev.agentType ? { agentType: ev.agentType } : {}),
-  };
+  }
 }
 
 /**
@@ -90,7 +90,7 @@ export function isHumanMessage(ev: TranscriptEvent): boolean {
     !ev.isMeta &&
     (ev.origin === undefined || ev.origin === 'human' || ev.origin === 'queued') &&
     ev.blocks.some((b) => b.kind === 'text' || b.kind === 'image')
-  );
+  )
 }
 
 /**
@@ -105,27 +105,23 @@ function isLoose(ev: TranscriptEvent): boolean {
   // rien d'un tour, elle dit que le régime a changé entre deux. Pliée dans la
   // carte précédente, elle annoncerait une contrainte après les tours qu'elle
   // contraint.
-  if (ev.kind === 'hook' || ev.kind === 'compaction' || ev.kind === 'summary') return true;
-  if (ev.kind === 'planmode') return true;
-  return (
-    ev.origin === 'slash-command' ||
-    ev.origin === 'command-output' ||
-    ev.origin === 'compact-summary'
-  );
+  if (ev.kind === 'hook' || ev.kind === 'compaction' || ev.kind === 'summary') return true
+  if (ev.kind === 'planmode') return true
+  return ev.origin === 'slash-command' || ev.origin === 'command-output' || ev.origin === 'compact-summary'
 }
 
 /** A node the CLI wrote about a compaction, rather than a turn of conversation. */
 function isCompactionAftermath(node: TimelineNode): boolean {
-  if (node.kind !== 'event') return false;
-  return node.event.kind === 'compaction' || node.event.origin === 'compact-summary';
+  if (node.kind !== 'event') return false
+  return node.event.kind === 'compaction' || node.event.origin === 'compact-summary'
 }
 
 /** The one-line command a `user` row consists of, or `''`. */
 function bareCommand(ev: TranscriptEvent): string {
-  const texts = ev.blocks.filter((b) => b.kind === 'text');
-  if (texts.length !== 1) return '';
-  const text = (texts[0]?.text ?? '').trim();
-  return /^[/!]\S/.test(text) && !text.includes('\n') ? text : '';
+  const texts = ev.blocks.filter((b) => b.kind === 'text')
+  if (texts.length !== 1) return ''
+  const text = (texts[0]?.text ?? '').trim()
+  return /^[/!]\S/.test(text) && !text.includes('\n') ? text : ''
 }
 
 /**
@@ -136,18 +132,18 @@ function bareCommand(ev: TranscriptEvent): string {
  */
 function dropEchoedCommands(nodes: TimelineNode[]): TimelineNode[] {
   return nodes.filter((node, i) => {
-    if (node.kind !== 'user') return true;
-    const typed = bareCommand(node.event);
-    if (!typed) return true;
+    if (node.kind !== 'user') return true
+    const typed = bareCommand(node.event)
+    if (!typed) return true
 
-    const next = nodes[i + 1];
-    if (next?.kind !== 'event' || next.event.origin !== 'slash-command') return true;
+    const next = nodes[i + 1]
+    if (next?.kind !== 'event' || next.event.origin !== 'slash-command') return true
 
-    const block = next.event.blocks.find((b) => b.kind === 'slash_command');
-    if (!block) return true;
-    const echoed = [block.name ?? '', block.text ?? ''].join(' ').trim();
-    return echoed !== typed;
-  });
+    const block = next.event.blocks.find((b) => b.kind === 'slash_command')
+    if (!block) return true
+    const echoed = [block.name ?? '', block.text ?? ''].join(' ').trim()
+    return echoed !== typed
+  })
 }
 
 /**
@@ -162,24 +158,24 @@ function dropEchoedCommands(nodes: TimelineNode[]): TimelineNode[] {
  * precede it in time, and never further.
  */
 function hoistCommands(nodes: TimelineNode[]): TimelineNode[] {
-  const out = [...nodes];
+  const out = [...nodes]
   for (let i = 0; i < out.length; i++) {
-    const node = out[i];
-    if (node?.kind !== 'event' || node.event.origin !== 'slash-command') continue;
+    const node = out[i]
+    if (node?.kind !== 'event' || node.event.origin !== 'slash-command') continue
 
-    let target = i;
+    let target = i
     while (target > 0) {
-      const prev = out[target - 1];
-      if (!prev || !isCompactionAftermath(prev)) break;
-      if (prev.kind !== 'event' || prev.event.timestamp <= node.event.timestamp) break;
-      target--;
+      const prev = out[target - 1]
+      if (!prev || !isCompactionAftermath(prev)) break
+      if (prev.kind !== 'event' || prev.event.timestamp <= node.event.timestamp) break
+      target--
     }
     if (target !== i) {
-      out.splice(i, 1);
-      out.splice(target, 0, node);
+      out.splice(i, 1)
+      out.splice(target, 0, node)
     }
   }
-  return out;
+  return out
 }
 
 /**
@@ -196,16 +192,16 @@ function hoistCommands(nodes: TimelineNode[]): TimelineNode[] {
  * posés à la construction — à ce moment-là l'ordre du fil n'est pas encore acquis.
  */
 function assignPhases(nodes: TimelineNode[]): TimelineNode[] {
-  let phase = 0;
+  let phase = 0
   return nodes.map((node) => {
-    if (node.kind === 'event' && node.event.kind === 'compaction') phase++;
-    return { ...node, phase };
-  });
+    if (node.kind === 'event' && node.event.kind === 'compaction') phase++
+    return { ...node, phase }
+  })
 }
 
 function finish(events: TranscriptEvent[]): AssistantTurn | LooseNode[] {
-  const first = events[0];
-  if (!first) return [];
+  const first = events[0]
+  if (!first) return []
 
   // A run with no assistant response is not a turn — it is stray system noise.
   // Rendering it under a "Claude" header would attribute it to Claude.
@@ -217,26 +213,26 @@ function finish(events: TranscriptEvent[]): AssistantTurn | LooseNode[] {
       phase: 0,
       ...identityOf(event),
       event,
-    }));
+    }))
   }
 
-  const last = events[events.length - 1] ?? first;
-  let outputTokens = 0;
-  let contextPeak = 0;
-  let toolCount = 0;
-  let thinkingCount = 0;
-  let model = '';
+  const last = events[events.length - 1] ?? first
+  let outputTokens = 0
+  let contextPeak = 0
+  let toolCount = 0
+  let thinkingCount = 0
+  let model = ''
 
   for (const ev of events) {
     if (ev.usage) {
-      outputTokens += ev.usage.output;
-      const context = ev.usage.input + ev.usage.cacheRead + ev.usage.cacheCreate;
-      if (context > contextPeak) contextPeak = context;
+      outputTokens += ev.usage.output
+      const context = ev.usage.input + ev.usage.cacheRead + ev.usage.cacheCreate
+      if (context > contextPeak) contextPeak = context
     }
-    if (!model && ev.model) model = ev.model;
+    if (!model && ev.model) model = ev.model
     for (const b of ev.blocks) {
-      if (b.kind === 'tool_use') toolCount++;
-      else if (b.kind === 'thinking') thinkingCount++;
+      if (b.kind === 'tool_use') toolCount++
+      else if (b.kind === 'thinking') thinkingCount++
     }
   }
 
@@ -255,7 +251,7 @@ function finish(events: TranscriptEvent[]): AssistantTurn | LooseNode[] {
     contextPeak,
     toolCount,
     thinkingCount,
-  };
+  }
 }
 
 export interface TurnOptions {
@@ -270,36 +266,33 @@ export interface TurnOptions {
    * cette carte n'est plus là : la consigne n'apparaît alors nulle part, et le
    * flux de l'agent commence par une réponse à une question qu'on ne lit pas.
    */
-  showRunPrompt?: MaybeRefOrGetter<boolean>;
+  showRunPrompt?: MaybeRefOrGetter<boolean>
 }
 
-export function useTranscriptTurns(
-  source: MaybeRefOrGetter<TranscriptEvent[]>,
-  options: TurnOptions = {},
-): ComputedRef<TimelineNode[]> {
+export function useTranscriptTurns(source: MaybeRefOrGetter<TranscriptEvent[]>, options: TurnOptions = {}): ComputedRef<TimelineNode[]> {
   return computed(() => {
-    const events = toValue(source);
-    const showRunPrompt = toValue(options.showRunPrompt) === true;
-    const nodes: TimelineNode[] = [];
-    let run: TranscriptEvent[] = [];
+    const events = toValue(source)
+    const showRunPrompt = toValue(options.showRunPrompt) === true
+    const nodes: TimelineNode[] = []
+    let run: TranscriptEvent[] = []
     /** Runs already opened, so the prompt that starts each one can be dropped. */
-    const opened = new Set<string>();
+    const opened = new Set<string>()
 
-    const flush = (): void => {
-      if (!run.length) return;
-      const done = finish(run);
-      if (Array.isArray(done)) nodes.push(...done);
-      else nodes.push(done);
-      run = [];
-    };
+    function flush(): void {
+      if (!run.length) return
+      const done = finish(run)
+      if (Array.isArray(done)) nodes.push(...done)
+      else nodes.push(done)
+      run = []
+    }
 
     for (const ev of events) {
       // A sub-agent's stream is a different conversation: never fold it into the
       // main one, even when its rows sit between two of ours. Two agents are two
       // conversations as well — `isSidechain` is true for both, so the run has to
       // break on the run id, or concurrent agents merge into one turn.
-      const open = run[0];
-      if (open && (open.isSidechain !== ev.isSidechain || open.agentId !== ev.agentId)) flush();
+      const open = run[0]
+      if (open && (open.isSidechain !== ev.isSidechain || open.agentId !== ev.agentId)) flush()
 
       // A run opens on the prompt its parent sent it. That text is normally
       // already on screen, in the `Agent` call that spawned the run — rendering
@@ -309,10 +302,10 @@ export function useTranscriptTurns(
       // du run pour devenir son propre nœud, comme le prompt qui ouvre une
       // session : c'est le même geste, à un interlocuteur près.
       if (ev.isSidechain && ev.agentId && !opened.has(ev.agentId)) {
-        opened.add(ev.agentId);
+        opened.add(ev.agentId)
         if (ev.kind === 'user') {
-          if (!showRunPrompt) continue;
-          flush();
+          if (!showRunPrompt) continue
+          flush()
           nodes.push({
             kind: 'user',
             uuid: ev.uuid,
@@ -320,8 +313,8 @@ export function useTranscriptTurns(
             phase: 0,
             ...identityOf(ev),
             event: ev,
-          });
-          continue;
+          })
+          continue
         }
       }
 
@@ -330,7 +323,7 @@ export function useTranscriptTurns(
       // il se rangeait sous la réponse qu'il n'a pas provoquée — et, faute de
       // rendu à cet endroit, disparaissait tout à fait.
       if (isHumanMessage(ev) || (ev.kind === 'user' && ev.origin === 'teammate')) {
-        flush();
+        flush()
         nodes.push({
           kind: 'user',
           uuid: ev.uuid,
@@ -338,9 +331,9 @@ export function useTranscriptTurns(
           phase: 0,
           ...identityOf(ev),
           event: ev,
-        });
+        })
       } else if (isLoose(ev)) {
-        flush();
+        flush()
         nodes.push({
           kind: 'event',
           uuid: ev.uuid,
@@ -348,14 +341,14 @@ export function useTranscriptTurns(
           phase: 0,
           ...identityOf(ev),
           event: ev,
-        });
+        })
       } else if (ev.blocks.length) {
-        run.push(ev);
+        run.push(ev)
       }
     }
-    flush();
+    flush()
     // Hoist first: the echo only lands next to its prompt once it is back in
     // causal order, and `dropEchoedCommands` compares neighbours.
-    return assignPhases(dropEchoedCommands(hoistCommands(nodes)));
-  });
+    return assignPhases(dropEchoedCommands(hoistCommands(nodes)))
+  })
 }

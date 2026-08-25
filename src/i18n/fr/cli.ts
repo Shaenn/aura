@@ -8,4 +8,4 @@ export default {
   copyFailed: "Je n'ai pas pu copier : le navigateur me refuse le presse-papiers.",
   /** `claude …` est composé en chasse fixe, d'où le slot. */
   hint: 'À exécuter dans Claude Code (ou en terminal avec {cmd}).',
-};
+}

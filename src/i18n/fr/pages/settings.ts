@@ -1,8 +1,7 @@
 export default {
   unsavedTitle: 'Modifications non appliquées',
   tabsAria: 'Sections des réglages',
-  invalidBanner:
-    "Le fichier n'est pas un JSON valide : je ne peux pas en tirer les champs. L'onglet « JSON » montre ce que je lis.",
+  invalidBanner: "Le fichier n'est pas un JSON valide : je ne peux pas en tirer les champs. L'onglet « JSON » montre ce que je lis.",
   invalidJson: 'JSON invalide',
   readError: "Je n'ai pas pu lire vos réglages",
   tabs: {
@@ -53,8 +52,7 @@ export default {
     bypassPermissions: 'bypassPermissions — saute les demandes (dangereux)',
   },
   /** `bypassPermissions` est en gras en tête de phrase. */
-  bypassWarn:
-    "{mode} saute toutes les demandes d'autorisation. À réserver aux environnements isolés (conteneurs / VM).",
+  bypassWarn: "{mode} saute toutes les demandes d'autorisation. À réserver aux environnements isolés (conteneurs / VM).",
   rules: {
     allow: 'Autorisées (allow)',
     allowPlaceholder: 'Ex. Bash(npm run *)',
@@ -94,4 +92,4 @@ export default {
     yes: 'oui',
     no: 'non',
   },
-};
+}

@@ -9,41 +9,41 @@
 // Treat a notification as "look again", and keep a slow fallback poll for the
 // screens where missing a change would be visible.
 
-export type ClaudeEvent = { kind: 'sessions' } | { kind: 'transcript'; slug: string; id: string };
+export type ClaudeEvent = { kind: 'sessions' } | { kind: 'transcript'; slug: string; id: string }
 
-type Listener = (event: ClaudeEvent) => void;
+type Listener = (event: ClaudeEvent) => void
 
-const listeners = new Set<Listener>();
-let source: EventSource | null = null;
+const listeners = new Set<Listener>()
+let source: EventSource | null = null
 
 function dispatch(raw: MessageEvent<string>): void {
-  let event: ClaudeEvent;
+  let event: ClaudeEvent
   try {
-    event = JSON.parse(raw.data) as ClaudeEvent;
+    event = JSON.parse(raw.data) as ClaudeEvent
   } catch {
-    return;
+    return
   }
-  for (const l of [...listeners]) l(event);
+  for (const l of [...listeners]) l(event)
 }
 
 function open(): void {
-  source = new EventSource('/api/events');
-  source.addEventListener('sessions', dispatch as EventListener);
-  source.addEventListener('transcript', dispatch as EventListener);
+  source = new EventSource('/api/events')
+  source.addEventListener('sessions', dispatch as EventListener)
+  source.addEventListener('transcript', dispatch as EventListener)
 }
 
 function close(): void {
-  source?.close();
-  source = null;
+  source?.close()
+  source = null
 }
 
 /** Listen until the returned function is called. Safe to call from `onMounted`. */
 export function onClaudeChange(listener: Listener): () => void {
-  listeners.add(listener);
-  if (!source) open();
+  listeners.add(listener)
+  if (!source) open()
 
   return () => {
-    listeners.delete(listener);
-    if (listeners.size === 0) close();
-  };
+    listeners.delete(listener)
+    if (listeners.size === 0) close()
+  }
 }

@@ -12,17 +12,17 @@
 </template>
 
 <script setup lang="ts">
-import type { Block } from '@/services/projects';
-import KeyValueList from '../KeyValueList.vue';
-import OutputPane from '../OutputPane.vue';
+  import type { Block } from '@/services/projects'
+  import KeyValueList from '../KeyValueList.vue'
+  import OutputPane from '../OutputPane.vue'
 
-defineProps<{ block: Block }>();
+  defineProps<{ block: Block }>()
 </script>
 
 <style scoped lang="scss">
-.tv {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
+  .tv {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
 </style>

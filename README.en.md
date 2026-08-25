@@ -308,7 +308,9 @@ report a flaw.
 
 - **Node.js 24** — a single major version: the one the application is developed, tested and
   shipped on, and the one CI runs. Node 24 is under long-term support.
-- **pnpm** ≥ 10 — `npm i -g pnpm`.
+- **pnpm** ≥ 11 — `npm i -g pnpm`. The exact version is pinned by `packageManager` in
+  `package.json`: the guards in `pnpm-workspace.yaml` are pnpm 11 features, and an earlier
+  major would ignore them silently.
 - **Claude Code** installed and run at least once, so an existing `~/.claude` folder.
   On Windows: `C:\Users\<you>\.claude`.
 
@@ -478,8 +480,8 @@ accessibility and the write contract, and they are documented. Issues and PRs ar
 either language.
 
 ```bash
-pnpm lint
-pnpm typecheck      # server/ and test/
+pnpm verifie        # lint + typecheck + test
+pnpm typecheck      # src/, server/ and test/
 pnpm test           # vitest
 ```
 
