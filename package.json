@@ -51,7 +51,6 @@
     "@lehoczky/eslint-config-vitest": "2.1.0",
     "@quasar/app-vite": "3.8.0",
     "@types/node": "24.13.3",
-    "@vue/eslint-config-prettier": "10.2.0",
     "@vue/eslint-config-typescript": "14.9.0",
     "autoprefixer": "10.5.4",
     "concurrently": "10.0.5",

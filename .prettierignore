@@ -1,0 +1,17 @@
+# Regénéré par pnpm à chaque `pnpm add` : le formater le remet en écart au
+# geste suivant, pour un fichier que personne ne lit à la main.
+pnpm-lock.yaml
+
+# Ce que le dépôt ne versionne pas. `prettier .` ne lit pas le .gitignore : sans
+# ces lignes, il reformaterait la sortie de build, la copie du manuel recopiée
+# dans le site vitrine et le harnais Playwright.
+dist/
+.quasar/
+harness/
+site/guide/
+site/en/guide/
+site/.vitepress/cache/
+site/.vitepress/dist/
+llm règles/
+idea/
+.local/
