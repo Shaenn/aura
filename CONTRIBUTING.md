@@ -114,8 +114,8 @@ scripts/                outillage hors application
   free-ports.mjs        libère 8800/9100 : extinction ordonnée du BFF d'abord, force ensuite
   i18n-scan.mjs         relevé des chaînes à traduire
 
-dev.ps1 / dev.bat       lancement + ouverture du navigateur
-stop.ps1 / stop.bat     arrêt ordonné (délèguent à scripts/free-ports.mjs)
+dev.bat                 lancement (délègue à `pnpm dev:all`)
+stop.bat                arrêt ordonné (délègue à `pnpm stop`)
 ```
 
 ## Instructions pour Claude Code

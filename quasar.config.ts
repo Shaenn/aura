@@ -1,7 +1,24 @@
 // Configuration for your app
 // https://quasar.dev/quasar-cli-vite/quasar-config-file
 
+import { readFileSync } from 'node:fs'
 import { defineConfig } from '#q-app'
+
+// Les deux ports d'AURA viennent de `ports.json`, et de nulle part ailleurs.
+//
+// Ils étaient écrits à neuf endroits : ici deux fois (l'écoute et la cible du
+// proxy), dans `server/env.ts`, dans le script `stop`, dans les deux scripts
+// PowerShell qui ont depuis disparu, dans l'en-tête et le défaut de
+// `scripts/free-ports.mjs`, et dans le schéma de `CLAUDE.md`. Aucun des neuf ne
+// vérifiait les autres : un port changé d'un seul côté donne un proxy qui pointe
+// dans le vide, ou un `stop` qui libère un port que personne n'occupe. Rien ne
+// casse bruyamment — c'est là le problème.
+//
+// `ports.json` et non `ports.ts` : PowerShell le lit par `ConvertFrom-Json`, et
+// un back C# par `AddJsonFile` — deux mondes auxquels un module TypeScript
+// serait resté fermé. Il est lu en clair plutôt qu'importé, comme ce dépôt lit
+// déjà `package.json` ailleurs.
+const PORTS = JSON.parse(readFileSync(new URL('./ports.json', import.meta.url), 'utf8')) as { web: number; api: number }
 
 export default defineConfig((ctx) => {
   return {
@@ -94,10 +111,11 @@ export default defineConfig((ctx) => {
       // `proxy` : ce nom coûte ~300 ms par requête au navigateur.
       host: '127.0.0.1',
       // 9100/8800 rather than the usual 9000/8788: a sibling app on this
-      // machine is packaged around those and must keep them.
-      port: 9100,
+      // machine is packaged around those and must keep them. La valeur vit dans
+      // `ports.json`.
+      port: PORTS.web,
       // Fail loudly instead of sliding to the next free port: a silent shift
-      // would leave the browser and dev.ps1 pointing at a different app.
+      // would leave the browser pointing at a different app.
       strictPort: true,
       // Same-origin /api → the Fastify BFF (server/), which holds the secrets
       // and proxies to the external services. Kills CORS in dev.
@@ -106,7 +124,7 @@ export default defineConfig((ctx) => {
       // rien n'écoute ici, et l'attente avant le repli IPv4 coûte ~300 ms par
       // requête — mesuré, et quinze fois le temps de réponse du BFF lui-même.
       proxy: {
-        '/api': { target: 'http://127.0.0.1:8800', changeOrigin: true },
+        '/api': { target: `http://127.0.0.1:${PORTS.api}`, changeOrigin: true },
       },
     },
 

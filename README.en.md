@@ -351,8 +351,9 @@ pnpm install
 pnpm dev:all
 ```
 
-The application opens at <http://localhost:9100>, the server listens on `:8800`.
-On Windows, `dev.ps1` does the same and opens the browser for you.
+The application opens at <http://localhost:9100> — the dev server opens the browser itself —
+and the BFF listens on `:8800`. On Windows, `dev.bat` runs the very same command, for those
+who prefer a double-click to a terminal.
 
 **In local “production”** — a single process serves the application and the API:
 

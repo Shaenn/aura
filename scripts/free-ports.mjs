@@ -1,7 +1,13 @@
 /* eslint-disable no-console -- Outil de ligne de commande : la console est sa sortie. */
 // Libère les ports d'AURA avant un lancement, et sert de moteur aux scripts d'arrêt.
 //
-//   node scripts/free-ports.mjs 8800 9100
+//   node scripts/free-ports.mjs            # les ports de ports.json
+//   node scripts/free-ports.mjs 8800 9100  # ceux qu'on lui donne
+//
+// Sans argument est la forme normale, et celle qu'emploient `stop` et
+// `dev:all`. L'ancienne obligeait à recopier les deux ports dans chacun d'eux :
+// autant de listes à tenir d'accord avec `ports.json`, et un `stop` qui
+// libérait un port que personne n'occupait le jour où l'une d'elles décrochait.
 //
 // Deux gestes, dans cet ordre — et l'ordre est tout le sujet :
 //
@@ -21,6 +27,10 @@
 // reviendrait à promettre ce qu'on n'a pas vérifié.
 
 import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+
+/** Les ports du dépôt. La seule déclaration — voir l'en-tête de `quasar.config.ts`. */
+const PORTS = JSON.parse(readFileSync(new URL('../ports.json', import.meta.url), 'utf8'))
 
 if (process.platform !== 'win32') {
   console.error(`Je ne sais libérer les ports que sous Windows, pas sous ${process.platform}.`)
@@ -31,14 +41,13 @@ if (process.platform !== 'win32') {
 /** Ce à quoi on reconnaît un processus d'AURA, pour ne remonter que chez nous. */
 const MARKERS = [/server[/\\]index\.ts/, /quasar/, /concurrently/, /dev:all/]
 
-const ports = process.argv.slice(2).map(Number).filter(Boolean)
-if (!ports.length) {
-  console.error('Usage : node scripts/free-ports.mjs <port> [port…]')
-  process.exit(2)
-}
+// Les arguments restent acceptés — ils servent à viser un port qui n'est pas
+// celui du dépôt, ce que fait un essai sur une seconde instance.
+const demandes = process.argv.slice(2).map(Number).filter(Boolean)
+const ports = demandes.length ? demandes : [PORTS.api, PORTS.web]
 
 /** Le port du BFF, seul à savoir s'éteindre proprement. */
-const API_PORT = Number(process.env.PORT) || 8800
+const API_PORT = Number(process.env.PORT) || PORTS.api
 
 await main()
 

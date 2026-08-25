@@ -11,8 +11,18 @@
 // que tout le serveur importe — il reste dans le seul module qui en a besoin, et
 // aucune route n'est en mesure de le renvoyer par mégarde.
 
+import { readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, normalize, sep } from 'node:path'
+
+/**
+ * Les ports d'AURA, lus dans `ports.json` à la racine du dépôt.
+ *
+ * Une seule déclaration pour une valeur que le proxy de Quasar et le script
+ * `stop` doivent tous deux connaître — voir l'en-tête de `quasar.config.ts`
+ * pour les neuf endroits où elle vivait.
+ */
+const PORTS = JSON.parse(readFileSync(new URL('../ports.json', import.meta.url), 'utf8')) as { web: number; api: number }
 
 export interface ServerEnv {
   /** Port the Fastify server listens on (Quasar's dev proxy targets it). */
@@ -23,7 +33,9 @@ export interface ServerEnv {
 
 /** Read the server environment; everything has a sensible local default. */
 export function loadEnv(): ServerEnv {
-  const port = Number(process.env.PORT ?? 8800)
+  // `PORT` garde la priorité : c'est ce qui permet de lancer une seconde
+  // instance, ou un test sur un port libre, sans toucher au fichier partagé.
+  const port = Number(process.env.PORT ?? PORTS.api)
   const raw = process.env.AURA_CLAUDE_DIR?.trim() || join(homedir(), '.claude')
   return { port, claudeDir: normalizeRoot(raw) }
 }

@@ -378,14 +378,14 @@ pnpm install
 pnpm dev:all
 ```
 
-L'application s'ouvre sur <http://127.0.0.1:9100>, le serveur écoute sur `:8800`.
-`dev.ps1` fait la même chose et ouvre le navigateur pour vous ; `dev.bat` y délègue, pour un
-lancement au double-clic.
+L'application s'ouvre sur <http://127.0.0.1:9100> — le serveur de développement ouvre le
+navigateur lui-même — et le BFF écoute sur `:8800`. `dev.bat` lance exactement la même
+commande, pour qui préfère un double-clic à un terminal.
 
 ### L'arrêt compte autant que le lancement
 
 ```bash
-pnpm stop           # ou .\stop.ps1, ou stop.bat
+pnpm stop           # ou stop.bat
 ```
 
 Une session de l'Atelier fait tourner un processus `claude`. Le serveur les coupe tous en

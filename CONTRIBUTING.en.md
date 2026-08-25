@@ -115,8 +115,8 @@ scripts/                tooling outside the application
   free-ports.mjs        frees 8800/9100: orderly BFF shutdown first, force second
   i18n-scan.mjs         survey of the strings to translate
 
-dev.ps1 / dev.bat       launch + open the browser
-stop.ps1 / stop.bat     orderly stop (they delegate to scripts/free-ports.mjs)
+dev.bat                 launch (delegates to `pnpm dev:all`)
+stop.bat                orderly stop (delegates to `pnpm stop`)
 ```
 
 ## Instructions for Claude Code
