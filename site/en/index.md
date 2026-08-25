@@ -112,7 +112,7 @@ pnpm install
 pnpm dev:all
 ```
 
-The application opens on `http://127.0.0.1:9100`. To stop it: `Ctrl+C`, or `pnpm stop` from
+The application opens on `http://127.0.0.1:9788`. To stop it: `Ctrl+C`, or `pnpm stop` from
 another window — a Workshop session runs a `claude` process, and that is the only gesture
 which, on Windows, triggers an orderly shutdown.
 

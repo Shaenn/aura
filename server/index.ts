@@ -5,7 +5,7 @@
 //     (list / read / propose / apply) — see routes/claude.ts. The browser can't
 //     touch the disk; every mutation is two-phase and backed up.
 //  2. In production, serve the built Quasar SPA from this same process — one
-//     deployable unit. In dev, Quasar serves the front on :9100 and proxies
+//     deployable unit. In dev, Quasar serves the front on :9788 and proxies
 //     /api here, so the static block below stays inert.
 
 import { spawn } from 'node:child_process'

@@ -27,7 +27,7 @@ afterEach(async () => {
 
 describe('Host', () => {
   it('accepte les noms de cette machine', async () => {
-    for (const host of ['127.0.0.1:8800', 'localhost:8800', '[::1]:8800', 'LOCALHOST:9100']) {
+    for (const host of ['127.0.0.1:8788', 'localhost:8788', '[::1]:8788', 'LOCALHOST:9788']) {
       const r = await app.inject({ method: 'GET', url: '/api/lecture', headers: { host } })
       expect(r.statusCode).toBe(200)
     }
@@ -37,7 +37,7 @@ describe('Host', () => {
     const r = await app.inject({
       method: 'GET',
       url: '/api/lecture',
-      headers: { host: 'evil.example:8800' },
+      headers: { host: 'evil.example:8788' },
     })
     expect(r.statusCode).toBe(403)
   })
@@ -54,7 +54,7 @@ describe('Host', () => {
 
 describe('Sec-Fetch-Site', () => {
   const url = '/api/ecriture'
-  const host = '127.0.0.1:8800'
+  const host = '127.0.0.1:8788'
 
   it('refuse une écriture demandée par un autre site', async () => {
     for (const site of ['cross-site', 'same-site']) {

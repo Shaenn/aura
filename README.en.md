@@ -351,15 +351,15 @@ pnpm install
 pnpm dev:all
 ```
 
-The application opens at <http://localhost:9100> — the dev server opens the browser itself —
-and the BFF listens on `:8800`. On Windows, `dev.bat` runs the very same command, for those
+The application opens at <http://localhost:9788> — the dev server opens the browser itself —
+and the BFF listens on `:8788`. On Windows, `dev.bat` runs the very same command, for those
 who prefer a double-click to a terminal.
 
 **In local “production”** — a single process serves the application and the API:
 
 ```bash
 pnpm build
-pnpm start          # http://localhost:8800
+pnpm start          # http://localhost:8788
 ```
 
 The console window stays open: **it is the server**. Closing it stops AURA.
@@ -371,7 +371,7 @@ read by `--env-file`):
 
 | Variable          | Default     | Role                                                      |
 | ----------------- | ----------- | --------------------------------------------------------- |
-| `PORT`            | `8800`      | Server listening port — the target of Quasar's dev proxy. |
+| `PORT`            | `8788`      | Server listening port — the target of Quasar's dev proxy. |
 | `AURA_CLAUDE_DIR` | `~/.claude` | Managed folder. Handy for working on a sandbox copy.      |
 
 The next three exist only for the [Gateway](https://shaenn.github.io/aura/en/guide/passerelle),
@@ -391,7 +391,7 @@ A new variable requires a full restart: hot reload does not re-read `--env-file`
 
 ```
 Browser (Quasar SPA)  ──/api/*──►  Fastify BFF (server/)  ──►  ~/.claude
-      :9100 (dev)                       :8800                 guarded read / write
+      :9788 (dev)                       :8788                 guarded read / write
 ```
 
 The front never touches the disk: it calls `/api/*` on the same origin — no CORS, no secret in

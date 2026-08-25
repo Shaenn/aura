@@ -11,7 +11,7 @@ Tout texte visible par l'utilisateur suit la charte de voix : @docs/voix.md
 
 ```
 Navigateur (SPA Quasar)  ──/api/*──►  BFF Fastify (server/)  ──►  ~/.claude
-        :9100 (dev)                        :8800                  (lecture / écriture gardée)
+        :9788 (dev)                        :8788                  (lecture / écriture gardée)
 ```
 
 Ces deux numéros sont déclarés dans **`ports.json`**, à la racine, et nulle part ailleurs :

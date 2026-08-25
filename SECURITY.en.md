@@ -70,7 +70,7 @@ Permission requests are still raised, and still deny themselves when unanswered.
 ## What is not covered
 
 - **The other processes in your session.** Anything running under your account can reach
-  `127.0.0.1:8800`, just as anything running under your account can read `~/.claude` directly.
+  `127.0.0.1:8788`, just as anything running under your account can read `~/.claude` directly.
   AURA does not claim to defend against that.
 - **What Claude Code does.** AURA observes and configures; tool permissions, hooks and MCP
   servers are run by Claude Code, under its own rules.

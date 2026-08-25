@@ -33,8 +33,8 @@ system.
 pnpm dev:all
 ```
 
-- Application: <http://localhost:9100> (opened automatically)
-- Server (BFF): <http://localhost:8800>
+- Application: <http://localhost:9788> (opened automatically)
+- Server (BFF): <http://localhost:8788>
 
 The console window stays open: **it is the server**. Closing it stops AURA.
 
@@ -42,14 +42,14 @@ The console window stays open: **it is the server**. Closing it stops AURA.
 
 ```bash
 pnpm build      # generates the static build of the SPA
-pnpm start      # serves the app + the API on http://localhost:8800
+pnpm start      # serves the app + the API on http://localhost:8788
 ```
 
 ## Configuration (optional)
 
 No secret is required. Two optional environment variables:
 
-- `PORT` — the server's listening port (default `8800`).
+- `PORT` — the server's listening port (default `8788`).
 - `AURA_CLAUDE_DIR` — overrides the managed `.claude` folder (default `~/.claude`; handy for
   testing on a sandbox copy).
 
@@ -57,8 +57,8 @@ They can be set in the environment or in `server/.env` (git-ignored), read by `-
 
 ## Troubleshooting
 
-- **The browser does not open**: go manually to <http://localhost:9100> (dev) or
-  <http://localhost:8800> (prod).
+- **The browser does not open**: go manually to <http://localhost:9788> (dev) or
+  <http://localhost:8788> (prod).
 - **The port is already in use**: an instance is probably already running, or change `PORT`.
 - **“`.claude` folder not found”**: run Claude Code once to create it, or point
   `AURA_CLAUDE_DIR` at the right folder.

@@ -2,7 +2,7 @@
 // Libère les ports d'AURA avant un lancement, et sert de moteur aux scripts d'arrêt.
 //
 //   node scripts/free-ports.mjs            # les ports de ports.json
-//   node scripts/free-ports.mjs 8800 9100  # ceux qu'on lui donne
+//   node scripts/free-ports.mjs 8788 9788  # ceux qu'on lui donne
 //
 // Sans argument est la forme normale, et celle qu'emploient `stop` et
 // `dev:all`. L'ancienne obligeait à recopier les deux ports dans chacun d'eux :
