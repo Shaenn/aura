@@ -1505,8 +1505,9 @@ export async function parseTranscript(abs: string, id: string): Promise<ParsedTr
    * event — a `SessionStart` pair writes `toolUseID` as a uuid on one line and
    * as the literal `"SessionStart"` on the other — so the event is the key.
    */
-  const mergeKey = (run: HookRun): string =>
-    run.toolUseId && toolUseIds.has(run.toolUseId) ? `tool:${run.toolUseId}|${run.name}` : `lifecycle:${run.event}`
+  function mergeKey(run: HookRun): string {
+    return run.toolUseId && toolUseIds.has(run.toolUseId) ? `tool:${run.toolUseId}|${run.name}` : `lifecycle:${run.event}`
+  }
   const runByKey = new Map<string, HookRun>()
   /**
    * Rewinding a session replays earlier lines verbatim, so the same run can be

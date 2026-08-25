@@ -216,7 +216,9 @@ function text(): TranscriptEvent {
   }
 }
 
-const never = () => false
+function never() {
+  return false
+}
 
 describe('regroupement des créations dans le flux', () => {
   it('réunit une série et enjambe les jalons qu’elle traverse', () => {

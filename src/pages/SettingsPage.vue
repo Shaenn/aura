@@ -299,30 +299,34 @@
   // default it displayed. These flags surface it: picking "Hérité" deletes the key.
   type Tri = 'inherit' | 'on' | 'off'
 
-  const triOptions = (def: boolean): { label: string; value: Tri; tooltip?: string }[] => [
-    {
-      label: t('pages.settings.tri.inherit'),
-      value: 'inherit',
-      tooltip: t('pages.settings.tri.inheritTip', {
-        default: t(def ? 'pages.settings.tri.yes' : 'pages.settings.tri.no'),
-      }),
-    },
-    { label: t('pages.settings.tri.on'), value: 'on' },
-    { label: t('pages.settings.tri.off'), value: 'off' },
-  ]
+  function triOptions(def: boolean): { label: string; value: Tri; tooltip?: string }[] {
+    return [
+      {
+        label: t('pages.settings.tri.inherit'),
+        value: 'inherit',
+        tooltip: t('pages.settings.tri.inheritTip', {
+          default: t(def ? 'pages.settings.tri.yes' : 'pages.settings.tri.no'),
+        }),
+      },
+      { label: t('pages.settings.tri.on'), value: 'on' },
+      { label: t('pages.settings.tri.off'), value: 'off' },
+    ]
+  }
   const triDefaultOn = computed(() => triOptions(true))
   const triDefaultOff = computed(() => triOptions(false))
 
-  const triFlag = (key: string): Tri => {
+  function triFlag(key: string): Tri {
     if (!has([key])) return 'inherit'
     return field<boolean>([key], false).value ? 'on' : 'off'
   }
-  const setTriFlag = (key: string, v: Tri): void => {
+  function setTriFlag(key: string, v: Tri): void {
     if (v === 'inherit') remove([key])
     else field<boolean>([key], v === 'on').value = v === 'on'
   }
   /** Same, as a v-model target (for flags rendered outside the `booleanFlags` loop). */
-  const triField = (key: string) => computed<Tri>({ get: () => triFlag(key), set: (v) => setTriFlag(key, v) })
+  function triField(key: string) {
+    return computed<Tri>({ get: () => triFlag(key), set: (v) => setTriFlag(key, v) })
+  }
 
   // ── Bound fields ─────────────────────────────────────────────────────────────
   const language = field<string>(['language'], '')
@@ -349,7 +353,7 @@
     { id: 'json', title: t('pages.settings.tabs.json'), icon: 'data_object' },
   ])
   const activeId = ref('sec-general')
-  const goTo = (id: string): void => {
+  function goTo(id: string): void {
     activeId.value = id
   }
 

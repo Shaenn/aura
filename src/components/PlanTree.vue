@@ -115,13 +115,17 @@
   })
 
   const overrides = reactive<Record<string, boolean>>({})
-  const isOpen = (key: string): boolean => overrides[key] ?? defaultOpen.value.has(key)
+  function isOpen(key: string): boolean {
+    return overrides[key] ?? defaultOpen.value.has(key)
+  }
   function toggle(key: string): void {
     overrides[key] = !isOpen(key)
   }
 
   /** Day only — the month is already the parent node. */
-  const dayOf = (ms: number): string => String(new Date(ms).getDate()).padStart(2, '0')
+  function dayOf(ms: number): string {
+    return String(new Date(ms).getDate()).padStart(2, '0')
+  }
 </script>
 
 <style scoped lang="scss">

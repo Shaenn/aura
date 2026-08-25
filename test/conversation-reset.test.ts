@@ -10,11 +10,13 @@
 import { describe, expect, it } from 'vitest'
 import { Translator } from '../server/agent/translate.ts'
 
-const assistant = (id: string, text: string): Record<string, unknown> => ({
-  type: 'assistant',
-  parent_tool_use_id: null,
-  message: { id, model: 'claude-opus-5', content: [{ type: 'text', text }] },
-})
+function assistant(id: string, text: string): Record<string, unknown> {
+  return {
+    type: 'assistant',
+    parent_tool_use_id: null,
+    message: { id, model: 'claude-opus-5', content: [{ type: 'text', text }] },
+  }
+}
 
 describe('remise à zéro du fil', () => {
   it('oublie tout ce qui précède', () => {

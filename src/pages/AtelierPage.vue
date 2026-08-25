@@ -1029,7 +1029,9 @@
   }
 
   /** Reprendre celle qu'on a choisie dans la liste : le dossier est déjà à l'écran. */
-  const resumeSession = (id: string): Promise<void> => startResume(cwd.value.trim(), id)
+  function resumeSession(id: string): Promise<void> {
+    return startResume(cwd.value.trim(), id)
+  }
 
   // ── Les sessions du dossier choisi ──────────────────────────────────────────
 
@@ -1446,7 +1448,7 @@
    */
   const asideColumn = ref(false)
   const mql = window.matchMedia('(min-width: 1280px)')
-  const onWidth = (e: MediaQueryListEvent | MediaQueryList): void => {
+  function onWidth(e: MediaQueryListEvent | MediaQueryList): void {
     asideColumn.value = e.matches
   }
   onWidth(mql)

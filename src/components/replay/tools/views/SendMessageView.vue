@@ -175,7 +175,9 @@
    * `rf`, `team-lead` dans le parc, plus des identifiants qui commencent tous par
    * un `a`. L'élision n'est donc pas un cas rare ici, c'est la moitié des envois.
    */
-  const de = (name: string): string => (/^[aeiouâàéèêîôûy]/i.test(name) ? `d'${name}` : `de ${name}`)
+  function de(name: string): string {
+    return /^[aeiouâàéèêîôûy]/i.test(name) ? `d'${name}` : `de ${name}`
+  }
 
   interface Verdict {
     ok: boolean
@@ -280,7 +282,9 @@
 
   /** La couleur que le harness donne à l'agent, ramenée à celles qu'on sait peindre. */
   const HUES = new Set(['blue', 'green', 'red', 'yellow', 'purple', 'cyan', 'orange'])
-  const hue = (color?: string): string => (color && HUES.has(color) ? `smv-agent--${color}` : '')
+  function hue(color?: string): string {
+    return color && HUES.has(color) ? `smv-agent--${color}` : ''
+  }
 </script>
 
 <style scoped lang="scss">

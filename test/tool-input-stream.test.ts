@@ -16,18 +16,21 @@ import { Translator } from '../server/agent/translate.ts'
 import type { Block } from '../shared/transcript.ts'
 
 /** La maquette d'une option : c'est elle qui fait le poids d'une question. */
-const preview = (lines: number): string =>
-  ['┌──────────────┐', ...Array.from({ length: lines }, (_, i) => `│ ligne ${i}`), '└─────────────┘'].join('\n')
+function preview(lines: number): string {
+  return ['┌──────────────┐', ...Array.from({ length: lines }, (_, i) => `│ ligne ${i}`), '└─────────────┘'].join('\n')
+}
 
 /** Une question à deux maquettes — environ 3 500 caractères de JSON. */
-const question = (n: number): unknown => ({
-  question: `Quelle mise en page pour l'écran ${n} ?`,
-  header: `Écran ${n}`,
-  options: [
-    { label: 'Encadrée', description: 'Un cadre.', preview: preview(150) },
-    { label: 'Nue', description: 'Sans cadre.', preview: preview(150) },
-  ],
-})
+function question(n: number): unknown {
+  return {
+    question: `Quelle mise en page pour l'écran ${n} ?`,
+    header: `Écran ${n}`,
+    options: [
+      { label: 'Encadrée', description: 'Un cadre.', preview: preview(150) },
+      { label: 'Nue', description: 'Sans cadre.', preview: preview(150) },
+    ],
+  }
+}
 
 /** Un traducteur avec une réponse en cours et un `tool_use` ouvert au bloc 0. */
 function openToolBlock(): Translator {
@@ -59,7 +62,9 @@ function toolBlock(t: Translator): Block | undefined {
 }
 
 /** Le pas de diffusion est réel : deux fragments trop rapprochés ne sont pas relus. */
-const step = (): Promise<void> => new Promise((r) => setTimeout(r, 140))
+function step(): Promise<void> {
+  return new Promise((r) => setTimeout(r, 140))
+}
 
 describe('entrée d’outil en cours de frappe', () => {
   it('continue de rendre une question à maquettes au-delà de quelques milliers de caractères', async () => {

@@ -72,7 +72,9 @@
    * une puce permanente qui n'apprend rien. Les deux autres expliquent pourquoi on
    * lit une liste nue ou un décompte au lieu du code.
    */
-  const modeLabel = (mode: string): string => (mode === 'files_with_matches' || mode === 'count' ? t(`replay.tools.views.grep.modes.${mode}`) : '')
+  function modeLabel(mode: string): string {
+    return mode === 'files_with_matches' || mode === 'count' ? t(`replay.tools.views.grep.modes.${mode}`) : ''
+  }
 
   /** `-C` and its alias `context`, or either half of the pair. 18,4 % des appels. */
   const wantsContext = computed(() => ['-C', '-A', '-B', 'context'].some((k) => num(input.value[k]) > 0))
@@ -88,8 +90,10 @@
     ]),
   )
 
-  const baseOf = (p: string): string => basename(p)
-  const dirOf = (p: string): string => {
+  function baseOf(p: string): string {
+    return basename(p)
+  }
+  function dirOf(p: string): string {
     const d = dirname(p)
     return d ? `${d}/` : ''
   }
@@ -228,8 +232,12 @@
     else map.set(file, [match])
   }
 
-  const slash = (p: string): string => p.replace(/\\/g, '/')
-  const isAbsolute = (p: string): boolean => /^([a-z]:[\\/]|[\\/])/i.test(p)
+  function slash(p: string): string {
+    return p.replace(/\\/g, '/')
+  }
+  function isAbsolute(p: string): boolean {
+    return /^([a-z]:[\\/]|[\\/])/i.test(p)
+  }
 
   /**
    * rg names a match by a path relative to the cwd, but its context lines by the

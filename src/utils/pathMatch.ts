@@ -52,7 +52,9 @@ interface Node {
   files: string[]
 }
 
-const node = (): Node => ({ dirs: new Map(), files: [] })
+function node(): Node {
+  return { dirs: new Map(), files: [] }
+}
 
 /**
  * Les chemins qui correspondent, montés en arbre.
@@ -118,7 +120,9 @@ export function treeRows(files: string[], query: string, collapsed: ReadonlySet<
 }
 
 /** L'ordre d'un explorateur : insensible à la casse, chiffres en ordre naturel. */
-const byName = (a: string, b: string): number => a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })
+function byName(a: string, b: string): number {
+  return a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true })
+}
 
 /**
  * L'arbre en lignes : les dossiers d'abord, les fichiers ensuite, chacun par

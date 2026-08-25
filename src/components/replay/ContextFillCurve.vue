@@ -47,8 +47,12 @@
     return peak > props.context.limit * 0.6 ? props.context.limit : Math.max(peak, 1)
   })
 
-  const x = (i: number): number => (points.value.length <= 1 ? W / 2 : (i / (points.value.length - 1)) * W)
-  const y = (total: number): number => PAD + (1 - total / scaleMax.value) * (H - PAD)
+  function x(i: number): number {
+    return points.value.length <= 1 ? W / 2 : (i / (points.value.length - 1)) * W
+  }
+  function y(total: number): number {
+    return PAD + (1 - total / scaleMax.value) * (H - PAD)
+  }
 
   const linePath = computed(() => points.value.map((t, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(t.total).toFixed(1)}`).join(' '))
 

@@ -18,7 +18,9 @@ const AURA = 17648
 
 /** Les PID encore vivants au moment du relevé. `24680` est mort, son daemon non. */
 const VIVANTS = new Set([17648, 26132, 14864, 18220, 31724, 24332, 17216, 3432, 11232, 16556])
-const estVivant = (pid: number): boolean => VIVANTS.has(pid)
+function estVivant(pid: number): boolean {
+  return VIVANTS.has(pid)
+}
 
 const PARC: RawProcess[] = [
   // Le BFF, lancé par `node --watch` (16556), qui ne parle pas de Claude.
@@ -82,9 +84,13 @@ const PARC: RawProcess[] = [
   },
 ]
 
-const liste = (): ReturnType<typeof buildProcessList> => buildProcessList(PARC, AURA, [], estVivant)
+function liste(): ReturnType<typeof buildProcessList> {
+  return buildProcessList(PARC, AURA, [], estVivant)
+}
 
-const kindOf = (pid: number): string | undefined => liste().find((p) => p.pid === pid)?.kind
+function kindOf(pid: number): string | undefined {
+  return liste().find((p) => p.pid === pid)?.kind
+}
 
 describe('reconnaître les processus', () => {
   it('donne son rôle à chacun', () => {

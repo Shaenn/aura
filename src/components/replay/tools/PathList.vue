@@ -51,10 +51,14 @@
   const overflow = computed(() => Math.max(0, total.value - shown.value.length))
 
   /** Le chemin sans le dossier commun ; l'infobulle, elle, garde le chemin entier. */
-  const strip = (p: string): string => (props.root && p.startsWith(props.root) ? p.slice(props.root.length) : p)
+  function strip(p: string): string {
+    return props.root && p.startsWith(props.root) ? p.slice(props.root.length) : p
+  }
 
-  const baseOf = (p: string): string => basename(p)
-  const dirOf = (p: string): string => {
+  function baseOf(p: string): string {
+    return basename(p)
+  }
+  function dirOf(p: string): string {
     const d = dirname(p)
     return d ? `${d}/` : ''
   }

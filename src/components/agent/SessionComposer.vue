@@ -265,7 +265,7 @@
    */
   function commandItems(query: string): Item[] {
     const q = query.toLowerCase()
-    const rank = (c: SlashCommandInfo): number => {
+    function rank(c: SlashCommandInfo): number {
       const names = [c.name, ...(c.aliases ?? [])].map((n) => n.toLowerCase())
       if (names.some((n) => n.startsWith(q))) return 0
       return names.some((n) => n.includes(q)) ? 1 : 2

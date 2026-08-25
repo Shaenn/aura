@@ -231,7 +231,9 @@
    * en cours qu'on vient lire, et une phase fermée n'est pas montée du tout.
    */
   const openPhases = ref(new Set<number>())
-  const isOpen = (phase: number): boolean => openPhases.value.has(phase)
+  function isOpen(phase: number): boolean {
+    return openPhases.value.has(phase)
+  }
 
   watch(
     () => segments.value.length,
@@ -274,7 +276,9 @@
     return out
   })
 
-  const nodeAnchor = (uuid: string): string => `rp-node-${uuid}`
+  function nodeAnchor(uuid: string): string {
+    return `rp-node-${uuid}`
+  }
 
   /** The card we just jumped to, briefly outlined so the eye finds it. */
   const flashed = ref('')

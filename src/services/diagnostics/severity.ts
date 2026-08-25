@@ -22,9 +22,15 @@ export const SEVERITY: Record<Severity, { icon: string; color: string }> = {
 /** Ordre de gravité : la pire l'emporte quand une seule peut être montrée. */
 export const SEVERITY_RANK: Record<Severity, number> = { critical: 3, warn: 2, info: 1 }
 
-export const severityIcon = (s: Severity): string => SEVERITY[s].icon
-export const severityColor = (s: Severity): string => SEVERITY[s].color
-export const severityLabel = (s: Severity): string => t(`diagnostics.severity.${s}`)
+export function severityIcon(s: Severity): string {
+  return SEVERITY[s].icon
+}
+export function severityColor(s: Severity): string {
+  return SEVERITY[s].color
+}
+export function severityLabel(s: Severity): string {
+  return t(`diagnostics.severity.${s}`)
+}
 
 /** La plus grave d'un lot, ou `null` s'il est vide. */
 export function worstSeverity(items: { severity: Severity }[]): Severity | null {

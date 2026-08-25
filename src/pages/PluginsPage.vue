@@ -158,14 +158,20 @@
   ])
 
   // id = "name@marketplace"
-  const pluginName = (id: string): string => id.split('@')[0] ?? id
-  const pluginMarketplace = (id: string): string => id.split('@')[1] ?? '—'
+  function pluginName(id: string): string {
+    return id.split('@')[0] ?? id
+  }
+  function pluginMarketplace(id: string): string {
+    return id.split('@')[1] ?? '—'
+  }
 
   // A plugin is enabled unless `enabledPlugins[id]` says otherwise, so "Actif" is the
   // key's absence — writing `true` would record a no-op. Dropping the last entry takes
   // the now-empty `enabledPlugins` object with it.
-  const pluginEnabled = (id: string): boolean => field<boolean>(['enabledPlugins', id], true).value
-  const setPluginEnabled = (id: string, v: boolean): void => {
+  function pluginEnabled(id: string): boolean {
+    return field<boolean>(['enabledPlugins', id], true).value
+  }
+  function setPluginEnabled(id: string, v: boolean): void {
     mutate((o) => {
       if (!v) {
         setAt(o, ['enabledPlugins', id], false)
@@ -295,7 +301,7 @@
     }
   }
 
-  const reload = async (): Promise<void> => {
+  async function reload(): Promise<void> {
     await Promise.all([load(), reloadPlugins()])
   }
 

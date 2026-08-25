@@ -11,11 +11,13 @@ import { IDLE_ACTIVITY, type AgentActivity } from '../shared/agent.ts'
 
 const T0 = 1_700_000_000_000
 
-const activite = (partiel: Partial<AgentActivity>): AgentActivity => ({
-  ...IDLE_ACTIVITY,
-  turnStartedAt: T0,
-  ...partiel,
-})
+function activite(partiel: Partial<AgentActivity>): AgentActivity {
+  return {
+    ...IDLE_ACTIVITY,
+    turnStartedAt: T0,
+    ...partiel,
+  }
+}
 
 describe('ligne', () => {
   it('ne dit rien au repos', () => {
@@ -41,7 +43,9 @@ describe('ligne', () => {
   })
 
   it('se nomme de ses outils, et compte au-delà de deux', () => {
-    const outil = (name: string) => ({ id: name, name, startedAt: T0 })
+    function outil(name: string) {
+      return { id: name, name, startedAt: T0 }
+    }
     expect(ligne(activite({ phase: 'tool', tools: [outil('Read')] }), T0)).toBe('Read')
     expect(ligne(activite({ phase: 'tool', tools: [outil('Read'), outil('Bash'), outil('Grep')] }), T0)).toBe('Read, Bash +1')
   })
@@ -56,7 +60,7 @@ describe('ligne', () => {
 })
 
 describe('Battement', () => {
-  const monte = () => {
+  function monte() {
     const emis: string[] = []
     const saisies: number[] = []
     const battement = new Battement(
@@ -99,7 +103,9 @@ describe('Battement', () => {
     // Une phase d'outil se remplace toutes les deux ou trois secondes : suivre
     // chaque changement ferait une requête par seconde pour un gain nul.
     const { emis, battement } = monte()
-    const outil = (name: string) => ({ id: name, name, startedAt: T0 })
+    function outil(name: string) {
+      return { id: name, name, startedAt: T0 }
+    }
     battement.montre(activite({ phase: 'tool', tools: [outil('Read')] }), T0)
     battement.montre(activite({ phase: 'tool', tools: [outil('Grep')] }), T0 + 200)
     battement.montre(activite({ phase: 'tool', tools: [outil('Bash')] }), T0 + 400)

@@ -285,7 +285,7 @@ export function registerClaude(app: FastifyInstance): void {
 
   /** High-level inventory for the dashboard. */
   app.get('/api/claude/overview', async () => {
-    const countDir = async (rel: string, suffix: string): Promise<number> => {
+    async function countDir(rel: string, suffix: string): Promise<number> {
       if (!(await exists(rel))) return 0
       return (await listDir(rel)).filter((e) => e.name.endsWith(suffix)).length
     }
@@ -310,11 +310,14 @@ function updateMemoryIndex(current: string | null, action: 'add' | 'remove', fil
   const src = current ?? ''
   const lines = src.split('\n')
   const at = lines.findIndex((l) => linkRe.test(l))
-  const norm = (ls: string[]): string =>
-    ls
-      .join('\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .replace(/\n+$/, '') + '\n'
+  function norm(ls: string[]): string {
+    return (
+      ls
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/\n+$/, '') + '\n'
+    )
+  }
 
   if (action === 'remove') {
     if (at < 0) return null // not indexed → no-op

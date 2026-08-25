@@ -73,7 +73,9 @@
     return q.length > 80 ? q : ''
   })
 
-  const domains = (key: string): string => arr(input.value[key]).filter(Boolean).join(', ')
+  function domains(key: string): string {
+    return arr(input.value[key]).filter(Boolean).join(', ')
+  }
 
   const params = computed(() =>
     chips([

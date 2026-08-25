@@ -511,7 +511,9 @@
     void router.replace({ query })
   }
 
-  const queryStr = (v: unknown): string => (typeof v === 'string' ? v : '')
+  function queryStr(v: unknown): string {
+    return typeof v === 'string' ? v : ''
+  }
 
   /**
    * Rouvrir ce que dit l'URL, si ce fichier existe toujours dans l'inventaire.
@@ -526,7 +528,9 @@
     const rel = queryStr(route.query.f)
     if (!rel) return false
     const src = queryStr(route.query.src)
-    const find = (list: ResourceNode[]): ResourceNode | undefined => list.find((r) => r.rel === rel)
+    function find(list: ResourceNode[]): ResourceNode | undefined {
+      return list.find((r) => r.rel === rel)
+    }
     if (src === 'plan') {
       const p = projectPlans.value.find((x) => x.name === rel)
       if (p) void openPlan(p)
@@ -573,9 +577,15 @@
     }
   }
 
-  const openResource = (r: ResourceNode): Promise<void> => openFile('resource', r)
-  const openMemory = (r: ResourceNode): Promise<void> => openFile('memory', r)
-  const openIncluded = (r: ResourceNode): Promise<void> => openFile('included', r)
+  function openResource(r: ResourceNode): Promise<void> {
+    return openFile('resource', r)
+  }
+  function openMemory(r: ResourceNode): Promise<void> {
+    return openFile('memory', r)
+  }
+  function openIncluded(r: ResourceNode): Promise<void> {
+    return openFile('included', r)
+  }
 
   /**
    * Poser la liste des dossiers inclus, puis relire l'inventaire.
@@ -595,7 +605,9 @@
   }
 
   /** Le retrait depuis l'arbre : un geste unique, donc appliqué tout de suite. */
-  const excludeFolder = (rel: string): Promise<void> => applyFolders(settings.foldersOf(props.slug).filter((f) => f !== rel))
+  function excludeFolder(rel: string): Promise<void> {
+    return applyFolders(settings.foldersOf(props.slug).filter((f) => f !== rel))
+  }
 
   /** Plans are flat `.md` files read through the system API, never `readResource`. */
   async function openPlan(p: PlanInfo): Promise<void> {
@@ -619,7 +631,9 @@
   }
 
   /** Le détail vient du serveur ; AURA n'ajoute sa voix que s'il est resté muet. */
-  const readError = (e: unknown): string => (e instanceof Error && e.message.trim() ? e.message : t('pages.project.readError'))
+  function readError(e: unknown): string {
+    return e instanceof Error && e.message.trim() ? e.message : t('pages.project.readError')
+  }
 
   const confirmPlanDelete = ref(false)
   const deletingPlan = ref(false)

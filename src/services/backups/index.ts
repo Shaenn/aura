@@ -29,10 +29,13 @@ async function req<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
-export const listBackups = (): Promise<{ entries: BackupEntry[] }> => req('/api/backups')
+export function listBackups(): Promise<{ entries: BackupEntry[] }> {
+  return req('/api/backups')
+}
 
-export const readBackup = (stamp: string, path: string): Promise<{ content: string }> =>
-  req(`/api/backups/content?stamp=${encodeURIComponent(stamp)}&path=${encodeURIComponent(path)}`)
+export function readBackup(stamp: string, path: string): Promise<{ content: string }> {
+  return req(`/api/backups/content?stamp=${encodeURIComponent(stamp)}&path=${encodeURIComponent(path)}`)
+}
 
 /**
  * Efface un instantané, ou la totalité si `stamp` est omis.
@@ -41,9 +44,10 @@ export const readBackup = (stamp: string, path: string): Promise<{ content: stri
  * BFF refuse désormais une demande de purge qui ne nomme pas sa cible — un
  * corps vide effaçait tout, et c'est ce qu'on envoie par accident.
  */
-export const purgeBackups = (stamp?: string): Promise<{ ok: true }> =>
-  req('/api/backups/purge', {
+export function purgeBackups(stamp?: string): Promise<{ ok: true }> {
+  return req('/api/backups/purge', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(stamp ? { stamp } : { all: true }),
   })
+}

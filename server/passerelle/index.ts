@@ -1250,7 +1250,9 @@ export function demarrePasserelle(journal: Journal): void {
  * ce qui est chez Telegram y reste tant qu'on ne le retire pas.
  */
 async function declareCommandes(tg: Telegram, chats: Set<number>, journal: Journal): Promise<void> {
-  const rate = (quoi: string): void => journal.warn(`Passerelle : Telegram a refusé la liste des commandes (${quoi}).`)
+  function rate(quoi: string): void {
+    return journal.warn(`Passerelle : Telegram a refusé la liste des commandes (${quoi}).`)
+  }
 
   for (const chatId of chats) {
     // Le repli de la conversation : ce que voit un client dont la langue n'est

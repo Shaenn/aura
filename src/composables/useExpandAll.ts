@@ -33,7 +33,7 @@ export function provideExpandAll(): {
   collapseAll: () => void
 } {
   const command = ref<ExpandCommand>({ open: false, seq: 0, sticky: false })
-  const setAll = (open: boolean): void => {
+  function setAll(open: boolean): void {
     command.value = { open, seq: command.value.seq + 1, sticky: false }
   }
   provide(EXPAND_ALL, command)
@@ -53,7 +53,7 @@ export function provideScopedExpandAll(): {
 } {
   const parent = inject(EXPAND_ALL, null)
   const command = ref<ExpandCommand>({ open: false, seq: 0, sticky: false })
-  const setAll = (open: boolean, sticky = false): void => {
+  function setAll(open: boolean, sticky = false): void {
     command.value = { open, seq: command.value.seq + 1, sticky }
   }
   if (parent) {
@@ -87,7 +87,9 @@ export function useExpandable(initial = false, { followSticky = true }: { follow
   const command = inject(EXPAND_ALL, null)
   // Un ordre adhésif déjà donné vaut pour ce qui naît sous lui : l'outil qui
   // vient d'apparaître dans le tour suivi en direct s'ouvre comme les autres.
-  const sticky = (): boolean => Boolean(command?.value.sticky) && followSticky
+  function sticky(): boolean {
+    return Boolean(command?.value.sticky) && followSticky
+  }
   const open = ref(sticky() ? command!.value.open : initial)
   if (command) {
     watch(

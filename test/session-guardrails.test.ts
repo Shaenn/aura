@@ -18,10 +18,12 @@ import { atCapacity, countSessions, createRunner, IDLE_TTL_MS, MAX_SESSIONS, sto
 
 const CWD = import.meta.dirname
 
-const open = (): ReturnType<typeof createRunner> => createRunner({ cwd: CWD })
+function open(): ReturnType<typeof createRunner> {
+  return createRunner({ cwd: CWD })
+}
 
 /** Fait passer le temps sans rien exécuter : seule l'horloge de `touchedAt` compte. */
-const laisserPasser = (ms: number): void => {
+function laisserPasser(ms: number): void {
   vi.setSystemTime(Date.now() + ms)
 }
 

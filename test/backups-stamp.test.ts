@@ -34,11 +34,12 @@ const stampDir = join(BACKUPS_DIR, STAMP)
  */
 const temoin = join(LOCAL_DIR, 'temoin-purge.txt')
 
-const existe = async (p: string): Promise<boolean> =>
-  access(p).then(
+async function existe(p: string): Promise<boolean> {
+  return access(p).then(
     () => true,
     () => false,
   )
+}
 
 beforeEach(async () => {
   await mkdir(stampDir, { recursive: true })

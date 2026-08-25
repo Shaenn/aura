@@ -372,7 +372,9 @@
   })
 
   const dirty = computed(() => content.value !== original.value)
-  const onVal = (e: Event): string => (e.target as HTMLInputElement | HTMLTextAreaElement).value
+  function onVal(e: Event): string {
+    return (e.target as HTMLInputElement | HTMLTextAreaElement).value
+  }
 
   const prettySlug = prettyProjectSlug
 
@@ -383,13 +385,17 @@
   // l'écran. Le projet dont une mémoire est ouverte s'ouvre de lui-même — au
   // chargement comme après un clic sur un lien du sommaire.
   const opened = reactive<Record<string, boolean>>({})
-  const isOpen = (slug: string): boolean => opened[slug] === true
+  function isOpen(slug: string): boolean {
+    return opened[slug] === true
+  }
   function toggle(slug: string): void {
     opened[slug] = !opened[slug]
   }
 
   /** Ce que le projet contient : ses mémoires, plus son index s'il en a un. */
-  const countOf = (p: MemoryProject): number => p.items.length + (p.indexRel ? 1 : 0)
+  function countOf(p: MemoryProject): number {
+    return p.items.length + (p.indexRel ? 1 : 0)
+  }
 
   watch([selected, projects], () => {
     const rel = selected.value
@@ -467,10 +473,16 @@
     await load(rel)
   }
 
-  const selectPlain = (rel: string): void => guardDirty(() => void openFile(rel, 'plain'))
-  const selectStructured = (rel: string): void => guardDirty(() => void openFile(rel, 'structured'))
+  function selectPlain(rel: string): void {
+    return guardDirty(() => void openFile(rel, 'plain'))
+  }
+  function selectStructured(rel: string): void {
+    return guardDirty(() => void openFile(rel, 'structured'))
+  }
 
-  const reload = (): Promise<void> => (selected.value ? load(selected.value) : Promise.resolve())
+  function reload(): Promise<void> {
+    return selected.value ? load(selected.value) : Promise.resolve()
+  }
 
   /** Resolve a relative href against a directory, honouring `.` and `..` segments. */
   function resolveRel(dir: string, href: string): string {

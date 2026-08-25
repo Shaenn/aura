@@ -119,4 +119,6 @@ async function pickWindows(startFrom?: string): Promise<string | null> {
 }
 
 /** Une chaîne PowerShell littérale : rien n'y est interprété, les `'` sont doublés. */
-const psLiteral = (s: string): string => `'${s.replace(/'/g, "''")}'`
+function psLiteral(s: string): string {
+  return `'${s.replace(/'/g, "''")}'`
+}

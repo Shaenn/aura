@@ -53,23 +53,27 @@ async function req<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
-export const getMcp = (): Promise<McpInventory> => req('/api/mcp')
+export function getMcp(): Promise<McpInventory> {
+  return req('/api/mcp')
+}
 
 /** `server === null` deletes the named global server; otherwise add/update it. */
-export const proposeMcp = (name: string, server: McpServerConfig | null): Promise<McpWriteProposal> =>
-  req('/api/mcp/propose', {
+export function proposeMcp(name: string, server: McpServerConfig | null): Promise<McpWriteProposal> {
+  return req('/api/mcp/propose', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, server }),
   })
+}
 
-export const applyMcp = (
+export function applyMcp(
   name: string,
   server: McpServerConfig | null,
   expectedHash: string | null,
-): Promise<{ ok: true; backupPath: string | null }> =>
-  req('/api/mcp/apply', {
+): Promise<{ ok: true; backupPath: string | null }> {
+  return req('/api/mcp/apply', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, server, expectedHash }),
   })
+}

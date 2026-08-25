@@ -113,8 +113,10 @@
   const operation = computed(() => str(input.value.operation))
   const filePath = computed(() => str(input.value.filePath))
 
-  const baseOf = (p: string): string => basename(p)
-  const dirOf = (p: string): string => {
+  function baseOf(p: string): string {
+    return basename(p)
+  }
+  function dirOf(p: string): string {
     const d = dirname(p)
     return d ? `${d}/` : ''
   }
@@ -164,7 +166,9 @@
     'Constructor',
   ])
 
-  const kindOf = (kind: string): string => (KINDS.has(kind) ? t(`replay.tools.views.lsp.kinds.${kind}`) : kind)
+  function kindOf(kind: string): string {
+    return KINDS.has(kind) ? t(`replay.tools.views.lsp.kinds.${kind}`) : kind
+  }
 
   /** Ce qui manque, dit par l'opération plutôt que par le texte anglais du CLI. */
   const EMPTY = new Set([
@@ -399,7 +403,9 @@
    * Une occurrence a sa colonne, un symbole n'en a pas : le serveur ne donne que
    * sa ligne de déclaration. Écrire `6:1` dans ce cas serait inventer une colonne.
    */
-  const at = (hit: Hit): string => (hit.character ? `${hit.line}:${hit.character}` : `${t('replay.tools.views.lsp.line')} ${hit.line}`)
+  function at(hit: Hit): string {
+    return hit.character ? `${hit.line}:${hit.character}` : `${t('replay.tools.views.lsp.line')} ${hit.line}`
+  }
 
   const emptyLabel = computed(() =>
     EMPTY.has(operation.value) ? t(`replay.tools.views.lsp.empty.${operation.value}`) : t('replay.tools.views.lsp.noResult'),

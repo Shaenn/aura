@@ -131,16 +131,20 @@
   /** With no vocabulary there is nothing to compare against, hence nothing to flag. */
   const documented = computed(() => props.keys.length > 0)
 
-  const byKey = (k: string): FmEntry | undefined => props.entries.find((e) => e.key === k)
+  function byKey(k: string): FmEntry | undefined {
+    return props.entries.find((e) => e.key === k)
+  }
   const displayName = computed(() => byKey('name')?.value || props.fallbackName)
   const description = computed(() => byKey('description')?.value ?? '')
 
   /** A key we can render but not explain: shape read off the value, no `info`. */
-  const neutralSpec = (e: FmEntry): KeySpec => ({
-    key: e.key,
-    kind: e.list.length ? 'list' : 'text',
-    ns: null,
-  })
+  function neutralSpec(e: FmEntry): KeySpec {
+    return {
+      key: e.key,
+      kind: e.list.length ? 'list' : 'text',
+      ns: null,
+    }
+  }
 
   /** Every entry except the two already rendered as the card's header. */
   const defined = computed(() =>

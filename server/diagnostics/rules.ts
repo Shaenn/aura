@@ -171,7 +171,9 @@ function money(n: number): number | undefined {
 }
 
 /** Le début d'un `sessionId`, seule forme lisible dans une phrase. */
-const short = (id: string): string => `${id.slice(0, 8)}…`
+function short(id: string): string {
+  return `${id.slice(0, 8)}…`
+}
 
 /**
  * Le contexte réellement attribué d'une session.
@@ -193,7 +195,7 @@ function attributed(s: SessionSignal): number {
 type SessionRule = (s: SessionSignal, t: Thresholds) => Finding | null
 
 /** Ce que coûte la seule relecture de l'historique déjà lu. */
-const historiqueRelu: SessionRule = (s, th) => {
+function historiqueRelu(s: SessionSignal, th: Thresholds): Finding | null {
   const c = th.metrics.cacheReadCost
   const value = valueOf('cacheReadCost', s)
   if (!exceeds(c, value) || value === null) return null
@@ -233,7 +235,7 @@ const historiqueRelu: SessionRule = (s, th) => {
 }
 
 /** Une fenêtre reconstruite plutôt que relue : le cache ne prend pas. */
-const cacheFaible: SessionRule = (s, th) => {
+function cacheFaible(s: SessionSignal, th: Thresholds): Finding | null {
   const c = th.metrics.cacheHitRatio
   const value = valueOf('cacheHitRatio', s)
   if (!exceeds(c, value) || value === null) return null
@@ -286,7 +288,7 @@ const cacheFaible: SessionRule = (s, th) => {
 }
 
 /** Ce que les délégations ont coûté, lu dans leurs propres fichiers. */
-const sousAgentsCouteux: SessionRule = (s, th) => {
+function sousAgentsCouteux(s: SessionSignal, th: Thresholds): Finding | null {
   const c = th.metrics.subagentCost
   const value = valueOf('subagentCost', s)
   if (!exceeds(c, value) || value === null) return null
@@ -326,7 +328,7 @@ const sousAgentsCouteux: SessionRule = (s, th) => {
 }
 
 /** Les outils occupent la fenêtre — et c'est le premier poste du parc. */
-const outilsGourmands: SessionRule = (s, th) => {
+function outilsGourmands(s: SessionSignal, th: Thresholds): Finding | null {
   const c = th.metrics.toolTokens
   const value = valueOf('toolTokens', s)
   if (!exceeds(c, value) || value === null) return null
@@ -376,7 +378,7 @@ const outilsGourmands: SessionRule = (s, th) => {
 }
 
 /** Des appels qui échouent : des tokens dépensés sans rien produire. */
-const outilsEnEchec: SessionRule = (s, th) => {
+function outilsEnEchec(s: SessionSignal, th: Thresholds): Finding | null {
   const c = th.metrics.toolErrorRate
   const value = valueOf('toolErrorRate', s)
   if (!exceeds(c, value) || value === null) return null
@@ -427,7 +429,7 @@ const outilsEnEchec: SessionRule = (s, th) => {
 }
 
 /** Une compaction jette du contexte qu'il a fallu payer pour construire. */
-const compactionLourde: SessionRule = (s, th) => {
+function compactionLourde(s: SessionSignal, th: Thresholds): Finding | null {
   const c = th.metrics.compactionWaste
   const value = valueOf('compactionWaste', s)
   if (!exceeds(c, value) || value === null) return null
@@ -465,7 +467,7 @@ const compactionLourde: SessionRule = (s, th) => {
 }
 
 /** Des mémoires, catalogues et hooks qui entrent dans chaque fenêtre. */
-const contexteInjecte: SessionRule = (s, th) => {
+function contexteInjecte(s: SessionSignal, th: Thresholds): Finding | null {
   const c = th.metrics.injectedContext
   const value = valueOf('injectedContext', s)
   if (!exceeds(c, value) || value === null) return null
@@ -519,7 +521,7 @@ const contexteInjecte: SessionRule = (s, th) => {
 //    où rien n'est chiffrable, `impact` ne porte aucun nombre et le dit.
 
 /** Chercher plus qu'on ne construit. */
-const explorationSansFin: SessionRule = (s, th) => {
+function explorationSansFin(s: SessionSignal, th: Thresholds): Finding | null {
   const c = th.metrics.explorationRatio
   const value = valueOf('explorationRatio', s)
   if (!exceeds(c, value) || value === null) return null
@@ -567,7 +569,7 @@ const explorationSansFin: SessionRule = (s, th) => {
  * tâche entière d'un coup et laisse-la courir ». Les sessions qui produisent le
  * plus font 23 tours par prompt ; celles qui produisent le moins, 11,7.
  */
-const briefMorcele: SessionRule = (s, th) => {
+function briefMorcele(s: SessionSignal, th: Thresholds): Finding | null {
   const c = th.metrics.turnsPerPrompt
   const value = valueOf('turnsPerPrompt', s)
   if (!exceeds(c, value) || value === null) return null
@@ -606,7 +608,7 @@ const briefMorcele: SessionRule = (s, th) => {
 }
 
 /** Le travail partait ailleurs qu'attendu. */
-const reorientations: SessionRule = (s, th) => {
+function reorientations(s: SessionSignal, th: Thresholds): Finding | null {
   const c = th.metrics.interruptions
   const value = valueOf('interruptions', s)
   if (!exceeds(c, value) || value === null) return null
@@ -639,7 +641,7 @@ const reorientations: SessionRule = (s, th) => {
 }
 
 /** Les mêmes fichiers relus plusieurs fois dans la même session. */
-const relectures: SessionRule = (s, th) => {
+function relectures(s: SessionSignal, th: Thresholds): Finding | null {
   const c = th.metrics.rereadTokens
   const value = valueOf('rereadTokens', s)
   if (!exceeds(c, value) || value === null) return null
@@ -678,7 +680,7 @@ const relectures: SessionRule = (s, th) => {
 }
 
 /** La fenêtre approche de ce que le modèle peut tenir. */
-const fenetreProcheLimite: SessionRule = (s, th) => {
+function fenetreProcheLimite(s: SessionSignal, th: Thresholds): Finding | null {
   const c = th.metrics.contextFill
   const value = valueOf('contextFill', s)
   if (!exceeds(c, value) || value === null) return null

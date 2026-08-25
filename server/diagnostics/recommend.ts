@@ -107,8 +107,12 @@ export interface DiagnosticReport {
 // recommandation (`bodyFor`) restent en voix neutre : ce sont des mesures, et
 // une mesure n'appartient à personne. Le conseil, lui, engage celle qui le donne
 // — voir docs/voix.md.
-const titleOf = (rule: RuleName): string => t(`diagnostics.recommendations.titles.${rule}`)
-const actionOf = (rule: RuleName): string => t(`diagnostics.recommendations.actions.${rule}`)
+function titleOf(rule: RuleName): string {
+  return t(`diagnostics.recommendations.titles.${rule}`)
+}
+function actionOf(rule: RuleName): string {
+  return t(`diagnostics.recommendations.actions.${rule}`)
+}
 
 // ── Outillage ────────────────────────────────────────────────────────────────
 
@@ -184,7 +188,9 @@ function weight(impact: Impact): number {
 function bodyFor(rule: RuleName, findings: Finding[], signals: SessionSignal[]): string {
   const n = findings.length
   const sessions = n > 1 ? t('diagnostics.recommendations.manySessions', { n }) : t('diagnostics.recommendations.oneSession')
-  const metric = (key: string): number[] => findings.map((f) => f.metrics[key] ?? 0)
+  function metric(key: string): number[] {
+    return findings.map((f) => f.metrics[key] ?? 0)
+  }
 
   switch (rule) {
     case 'historique-relu': {
@@ -324,10 +330,14 @@ function bodyFor(rule: RuleName, findings: Finding[], signals: SessionSignal[]):
  * des deux côtés. C'est ce qui distingue une cause d'un symptôme.
  */
 function applyCrossings(recommendations: Recommendation[], findings: Finding[]): void {
-  const targetsOf = (rule: RuleName): Set<string> => new Set(findings.filter((f) => f.rule === rule && f.scope === 'session').map((f) => f.target))
-  const find = (rule: RuleName): Recommendation | undefined => recommendations.find((r) => r.rule === rule)
+  function targetsOf(rule: RuleName): Set<string> {
+    return new Set(findings.filter((f) => f.rule === rule && f.scope === 'session').map((f) => f.target))
+  }
+  function find(rule: RuleName): Recommendation | undefined {
+    return recommendations.find((r) => r.rule === rule)
+  }
 
-  const overlap = (a: Set<string>, b: Set<string>): number => {
+  function overlap(a: Set<string>, b: Set<string>): number {
     let n = 0
     for (const x of a) if (b.has(x)) n++
     return n
@@ -338,7 +348,7 @@ function applyCrossings(recommendations: Recommendation[], findings: Finding[]):
   const compact = targetsOf('compaction-lourde')
   const agents = targetsOf('sous-agents-couteux')
 
-  const cross = (reco: Recommendation | undefined, n: number, key: string): void => {
+  function cross(reco: Recommendation | undefined, n: number, key: string): void {
     if (reco && n >= 1) reco.body += ` ${t(`diagnostics.recommendations.crossings.${key}`, { n })}`
   }
 

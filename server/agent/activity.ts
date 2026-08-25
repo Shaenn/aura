@@ -16,8 +16,12 @@ import { num, str } from '../json.ts'
 
 type Rec = Record<string, unknown>
 
-const rec = (v: unknown): Rec => (v && typeof v === 'object' ? (v as Rec) : {})
-const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : [])
+function rec(v: unknown): Rec {
+  return v && typeof v === 'object' ? (v as Rec) : {}
+}
+function arr(v: unknown): unknown[] {
+  return Array.isArray(v) ? v : []
+}
 
 /**
  * L'ampleur d'un changement, qui décide s'il part tout de suite.

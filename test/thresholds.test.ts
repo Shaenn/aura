@@ -45,7 +45,9 @@ const LOW: MetricMeta = {
 }
 
 /** `n` valeurs 1..n — un parc parfaitement étalé, aux percentiles connus. */
-const spread = (n: number): number[] => Array.from({ length: n }, (_, i) => i + 1)
+function spread(n: number): number[] {
+  return Array.from({ length: n }, (_, i) => i + 1)
+}
 
 describe('percentiles', () => {
   it('rend les bornes aux rangs extrêmes', () => {

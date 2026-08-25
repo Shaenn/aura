@@ -60,8 +60,12 @@ async function req<T>(url: string): Promise<T> {
   return (await (await request(url)).json()) as T
 }
 
-export const getProjects = (): Promise<{ projects: ProjectSummary[] }> => req('/api/projects')
-export const getProjectDetail = (slug: string): Promise<ProjectDetail> => req(`/api/projects/${encodeURIComponent(slug)}`)
+export function getProjects(): Promise<{ projects: ProjectSummary[] }> {
+  return req('/api/projects')
+}
+export function getProjectDetail(slug: string): Promise<ProjectDetail> {
+  return req(`/api/projects/${encodeURIComponent(slug)}`)
+}
 /**
  * Le même inventaire que `getProjectDetail`, sans les transcripts.
  *
@@ -69,17 +73,24 @@ export const getProjectDetail = (slug: string): Promise<ProjectDetail> => req(`/
  * le détail complet résume chaque transcript du projet, ce qui se compte en
  * dizaines de méga-octets lus pour afficher un arbre de fichiers.
  */
-export const getProjectResources = (slug: string): Promise<ProjectResources> => req(`/api/projects/${encodeURIComponent(slug)}/resources`)
+export function getProjectResources(slug: string): Promise<ProjectResources> {
+  return req(`/api/projects/${encodeURIComponent(slug)}/resources`)
+}
 /** Les sessions d'un projet, du plus récent au plus ancien. Sans l'inventaire. */
-export const getProjectSessions = (slug: string): Promise<{ sessions: TranscriptSummary[] }> =>
-  req(`/api/projects/${encodeURIComponent(slug)}/sessions`)
+export function getProjectSessions(slug: string): Promise<{ sessions: TranscriptSummary[] }> {
+  return req(`/api/projects/${encodeURIComponent(slug)}/sessions`)
+}
 /** Plans this project produced — they live in ~/.claude/plans, not in the project. */
-export const getProjectPlans = (slug: string): Promise<{ plans: PlanInfo[] }> => req(`/api/projects/${encodeURIComponent(slug)}/plans`)
-export const readResource = (slug: string, path: string): Promise<{ rel: string; content: string }> =>
-  req(`/api/projects/${encodeURIComponent(slug)}/resource?path=${encodeURIComponent(path)}`)
+export function getProjectPlans(slug: string): Promise<{ plans: PlanInfo[] }> {
+  return req(`/api/projects/${encodeURIComponent(slug)}/plans`)
+}
+export function readResource(slug: string, path: string): Promise<{ rel: string; content: string }> {
+  return req(`/api/projects/${encodeURIComponent(slug)}/resource?path=${encodeURIComponent(path)}`)
+}
 /** A CLAUDE.md of the source tree — a different sandbox than `readResource`. */
-export const readMemory = (slug: string, path: string): Promise<{ rel: string; content: string }> =>
-  req(`/api/projects/${encodeURIComponent(slug)}/memory?path=${encodeURIComponent(path)}`)
+export function readMemory(slug: string, path: string): Promise<{ rel: string; content: string }> {
+  return req(`/api/projects/${encodeURIComponent(slug)}/memory?path=${encodeURIComponent(path)}`)
+}
 /**
  * Un document d'un dossier inclus.
  *
@@ -87,11 +98,13 @@ export const readMemory = (slug: string, path: string): Promise<{ rel: string; c
  * liste des dossiers inclus dans les préférences et n'ouvre que ce qu'elle
  * couvre. Rien d'inclus, rien de lisible.
  */
-export const readIncludedFile = (slug: string, path: string): Promise<{ rel: string; content: string }> =>
-  req(`/api/projects/${encodeURIComponent(slug)}/included?path=${encodeURIComponent(path)}`)
+export function readIncludedFile(slug: string, path: string): Promise<{ rel: string; content: string }> {
+  return req(`/api/projects/${encodeURIComponent(slug)}/included?path=${encodeURIComponent(path)}`)
+}
 /** Les dossiers qu'AURA propose d'inclure, du plus fourni au moins fourni. */
-export const getFolderCandidates = (slug: string): Promise<{ candidates: FolderCandidate[] }> =>
-  req(`/api/projects/${encodeURIComponent(slug)}/folder-candidates`)
+export function getFolderCandidates(slug: string): Promise<{ candidates: FolderCandidate[] }> {
+  return req(`/api/projects/${encodeURIComponent(slug)}/folder-candidates`)
+}
 /** Un transcript, et l'empreinte du fichier dont il sort. */
 export interface TranscriptRead {
   transcript: ParsedTranscript
@@ -128,10 +141,14 @@ export async function readTranscript(slug: string, id: string): Promise<Transcri
  * en `immutable`, donc c'est le cache HTTP du navigateur qui fait le travail —
  * une image rendue deux fois n'est chargée qu'une.
  */
-export const transcriptImageUrl = (slug: string, id: string, img: TranscriptImage): string =>
-  `/api/projects/${encodeURIComponent(slug)}/transcript/image` +
-  `?id=${encodeURIComponent(id)}&uuid=${encodeURIComponent(img.uuid)}&index=${img.index}` +
-  (img.agentId ? `&agentId=${encodeURIComponent(img.agentId)}` : '')
+export function transcriptImageUrl(slug: string, id: string, img: TranscriptImage): string {
+  return (
+    `/api/projects/${encodeURIComponent(slug)}/transcript/image` +
+    `?id=${encodeURIComponent(id)}&uuid=${encodeURIComponent(img.uuid)}&index=${img.index}` +
+    (img.agentId ? `&agentId=${encodeURIComponent(img.agentId)}` : '')
+  )
+}
 
-export const readToolResult = (slug: string, id: string, toolUseId: string): Promise<{ toolUseId: string; content: string; truncated: boolean }> =>
-  req(`/api/projects/${encodeURIComponent(slug)}/tool-result` + `?id=${encodeURIComponent(id)}&toolUseId=${encodeURIComponent(toolUseId)}`)
+export function readToolResult(slug: string, id: string, toolUseId: string): Promise<{ toolUseId: string; content: string; truncated: boolean }> {
+  return req(`/api/projects/${encodeURIComponent(slug)}/tool-result` + `?id=${encodeURIComponent(id)}&toolUseId=${encodeURIComponent(toolUseId)}`)
+}

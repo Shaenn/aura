@@ -44,8 +44,12 @@ const INPUT_STEP_MS = 120
  */
 const INPUT_MAX = 64_000
 
-const rec = (v: unknown): Rec => (v && typeof v === 'object' ? (v as Rec) : {})
-const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : [])
+function rec(v: unknown): Rec {
+  return v && typeof v === 'object' ? (v as Rec) : {}
+}
+function arr(v: unknown): unknown[] {
+  return Array.isArray(v) ? v : []
+}
 
 /**
  * À quel sous-agent appartient ce message — `undefined` pour le fil principal.

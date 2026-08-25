@@ -98,7 +98,9 @@ async function req<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
-const q = (path: string): string => `/api/claude`.concat(path)
+function q(path: string): string {
+  return `/api/claude`.concat(path)
+}
 
 // ── Reads ──────────────────────────────────────────────────────────────────
 
@@ -107,56 +109,78 @@ export interface SystemInfo {
   version: string
 }
 
-export const getSystem = (): Promise<SystemInfo> => req(q('/system'))
-export const getOverview = (): Promise<Overview> => req(q('/overview'))
+export function getSystem(): Promise<SystemInfo> {
+  return req(q('/system'))
+}
+export function getOverview(): Promise<Overview> {
+  return req(q('/overview'))
+}
 
-export const listDir = (path = ''): Promise<{ entries: DirEntry[] }> => req(q(`/list?path=${encodeURIComponent(path)}`))
+export function listDir(path = ''): Promise<{ entries: DirEntry[] }> {
+  return req(q(`/list?path=${encodeURIComponent(path)}`))
+}
 
-export const readFile = (path: string): Promise<{ rel: string; content: string }> => req(q(`/file?path=${encodeURIComponent(path)}`))
+export function readFile(path: string): Promise<{ rel: string; content: string }> {
+  return req(q(`/file?path=${encodeURIComponent(path)}`))
+}
 
-export const listAgents = (): Promise<{ items: ResourceItem[] }> => req(q('/agents'))
-export const listSkills = (): Promise<{ items: ResourceItem[] }> => req(q('/skills'))
-export const getMemories = (): Promise<MemoriesIndex> => req(q('/memories'))
-export const getPlugins = (): Promise<PluginsIndex> => req(q('/plugins'))
+export function listAgents(): Promise<{ items: ResourceItem[] }> {
+  return req(q('/agents'))
+}
+export function listSkills(): Promise<{ items: ResourceItem[] }> {
+  return req(q('/skills'))
+}
+export function getMemories(): Promise<MemoriesIndex> {
+  return req(q('/memories'))
+}
+export function getPlugins(): Promise<PluginsIndex> {
+  return req(q('/plugins'))
+}
 
 export interface PluginHooks {
   plugin: string
   hooks: Record<string, { matcher?: string; hooks?: { type?: string; command?: string }[] }[]>
 }
-export const getPluginHooks = (): Promise<PluginHooks[]> => req(q('/plugin-hooks'))
+export function getPluginHooks(): Promise<PluginHooks[]> {
+  return req(q('/plugin-hooks'))
+}
 
 // ── Writes (two-phase) ─────────────────────────────────────────────────────
 
-export const propose = (path: string, content: string): Promise<Proposal> =>
-  req(q('/propose'), {
+export function propose(path: string, content: string): Promise<Proposal> {
+  return req(q('/propose'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path, content }),
   })
+}
 
-export const apply = (path: string, content: string, expectedBefore: string | null): Promise<ApplyResult> =>
-  req(q('/apply'), {
+export function apply(path: string, content: string, expectedBefore: string | null): Promise<ApplyResult> {
+  return req(q('/apply'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path, content, expectedBefore }),
   })
+}
 
-export const deleteResource = (path: string): Promise<{ backupPath: string; rel: string }> =>
-  req(q('/delete'), {
+export function deleteResource(path: string): Promise<{ backupPath: string; rel: string }> {
+  return req(q('/delete'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path }),
   })
+}
 
-export const syncMemoryIndex = (payload: {
+export function syncMemoryIndex(payload: {
   memRel: string
   action: 'add' | 'remove'
   file: string
   title?: string
   hook?: string
-}): Promise<{ changed: boolean; rel: string }> =>
-  req(q('/memory-index'), {
+}): Promise<{ changed: boolean; rel: string }> {
+  return req(q('/memory-index'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+}

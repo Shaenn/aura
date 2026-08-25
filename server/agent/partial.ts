@@ -23,7 +23,9 @@ interface Level {
   expectKey: boolean
 }
 
-const asRecord = (v: unknown): Rec | null => (v && typeof v === 'object' && !Array.isArray(v) ? (v as Rec) : null)
+function asRecord(v: unknown): Rec | null {
+  return v && typeof v === 'object' && !Array.isArray(v) ? (v as Rec) : null
+}
 
 /**
  * L'objet que porte un fragment de JSON, au plus près de ce qui est arrivé.
@@ -43,7 +45,7 @@ export function repairJson(fragment: string): Rec | null {
   // et l'état de la pile à cet endroit-là.
   let safe = 0
   let safeStack: Level[] = []
-  const mark = (at: number): void => {
+  function mark(at: number): void {
     safe = at
     safeStack = stack.map((l) => ({ ...l }))
   }

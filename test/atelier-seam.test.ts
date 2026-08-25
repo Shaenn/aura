@@ -26,19 +26,24 @@ function event(part: Partial<TranscriptEvent> & { kind: TranscriptEvent['kind'] 
   }
 }
 
-const human = (text: string) => event({ kind: 'user', origin: 'human', blocks: [{ kind: 'text', text }] })
+function human(text: string) {
+  return event({ kind: 'user', origin: 'human', blocks: [{ kind: 'text', text }] })
+}
 
-const answer = (text: string) => event({ kind: 'assistant', blocks: [{ kind: 'text', text }] })
+function answer(text: string) {
+  return event({ kind: 'assistant', blocks: [{ kind: 'text', text }] })
+}
 
-const command = (name: string) =>
-  event({
+function command(name: string) {
+  return event({
     kind: 'user',
     origin: 'slash-command',
     blocks: [{ kind: 'slash_command', name, text: '' }],
   })
+}
 
-const boundary = (uuid: string) =>
-  event({
+function boundary(uuid: string) {
+  return event({
     kind: 'compaction',
     uuid,
     isMeta: true,
@@ -51,9 +56,12 @@ const boundary = (uuid: string) =>
       durationMs: 0,
     },
   })
+}
 
 /** Ce que le harnais écrit après une compaction, et que le direct ne porte pas. */
-const kept = () => event({ kind: 'user', origin: 'compact-summary', blocks: [{ kind: 'text', text: 'résumé' }] })
+function kept() {
+  return event({ kind: 'user', origin: 'compact-summary', blocks: [{ kind: 'text', text: 'résumé' }] })
+}
 
 describe('la couture du fil', () => {
   it('montre le direct seul tant que le fichier n’existe pas', () => {

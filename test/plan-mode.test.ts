@@ -16,11 +16,16 @@ import { describe, expect, it } from 'vitest'
 import { parseTranscript } from '../server/transcript.ts'
 import type { TranscriptEvent } from '../shared/transcript.ts'
 
-const load = async (name: string): Promise<TranscriptEvent[]> =>
-  (await parseTranscript(join(import.meta.dirname, 'fixtures', `${name}.jsonl`), 'fixture')).events
+async function load(name: string): Promise<TranscriptEvent[]> {
+  return (await parseTranscript(join(import.meta.dirname, 'fixtures', `${name}.jsonl`), 'fixture')).events
+}
 
-const bornes = (evs: TranscriptEvent[]) => evs.filter((e) => e.kind === 'planmode')
-const marques = (evs: TranscriptEvent[]) => evs.filter((e) => e.inPlanMode).map((e) => e.uuid)
+function bornes(evs: TranscriptEvent[]) {
+  return evs.filter((e) => e.kind === 'planmode')
+}
+function marques(evs: TranscriptEvent[]) {
+  return evs.filter((e) => e.inPlanMode).map((e) => e.uuid)
+}
 
 describe('bornes du mode plan', () => {
   it('lit l’entrée, la reprise et la sortie', async () => {

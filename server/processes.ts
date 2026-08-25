@@ -69,8 +69,12 @@ Get-CimInstance Win32_Process -Filter "Name='claude.exe' OR Name='node.exe'" |
   } | ConvertTo-Json -Compress
 `
 
-const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0)
-const text = (v: unknown): string => (typeof v === 'string' ? v : '')
+function num(v: unknown): number {
+  return typeof v === 'number' && Number.isFinite(v) ? v : 0
+}
+function text(v: unknown): string {
+  return typeof v === 'string' ? v : ''
+}
 
 /**
  * Énumère les processus, ou rend `null` si la plateforme ne s'y prête pas.
@@ -146,7 +150,9 @@ const MARKERS: { needle: string; kind: ClaudeProcessKind }[] = [
 /** Le binaire que le SDK embarque, et qu'il lance pour une session d'Atelier. */
 const SDK_BINARY = /node_modules[\\/]@anthropic-ai[\\/]claude-agent-sdk/i
 
-const mentionsClaude = (command: string): boolean => /claude/i.test(command)
+function mentionsClaude(command: string): boolean {
+  return /claude/i.test(command)
+}
 
 /**
  * Le PID que le daemon dit avoir eu pour lanceur.

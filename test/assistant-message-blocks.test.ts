@@ -17,9 +17,11 @@ import { Translator } from '../server/agent/translate.ts'
 const ID = 'msg_1'
 
 /** Un message complet tel que le SDK le passe au traducteur. */
-const assistant = (content: unknown[], extra: Record<string, unknown> = {}): Record<string, unknown> => ({
-  message: { id: ID, model: 'opus', content, ...extra },
-})
+function assistant(content: unknown[], extra: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    message: { id: ID, model: 'opus', content, ...extra },
+  }
+}
 
 const thinking = { type: 'thinking', thinking: 'Le fichier est un vestige.' }
 const prose = { type: 'text', text: 'Non — et voici pourquoi.' }

@@ -75,7 +75,9 @@
 
   // Dossiers dépliés par défaut ; chaque instance gère l'état de ses enfants directs.
   const collapsed = reactive<Record<string, boolean>>({})
-  const isExpanded = (path: string): boolean => !collapsed[path]
+  function isExpanded(path: string): boolean {
+    return !collapsed[path]
+  }
   function toggle(path: string): void {
     collapsed[path] = !collapsed[path]
   }

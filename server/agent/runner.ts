@@ -46,8 +46,12 @@ interface ImageBlock {
 
 // Mêmes coercions que `translate.ts`, qui les garde locales pour la même
 // raison : ce qui vient du SDK n'est typé qu'à moitié.
-const rec = (v: unknown): Rec => (v && typeof v === 'object' ? (v as Rec) : {})
-const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : [])
+function rec(v: unknown): Rec {
+  return v && typeof v === 'object' ? (v as Rec) : {}
+}
+function arr(v: unknown): unknown[] {
+  return Array.isArray(v) ? v : []
+}
 
 /**
  * Les commandes du SDK, ramenées à la forme du wire.

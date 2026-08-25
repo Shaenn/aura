@@ -29,15 +29,19 @@ const OUTPUT =
   'C--Users-jean-dupont-Documents-devl-aura\\0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0\\' +
   'tasks\\btt4xdjh2.output'
 
-const lance = (input: Record<string, unknown>): Record<string, unknown> => ({
-  type: 'assistant',
-  message: { content: [{ type: 'tool_use', id: TOOL_USE, name: 'Bash', input }] },
-})
+function lance(input: Record<string, unknown>): Record<string, unknown> {
+  return {
+    type: 'assistant',
+    message: { content: [{ type: 'tool_use', id: TOOL_USE, name: 'Bash', input }] },
+  }
+}
 
-const repond = (text: string): Record<string, unknown> => ({
-  type: 'user',
-  message: { content: [{ type: 'tool_result', tool_use_id: TOOL_USE, content: text }] },
-})
+function repond(text: string): Record<string, unknown> {
+  return {
+    type: 'user',
+    message: { content: [{ type: 'tool_result', tool_use_id: TOOL_USE, content: text }] },
+  }
+}
 
 /**
  * La forme sous laquelle le harnais injecte réellement sa nouvelle.
@@ -47,16 +51,20 @@ const repond = (text: string): Record<string, unknown> => ({
  * toutes les fins de shell, sans que rien ne le signale : la ligne restait
  * simplement « en cours » pour toujours.
  */
-const notifie = (text: string): Record<string, unknown> => ({
-  type: 'user',
-  message: { content: text },
-})
+function notifie(text: string): Record<string, unknown> {
+  return {
+    type: 'user',
+    message: { content: text },
+  }
+}
 
 /** La même nouvelle, en liste de blocs — l'autre forme que le SDK sait rendre. */
-const notifieEnBlocs = (text: string): Record<string, unknown> => ({
-  type: 'user',
-  message: { content: [{ type: 'text', text }] },
-})
+function notifieEnBlocs(text: string): Record<string, unknown> {
+  return {
+    type: 'user',
+    message: { content: [{ type: 'text', text }] },
+  }
+}
 
 /** La réponse du CLI, mot pour mot. */
 const PROMESSE =
@@ -133,10 +141,12 @@ describe('ShellTracker', () => {
   })
 
   /** L'appel d'arrêt, tel qu'il passe dans le flux assistant. */
-  const arrete = (name: string, input: Record<string, unknown>): Record<string, unknown> => ({
-    type: 'assistant',
-    message: { content: [{ type: 'tool_use', id: 'toolu_kill', name, input }] },
-  })
+  function arrete(name: string, input: Record<string, unknown>): Record<string, unknown> {
+    return {
+      type: 'assistant',
+      message: { content: [{ type: 'tool_use', id: 'toolu_kill', name, input }] },
+    }
+  }
 
   it("marque coupé le shell qu'un TaskStop arrête", () => {
     const suiveur = new ShellTracker()
@@ -291,7 +301,7 @@ describe('readSince', () => {
   })
 
   /** Un transcript : la notification en tête, puis beaucoup de bruit derrière. */
-  const ecrire = async (bruit: number): Promise<string> => {
+  async function ecrire(bruit: number): Promise<string> {
     const path = join(dossier, 'transcript.jsonl')
     const ligne = JSON.stringify({ type: 'user', message: { role: 'user', content: FIN } })
     const remplissage = Array.from({ length: bruit }, (_, i) =>

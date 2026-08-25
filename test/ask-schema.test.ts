@@ -15,9 +15,11 @@ import { QUESTION_SHAPE } from '../server/agent/ask.ts'
 const schema = z.object(QUESTION_SHAPE)
 
 /** Une question minimale, à laquelle chaque cas ajoute ce qu'il éprouve. */
-const question = (options: unknown[]): unknown => ({
-  questions: [{ question: 'Quelle mise en page ?', header: 'Layout', options }],
-})
+function question(options: unknown[]): unknown {
+  return {
+    questions: [{ question: 'Quelle mise en page ?', header: 'Layout', options }],
+  }
+}
 
 describe('schéma des questions de l’Atelier', () => {
   it('laisse passer la maquette ASCII d’une option', () => {

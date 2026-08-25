@@ -134,7 +134,9 @@ function vocabulary(ns: KeyNs, specs: Omit<KeySpec, 'ns'>[]): KeySpec[] {
   return specs.map((s) => ({ ...s, ns }))
 }
 
-const documented = (spec: KeySpec): spec is KeySpec & { ns: KeyNs } => spec.ns !== null && spec.ns !== 'unknown'
+function documented(spec: KeySpec): spec is KeySpec & { ns: KeyNs } {
+  return spec.ns !== null && spec.ns !== 'unknown'
+}
 
 /** Le nom d'affichage d'une clé — son propre nom si rien ne la documente. */
 export function keyLabel(spec: KeySpec): string {
@@ -331,4 +333,6 @@ export function keySpec(keys: KeySpec[], key: string): KeySpec {
 }
 
 /** True when Claude Code documents this key for the given resource type. */
-export const isKnownKey = (keys: KeySpec[], key: string): boolean => keys.some((s) => s.key === key)
+export function isKnownKey(keys: KeySpec[], key: string): boolean {
+  return keys.some((s) => s.key === key)
+}

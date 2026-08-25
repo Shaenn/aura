@@ -25,7 +25,7 @@ export function paginer(markdown: string, max: number): string[] {
   let dansCode = false
   let langue = ''
 
-  const cloture = (): void => {
+  function cloture(): void {
     if (!courante.length) return
     if (dansCode) courante.push('```')
     pages.push(courante.join('\n'))

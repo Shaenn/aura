@@ -144,7 +144,7 @@ export function registerAgent(app: FastifyInstance): void {
     })
     reply.raw.write(': connected\n\n')
 
-    const send = (upsert: AgentUpsert): void => {
+    function send(upsert: AgentUpsert): void {
       reply.raw.write(`event: ${upsert.kind}\ndata: ${JSON.stringify(upsert)}\n\n`)
     }
 
@@ -152,7 +152,7 @@ export function registerAgent(app: FastifyInstance): void {
     const heartbeat = setInterval(() => reply.raw.write(': ping\n\n'), HEARTBEAT_MS)
 
     // Se désabonner n'arrête pas la session : c'est tout l'intérêt du registre.
-    const close = (): void => {
+    function close(): void {
       clearInterval(heartbeat)
       unsubscribe()
     }

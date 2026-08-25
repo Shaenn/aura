@@ -59,17 +59,24 @@ async function req<T>(url: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
-export const getStorage = (): Promise<Storage> => req('/api/system/storage')
-export const purgeArea = (area: string): Promise<{ ok: true }> =>
-  req('/api/system/purge', {
+export function getStorage(): Promise<Storage> {
+  return req('/api/system/storage')
+}
+export function purgeArea(area: string): Promise<{ ok: true }> {
+  return req('/api/system/purge', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ area }),
   })
-export const getSessions = (): Promise<{ sessions: SessionInfo[] }> => req('/api/system/sessions')
+}
+export function getSessions(): Promise<{ sessions: SessionInfo[] }> {
+  return req('/api/system/sessions')
+}
 
 /** Les processus Claude vivants — ce que le système exécute, pas ce que le disque déclare. */
-export const getProcesses = (): Promise<ProcessList> => req('/api/system/processes')
+export function getProcesses(): Promise<ProcessList> {
+  return req('/api/system/processes')
+}
 
 /**
  * Terminer un processus, `descendants` compris.
@@ -77,17 +84,23 @@ export const getProcesses = (): Promise<ProcessList> => req('/api/system/process
  * Presque toujours avec la descendance : un job coupé sans son hôte de
  * pseudo-terminal renaît aussitôt. Le serveur reste seul juge de l'ordre.
  */
-export const killProcess = (pid: number, descendants: boolean): Promise<KillProcessResult> =>
-  req('/api/system/processes/kill', {
+export function killProcess(pid: number, descendants: boolean): Promise<KillProcessResult> {
+  return req('/api/system/processes/kill', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ pid, descendants }),
   })
-export const getPlans = (): Promise<{ plans: PlanInfo[] }> => req('/api/system/plans')
-export const readPlan = (name: string): Promise<{ name: string; content: string }> => req(`/api/system/plan?name=${encodeURIComponent(name)}`)
-export const deletePlan = (name: string): Promise<{ ok: true }> =>
-  req('/api/system/plan/delete', {
+}
+export function getPlans(): Promise<{ plans: PlanInfo[] }> {
+  return req('/api/system/plans')
+}
+export function readPlan(name: string): Promise<{ name: string; content: string }> {
+  return req(`/api/system/plan?name=${encodeURIComponent(name)}`)
+}
+export function deletePlan(name: string): Promise<{ ok: true }> {
+  return req('/api/system/plan/delete', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
   })
+}

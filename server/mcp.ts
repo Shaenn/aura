@@ -74,7 +74,7 @@ export async function getMcpInventory(): Promise<McpInventory> {
 
   const fileServers: McpInventory['fileServers'] = []
   let globalServers: Record<string, ServerCfg> = {}
-  const collect = (obj: Record<string, ServerCfg> | undefined, scope: string): void => {
+  function collect(obj: Record<string, ServerCfg> | undefined, scope: string): void {
     for (const [name, cfg] of Object.entries(obj ?? {})) {
       const transport = cfg.type ?? (cfg.command ? 'stdio' : cfg.url ? 'http' : '?')
       const detail = cfg.command ? [cfg.command, ...(cfg.args ?? [])].join(' ') : (cfg.url ?? '')

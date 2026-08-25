@@ -224,7 +224,7 @@ export async function listSessions(): Promise<SessionInfo[]> {
 }
 
 // ── Plans ────────────────────────────────────────────────────────────────────
-const safePlan = (name: string): string => {
+function safePlan(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? ''
   if (!/^[A-Za-z0-9._-]+\.md$/.test(base)) throw new Error('Nom de plan invalide.')
   return base

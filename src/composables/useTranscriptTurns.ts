@@ -278,7 +278,7 @@ export function useTranscriptTurns(source: MaybeRefOrGetter<TranscriptEvent[]>, 
     /** Runs already opened, so the prompt that starts each one can be dropped. */
     const opened = new Set<string>()
 
-    const flush = (): void => {
+    function flush(): void {
       if (!run.length) return
       const done = finish(run)
       if (Array.isArray(done)) nodes.push(...done)

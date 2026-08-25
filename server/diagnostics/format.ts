@@ -52,11 +52,12 @@ export function pct(n: number): string {
  * le catalogue.
  */
 export function tok(n: number): string {
-  const num = (v: number, digits: number): string =>
-    new Intl.NumberFormat(locale(), {
+  function num(v: number, digits: number): string {
+    return new Intl.NumberFormat(locale(), {
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
     }).format(v)
+  }
   const space = locale() === 'fr' ? ' ' : ''
 
   if (n >= 1_000_000) return `${num(n / 1_000_000, 1)}${space}M`

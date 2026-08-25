@@ -17,9 +17,11 @@ import type { SubagentRunSummary } from '../shared/transcript.ts'
 
 const fixture = fileURLToPath(new URL('./fixtures/tracks.jsonl', import.meta.url))
 
-const load = () => parseTranscript(fixture, 'tracks')
+function load() {
+  return parseTranscript(fixture, 'tracks')
+}
 
-const runOf = (runs: SubagentRunSummary[], agentId: string): SubagentRunSummary => {
+function runOf(runs: SubagentRunSummary[], agentId: string): SubagentRunSummary {
   const run = runs.find((r) => r.agentId === agentId)
   if (!run) throw new Error(`run ${agentId} absent`)
   return run
@@ -167,7 +169,9 @@ describe('la liste des runs', () => {
  * comptes en clair qu'un ajout ferait tous bouger.
  */
 describe('une notification arrivée par la file des messages', () => {
-  const load = () => parseTranscript(fileURLToPath(new URL('./fixtures/notif-queued.jsonl', import.meta.url)), 'notif-queued')
+  function load() {
+    return parseTranscript(fileURLToPath(new URL('./fixtures/notif-queued.jsonl', import.meta.url)), 'notif-queued')
+  }
 
   it('termine le run qu’elle nomme', async () => {
     const { subagents } = await load()

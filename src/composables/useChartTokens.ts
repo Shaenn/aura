@@ -20,7 +20,9 @@ const SERIES_COUNT = 6
 
 function read(): ChartTokens {
   const s = getComputedStyle(document.body)
-  const v = (name: string) => s.getPropertyValue(name).trim()
+  function v(name: string) {
+    return s.getPropertyValue(name).trim()
+  }
   return {
     series: Array.from({ length: SERIES_COUNT }, (_, i) => v(`--series-${i + 1}`)),
     text: v('--text'),

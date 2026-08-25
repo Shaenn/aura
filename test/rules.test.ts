@@ -75,7 +75,9 @@ function signal(index: number, over: Partial<SessionSignal> = {}): SessionSignal
 }
 
 /** Un parc sain, assez grand pour que les percentiles se calculent. */
-const healthy = (n = 60): SessionSignal[] => Array.from({ length: n }, (_, i) => signal(i))
+function healthy(n = 60): SessionSignal[] {
+  return Array.from({ length: n }, (_, i) => signal(i))
+}
 
 describe('orphelines', () => {
   it('sépare ce qu’un garde-fou tait de ce qu’il fait disparaître', () => {
@@ -115,7 +117,7 @@ describe('règles', () => {
   })
 
   it('gradue la sévérité sur le dépassement, sans constante par règle', () => {
-    const at = (cost: number): Finding | undefined => {
+    function at(cost: number): Finding | undefined {
       const signals = healthy()
       signals.push(signal(999, { cost: cost + 1, cacheReadCost: cost }))
       return detect(signals, calibrate(signals)).find((f) => f.rule === 'historique-relu')

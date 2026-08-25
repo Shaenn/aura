@@ -136,7 +136,7 @@ function arm(dir: string, recursive: boolean, onChange: (relative: string) => vo
   let retry: NodeJS.Timeout | null = null
   let stopped = false
 
-  const start = (): void => {
+  function start(): void {
     if (stopped) return
     if (!existsSync(dir)) {
       retry = setTimeout(start, RETRY_MS)

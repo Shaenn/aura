@@ -54,10 +54,12 @@ describe('repairJson', () => {
 })
 
 describe('ActivityTracker', () => {
-  const blockStart = (type: string) => ({
-    type: 'stream_event',
-    event: { type: 'content_block_start', index: 0, content_block: { type } },
-  })
+  function blockStart(type: string) {
+    return {
+      type: 'stream_event',
+      event: { type: 'content_block_start', index: 0, content_block: { type } },
+    }
+  }
 
   it('suit le raisonnement et son estimation de tokens', () => {
     const tracker = new ActivityTracker()

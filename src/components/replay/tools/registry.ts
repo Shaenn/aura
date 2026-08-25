@@ -48,10 +48,14 @@ function oneLine(s: string, max = 80): string {
   return t.length > max ? `${t.slice(0, max - 1)}…` : t
 }
 
-const countLines = (s: string): number => (s ? s.split('\n').length : 0)
+function countLines(s: string): number {
+  return s ? s.split('\n').length : 0
+}
 
 /** Un résumé mal accordé se remarque plus que le compte qu'il porte. */
-const lineCount = (n: number): string => `${n} ligne${n > 1 ? 's' : ''}`
+function lineCount(n: number): string {
+  return `${n} ligne${n > 1 ? 's' : ''}`
+}
 
 /** `https://code.claude.com/docs/en/hooks.md` → `code.claude.com/docs/…/hooks.md` */
 function shortUrl(url: string): string {
@@ -71,7 +75,7 @@ const GENERIC: ToolDescriptor = {
   summary: (i) => oneLine(str(i.description) || str(i.query) || str(i.name) || str(i.path) || str(i.file_path) || str(i.prompt)),
 }
 
-const taskSummary = (i: Input): string => {
+function taskSummary(i: Input): string {
   const id = str(i.taskId) || str(i.task_id)
   const parts = [str(i.subject), id && `#${id}`, str(i.status)].filter(Boolean)
   return oneLine(parts.join(' · '))
@@ -86,7 +90,7 @@ const taskSummary = (i: Input): string => {
  * de celles-là portent une description. Le repli sur la commande ne sert que les
  * appels qui n'en ont aucune.
  */
-const shellSummary = (i: Input): string => {
+function shellSummary(i: Input): string {
   const command = str(i.command)
   const description = str(i.description)
   if (command.includes('\n') && description) return oneLine(description)

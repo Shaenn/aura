@@ -182,7 +182,7 @@ export function buildTree(items: ResourceNode[], opts: TreeOpts): RuleNode[] {
   }
   // Compte récursif des fichiers et tri (par type, puis alphabétique).
   const dirsBeforeFiles = filesFirst ? 1 : -1
-  const finish = (d: RuleDirNode): number => {
+  function finish(d: RuleDirNode): number {
     let n = 0
     for (const c of d.children) n += c.type === 'dir' ? finish(c) : 1
     d.fileCount = n
@@ -246,7 +246,7 @@ export function buildCandidateTree(candidates: FolderCandidate[]): CandidateNode
 
   // Le nœud d'un chemin, en créant au passage les parents qui manqueraient — la
   // borne de profondeur du serveur peut n'avoir rendu qu'une partie d'une branche.
-  const ensure = (rel: string): CandidateNode => {
+  function ensure(rel: string): CandidateNode {
     const found = byRel.get(rel)
     if (found) return found
     const cut = rel.lastIndexOf('/')
@@ -264,7 +264,7 @@ export function buildCandidateTree(candidates: FolderCandidate[]): CandidateNode
 
   for (const c of candidates) ensure(c.rel).docs = c.docs
 
-  const sort = (nodes: CandidateNode[]): CandidateNode[] => {
+  function sort(nodes: CandidateNode[]): CandidateNode[] {
     nodes.sort((a, b) => a.name.localeCompare(b.name))
     for (const n of nodes) sort(n.children)
     return nodes

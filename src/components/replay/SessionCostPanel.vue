@@ -210,7 +210,9 @@
 
   // Au-delà de dix dollars, les cents ne disent plus rien : ils allongent la
   // colonne sans changer la décision qu'on prend en la lisant.
-  const money = (n: number): string => fmtMoney(n, n < 10 ? 2 : 0)
+  function money(n: number): string {
+    return fmtMoney(n, n < 10 ? 2 : 0)
+  }
 
   function unitValue(v: number, unit: SessionRank['unit']): string {
     if (unit === 'usd') return money(v)

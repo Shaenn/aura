@@ -237,7 +237,9 @@
     'Elicitation',
     'ElicitationResult',
   ]
-  const eventInfo = (ev: string): string => t(`pages.hooks.events.${ev}`)
+  function eventInfo(ev: string): string {
+    return t(`pages.hooks.events.${ev}`)
+  }
   const TYPE_OPTIONS = [
     { label: 'command', value: 'command' },
     { label: 'prompt', value: 'prompt' },
@@ -258,18 +260,20 @@
   const dirty = computed(() => content.value !== original.value)
 
   type Path = (string | number)[]
-  const str = (p: Path): string => {
+  function str(p: Path): string {
     const v = getAt(parsed.value, p)
     if (typeof v === 'string') return v
     if (typeof v === 'number' || typeof v === 'boolean') return String(v)
     return ''
   }
-  const set = (p: Path, e: Event): void => {
+  function set(p: Path, e: Event): void {
     const v = (e.target as HTMLInputElement | HTMLTextAreaElement).value
     mutate((o) => (v === '' ? deleteAt(o, p) : setAt(o, p, v)))
   }
-  const setVal = (p: Path, v: string): void => mutate((o) => setAt(o, p, v))
-  const setNum = (p: Path, e: Event): void => {
+  function setVal(p: Path, v: string): void {
+    return mutate((o) => setAt(o, p, v))
+  }
+  function setNum(p: Path, e: Event): void {
     const raw = (e.target as HTMLInputElement).value
     mutate((o) => (raw === '' ? deleteAt(o, p) : setAt(o, p, Number(raw))))
   }
@@ -278,9 +282,12 @@
   const eventsWithHooks = computed(() =>
     Object.keys(hooks.value).filter((e) => Array.isArray(hooks.value[e]) && (hooks.value[e] as unknown[]).length),
   )
-  const groupsOf = (ev: string): Record<string, unknown>[] => (getAt(parsed.value, ['hooks', ev]) as Record<string, unknown>[] | undefined) ?? []
-  const actionsOf = (ev: string, gi: number): Record<string, unknown>[] =>
-    (getAt(parsed.value, ['hooks', ev, gi, 'hooks']) as Record<string, unknown>[] | undefined) ?? []
+  function groupsOf(ev: string): Record<string, unknown>[] {
+    return (getAt(parsed.value, ['hooks', ev]) as Record<string, unknown>[] | undefined) ?? []
+  }
+  function actionsOf(ev: string, gi: number): Record<string, unknown>[] {
+    return (getAt(parsed.value, ['hooks', ev, gi, 'hooks']) as Record<string, unknown>[] | undefined) ?? []
+  }
 
   /** Which single field to render for an action, by its type. */
   function fieldFor(a: Record<string, unknown>): 'command' | 'prompt' | 'url' | 'other' {
@@ -292,7 +299,9 @@
   }
 
   /** A plugin's hooks are active unless it's explicitly disabled in settings. */
-  const pluginEnabled = (id: string): boolean => getAt(parsed.value, ['enabledPlugins', id]) !== false
+  function pluginEnabled(id: string): boolean {
+    return getAt(parsed.value, ['enabledPlugins', id]) !== false
+  }
 
   /** Unique commands a plugin's hooks run (for a compact read-only summary). */
   function commandsOf(ph: PluginHooks): string[] {

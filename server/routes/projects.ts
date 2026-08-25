@@ -42,7 +42,9 @@ function fail(reply: FastifyReply, e: unknown): unknown {
  */
 function matchesEtag(header: string | string[] | undefined, etag: string): boolean {
   if (typeof header !== 'string' || !header) return false
-  const bare = (v: string): string => v.trim().replace(/^W\//, '')
+  function bare(v: string): string {
+    return v.trim().replace(/^W\//, '')
+  }
   if (header.trim() === '*') return true
   return header.split(',').some((candidate) => bare(candidate) === bare(etag))
 }

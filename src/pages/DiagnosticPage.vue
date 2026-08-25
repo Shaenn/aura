@@ -482,7 +482,9 @@
   const behaviour = computed(() => report.value?.behaviour ?? null)
   const pace = computed(() => report.value?.pace ?? null)
 
-  const one = (n: number): string => fmtDecimal(n)
+  function one(n: number): string {
+    return fmtDecimal(n)
+  }
 
   /**
    * Les quatre gestes, du quart du bas au quart du haut.
@@ -689,7 +691,9 @@
    * là où un seuil au garde-fou dit que le parc est sain.
    */
   function readThreshold(c: Calibration): string {
-    const u = (v: number) => unitValue(v, c.unit)
+    function u(v: number) {
+      return unitValue(v, c.unit)
+    }
     const value = u(c.value)
     const rank = c.direction === 'high' ? 'P90' : 'P10'
     const side = t(c.direction === 'high' ? 'pages.diagnostic.read.sideHigh' : 'pages.diagnostic.read.sideLow')

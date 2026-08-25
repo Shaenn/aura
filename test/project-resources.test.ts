@@ -101,11 +101,13 @@ describe('groupSkills', () => {
 })
 
 describe('buildCandidateTree', () => {
-  const cand = (rel: string, docs: number, included = false): FolderCandidate => ({
-    rel,
-    docs,
-    included,
-  })
+  function cand(rel: string, docs: number, included = false): FolderCandidate {
+    return {
+      rel,
+      docs,
+      included,
+    }
+  }
 
   it('recompose l’imbrication que la liste plate avait perdue', () => {
     const tree = buildCandidateTree([cand('docs/api', 3), cand('docs', 8), cand('src/help/sections', 36), cand('src', 36), cand('src/help', 36)])
@@ -136,7 +138,9 @@ describe('buildCandidateTree', () => {
 })
 
 describe('treeCount', () => {
-  const node = (rel: string): ResourceNode => res(rel, 'other')
+  function node(rel: string): ResourceNode {
+    return res(rel, 'other')
+  }
 
   // Les deux écrans additionnaient chacun de leur côté, et avaient déjà divergé :
   // l'un oubliait les plans, l'autre les documents du dépôt.

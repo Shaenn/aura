@@ -27,14 +27,16 @@ const FILES = [
 ]
 
 /** Les fichiers retenus, dans l'ordre où le clavier les parcourt. */
-const files = (query: string): string[] =>
-  treeRows(FILES, query)
+function files(query: string): string[] {
+  return treeRows(FILES, query)
     .rows.filter((r) => r.kind === 'file')
     .map((r) => r.path)
+}
 
 /** Le rendu tel qu'il s'affiche, indentation comprise. */
-const drawn = (query: string, collapsed?: Set<string>): string[] =>
-  treeRows(FILES, query, collapsed).rows.map((r) => '  '.repeat(r.depth) + (r.kind === 'dir' ? `${r.label}/` : r.label))
+function drawn(query: string, collapsed?: Set<string>): string[] {
+  return treeRows(FILES, query, collapsed).rows.map((r) => '  '.repeat(r.depth) + (r.kind === 'dir' ? `${r.label}/` : r.label))
+}
 
 describe('treeRows — ce qui est retenu', () => {
   it('cherche par extension seule, ce qu’on tape le plus souvent', () => {

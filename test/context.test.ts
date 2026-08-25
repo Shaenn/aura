@@ -19,9 +19,13 @@ import { parseTranscript } from '../server/transcript.ts'
 import { CONTEXT_CATEGORIES, turnDeltas, type TurnContext } from '../shared/context.ts'
 import { cardContext } from '../src/components/replay/contextRows.ts'
 
-const fixture = (name: string): string => fileURLToPath(new URL(`./fixtures/${name}.jsonl`, import.meta.url))
+function fixture(name: string): string {
+  return fileURLToPath(new URL(`./fixtures/${name}.jsonl`, import.meta.url))
+}
 
-const attributed = (turn: TurnContext): number => CONTEXT_CATEGORIES.reduce((sum, c) => sum + turn.byCategory[c], 0)
+function attributed(turn: TurnContext): number {
+  return CONTEXT_CATEGORIES.reduce((sum, c) => sum + turn.byCategory[c], 0)
+}
 
 describe('basic — un tour, un Read, un Edit', () => {
   it('ancre chaque tour sur la fenêtre exacte que le harness a relevée', async () => {
@@ -239,9 +243,12 @@ describe('tools — plusieurs appels dans un tour', () => {
 })
 
 describe('attachments — ce que le harness pousse dans la fenêtre', () => {
-  const load = () => parseTranscript(fixture('attachments'), 'attachments')
-  const sum = (c: Awaited<ReturnType<typeof load>>['context'], cat: string, phase = 0): number =>
-    c.injections.filter((i) => i.category === cat && i.phase === phase).reduce((s, i) => s + i.tokens, 0)
+  function load() {
+    return parseTranscript(fixture('attachments'), 'attachments')
+  }
+  function sum(c: Awaited<ReturnType<typeof load>>['context'], cat: string, phase = 0): number {
+    return c.injections.filter((i) => i.category === cat && i.phase === phase).reduce((s, i) => s + i.tokens, 0)
+  }
 
   it('ne compte qu’une fois un CLAUDE.md référencé deux fois', async () => {
     const { context } = await load()

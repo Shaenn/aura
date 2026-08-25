@@ -372,7 +372,9 @@ async function walkSourceTree(root: string): Promise<{ memories: ResourceNode[];
   // Le README d'abord : c'est la porte d'entrée du dépôt, et l'ordre alphabétique
   // la reléguerait derrière un CHANGELOG que personne ne lit en premier. Les
   // gabarits de `.github/` ferment la liste, étant les seuls à porter un dossier.
-  const rank = (r: ResourceNode): number => (r.rel.includes('/') ? 2 : /^README\b/i.test(r.name) ? 0 : 1)
+  function rank(r: ResourceNode): number {
+    return r.rel.includes('/') ? 2 : /^README\b/i.test(r.name) ? 0 : 1
+  }
   repoDocs.sort((a, b) => rank(a) - rank(b) || a.rel.localeCompare(b.rel))
   return { memories, repoDocs }
 }

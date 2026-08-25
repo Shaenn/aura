@@ -63,6 +63,8 @@ export function resolveRange(key: RangeKey, today = new Date()): { from?: string
 }
 
 function isoDay(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0')
+  function p(n: number) {
+    return String(n).padStart(2, '0')
+  }
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }

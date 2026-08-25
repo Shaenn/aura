@@ -45,7 +45,9 @@
    * apprendrait moins que « Bash ». La clé est calculée à l'appel : un libellé
    * posé ici resterait figé dans la langue du démarrage.
    */
-  const phaseLabel = (phase: Exclude<AgentPhase, 'tool'>): string => t(`agent.activity.${phase}`)
+  function phaseLabel(phase: Exclude<AgentPhase, 'tool'>): string {
+    return t(`agent.activity.${phase}`)
+  }
 
   /**
    * L'horloge du composant, qui n'avance que pendant qu'on regarde.

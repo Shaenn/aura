@@ -40,7 +40,9 @@ export const t = i18n.global.t
  * par exemple, qui peut venir d'un plugin qu'AURA ne connaît pas. Sans ce test,
  * `t()` rendrait la clé brute à l'écran.
  */
-export const te = (key: string): boolean => i18n.global.te(key)
+export function te(key: string): boolean {
+  return i18n.global.te(key)
+}
 
 /** La locale en vigueur, pour les formateurs qui passent par `Intl`. */
 export function currentLocale(): AppLocale {

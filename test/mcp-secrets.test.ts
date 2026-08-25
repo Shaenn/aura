@@ -87,8 +87,9 @@ describe('écriture', () => {
   /** Ce que le formulaire renvoie : ce qu'il a reçu, donc sans `env`. */
   const commeLeFront = { command: 'npx', args: ['-y', 'autre-serveur'], envKeys: ['GITHUB_TOKEN'] }
 
-  const relire = async (): Promise<Record<string, Record<string, unknown>>> =>
-    (JSON.parse(await readFile(claudeJson, 'utf8')) as { mcpServers: never }).mcpServers
+  async function relire(): Promise<Record<string, Record<string, unknown>>> {
+    return (JSON.parse(await readFile(claudeJson, 'utf8')) as { mcpServers: never }).mcpServers
+  }
 
   it('reconduit l’environnement que le client n’a pas reçu', async () => {
     await applique('github', commeLeFront)

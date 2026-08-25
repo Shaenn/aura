@@ -51,7 +51,9 @@ function sample(): Session[] {
   return out.slice(0, SAMPLE)
 }
 
-const attributedAt = (c: SessionContext, i: number): number => CONTEXT_CATEGORIES.reduce((sum, cat) => sum + c.turns[i]!.byCategory[cat], 0)
+function attributedAt(c: SessionContext, i: number): number {
+  return CONTEXT_CATEGORIES.reduce((sum, cat) => sum + c.turns[i]!.byCategory[cat], 0)
+}
 
 describe.skipIf(!HAS_CORPUS)('invariants sur ~/.claude', () => {
   const sessions = HAS_CORPUS ? sample() : []

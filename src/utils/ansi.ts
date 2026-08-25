@@ -137,7 +137,7 @@ export function ansiToHtml(text: string): string {
   let out = ''
   let last = 0
 
-  const push = (chunk: string): void => {
+  function push(chunk: string): void {
     if (!chunk) return
     const cls = classesOf(state)
     const safe = escapeHtml(chunk.replace(OTHER_CONTROLS, ''))

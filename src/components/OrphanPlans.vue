@@ -154,7 +154,9 @@
     }
   }
 
-  const msg = (e: unknown): string => (e instanceof Error && e.message.trim() ? e.message : t('common.noDetail'))
+  function msg(e: unknown): string {
+    return e instanceof Error && e.message.trim() ? e.message : t('common.noDetail')
+  }
 
   defineExpose({ refresh })
   onMounted(refresh)

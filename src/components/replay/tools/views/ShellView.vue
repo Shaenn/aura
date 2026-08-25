@@ -203,7 +203,9 @@
    */
   const silent = computed(() => !body.value.trim() && !isError.value && !launched.value)
 
-  const base = (p: string): string => basename(p)
+  function base(p: string): string {
+    return basename(p)
+  }
 </script>
 
 <style scoped lang="scss">

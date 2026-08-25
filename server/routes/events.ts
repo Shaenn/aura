@@ -28,14 +28,14 @@ export function registerEvents(app: FastifyInstance): void {
     // nothing changes for minutes.
     reply.raw.write(': connected\n\n')
 
-    const send = (event: ClaudeEvent): void => {
+    function send(event: ClaudeEvent): void {
       reply.raw.write(`event: ${event.kind}\ndata: ${JSON.stringify(event)}\n\n`)
     }
 
     const unsubscribe = subscribe(send)
     const heartbeat = setInterval(() => reply.raw.write(': ping\n\n'), HEARTBEAT_MS)
 
-    const close = (): void => {
+    function close(): void {
       clearInterval(heartbeat)
       unsubscribe()
     }

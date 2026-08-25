@@ -24,5 +24,7 @@
   const { t } = useI18n()
 
   /** A skill is a folder: `skills/foo/SKILL.md` → `skills/foo`. */
-  const skillDir = (rel: string): string => rel.replace(/\/SKILL\.md$/i, '')
+  function skillDir(rel: string): string {
+    return rel.replace(/\/SKILL\.md$/i, '')
+  }
 </script>

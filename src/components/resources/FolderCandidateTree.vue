@@ -66,7 +66,9 @@
   // Un dossier de tête est déplié, ses descendants non : l'arbre s'ouvre sur ce
   // qu'on cherche neuf fois sur dix, sans dérouler le projet entier.
   const opened = reactive<Record<string, boolean>>({})
-  const isOpen = (rel: string): boolean => Boolean(opened[rel])
+  function isOpen(rel: string): boolean {
+    return Boolean(opened[rel])
+  }
   function toggleOpen(rel: string): void {
     opened[rel] = !opened[rel]
   }

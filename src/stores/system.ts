@@ -23,7 +23,9 @@ export const useSystemStore = defineStore('system', () => {
   const sessions = ref<SessionInfo[]>([])
 
   /** Active = en train de tourner (busy) ou en attente d'une action (waiting). */
-  const isActive = (s: SessionInfo): boolean => !!s.status && s.status !== 'idle'
+  function isActive(s: SessionInfo): boolean {
+    return !!s.status && s.status !== 'idle'
+  }
   const activeSessions = computed(() => sessions.value.filter(isActive))
 
   async function refresh(): Promise<void> {

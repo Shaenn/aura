@@ -508,11 +508,15 @@ export function calibrateFrom(
   const fromParc = computed ?? spec.guard
   const value = override ?? (spec.direction === 'high' ? Math.max(fromParc, spec.guard) : Math.min(fromParc, spec.guard))
 
-  const beyond = (v: number): boolean => (spec.direction === 'high' ? v > value : v < value)
+  function beyond(v: number): boolean {
+    return spec.direction === 'high' ? v > value : v < value
+  }
   const hits = pairs.filter((p) => beyond(p.v))
 
   /** La somme des coûts connus, ou `null` si aucun ne l'est. */
-  const costOf = (list: typeof pairs): number | null => (costs ? list.reduce((n, p) => n + (p.cost ?? 0), 0) : null)
+  function costOf(list: typeof pairs): number | null {
+    return costs ? list.reduce((n, p) => n + (p.cost ?? 0), 0) : null
+  }
 
   // La bande que le garde-fou étouffe : au-delà du percentile, en deçà du seuil.
   // Vide par construction quand le percentile décide — les deux bornes coïncident.

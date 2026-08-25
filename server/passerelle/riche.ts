@@ -98,7 +98,7 @@ export function fragments(ligne: string): RichText[] {
    * d'un élément : c'est la même chose pour l'API, et c'est plus lisible au
    * journal comme au test.
    */
-  const interieur = (texte: string): RichText => {
+  function interieur(texte: string): RichText {
     const morceaux = fragments(texte)
     const seul = morceaux[0]
     return morceaux.length === 1 && typeof seul === 'string' ? seul : morceaux
@@ -241,13 +241,13 @@ export function enBlocs(markdown: string): InputRichBlock[] {
   let code: string[] | null = null
   let langue = ''
 
-  const fermeParagraphe = (): void => {
+  function fermeParagraphe(): void {
     if (!paragraphe.length) return
     blocs.push({ type: 'paragraph', text: fragments(paragraphe.join(' ')) })
     paragraphe = []
   }
 
-  const fermeTableau = (): void => {
+  function fermeTableau(): void {
     if (!tableau.length) return
     const grille = tableau.filter((l) => !SEPARATEUR.test(l)).map(cellules)
     const separateur = tableau.find((l) => SEPARATEUR.test(l))
@@ -271,7 +271,7 @@ export function enBlocs(markdown: string): InputRichBlock[] {
     })
   }
 
-  const fermeListe = (): void => {
+  function fermeListe(): void {
     if (!liste.length) return
     blocs.push(listeDepuis(liste))
     liste = []
@@ -286,14 +286,14 @@ export function enBlocs(markdown: string): InputRichBlock[] {
    * dans son cadre. La récursion s'arrête d'elle-même : chaque tour retire un
    * chevron.
    */
-  const fermeCitation = (): void => {
+  function fermeCitation(): void {
     if (!citation.length) return
     const dedans = enBlocs(citation.join('\n'))
     citation = []
     if (dedans.length) blocs.push({ type: 'blockquote', blocks: dedans })
   }
 
-  const fermeTout = (): void => {
+  function fermeTout(): void {
     fermeParagraphe()
     fermeTableau()
     fermeListe()

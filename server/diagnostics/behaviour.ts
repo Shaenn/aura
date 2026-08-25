@@ -73,11 +73,13 @@ function hoursOf(s: SessionSignal): number {
   return (end - start) / 3_600_000
 }
 
-const stat = (all: number[], top: number[], bottom: number[]): BehaviourStat => ({
-  median: median(all),
-  top: median(top),
-  bottom: median(bottom),
-})
+function stat(all: number[], top: number[], bottom: number[]): BehaviourStat {
+  return {
+    median: median(all),
+    top: median(top),
+    bottom: median(bottom),
+  }
+}
 
 // ── Le calcul ────────────────────────────────────────────────────────────────
 
@@ -107,8 +109,12 @@ export function buildBehaviour(signals: SessionSignal[]): Behaviour {
   const bottom = comparable ? sorted.slice(0, quarter) : []
   const top = comparable ? sorted.slice(sorted.length - quarter) : []
 
-  const perPrompt = (list: typeof kept): number[] => list.map((k) => k.turnsPerPrompt).filter((v): v is number => v !== null)
-  const interrupted = (list: typeof kept): number => (list.length ? list.filter((k) => k.signal.interruptions > 0).length / list.length : 0)
+  function perPrompt(list: typeof kept): number[] {
+    return list.map((k) => k.turnsPerPrompt).filter((v): v is number => v !== null)
+  }
+  function interrupted(list: typeof kept): number {
+    return list.length ? list.filter((k) => k.signal.interruptions > 0).length / list.length : 0
+  }
 
   return {
     sessions: kept.length,

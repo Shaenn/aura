@@ -12,7 +12,9 @@ const LOCALES = [
   { code: 'en', help: 'src/help/sections/en', out: 'site/en/guide' },
 ]
 
-const partial = (name) => readFile(join(root, 'site/partials', `${name}.md`), 'utf8')
+function partial(name) {
+  return readFile(join(root, 'site/partials', `${name}.md`), 'utf8')
+}
 
 // Le frontmatter du manuel est écrit pour l'application (`id`, `icon`, `order`,
 // `routes`). VitePress n'en lit que `title` et ignore le reste : on le laisse tel quel,

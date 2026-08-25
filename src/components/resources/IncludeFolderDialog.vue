@@ -71,7 +71,9 @@
   /** Ce qu'on est en train de choisir. Rien n'est écrit tant qu'on n'applique pas. */
   const selection = ref<string[]>([])
 
-  const key = (l: string[]): string => [...l].sort((a, b) => a.localeCompare(b)).join('\n')
+  function key(l: string[]): string {
+    return [...l].sort((a, b) => a.localeCompare(b)).join('\n')
+  }
   const changed = computed(() => key(selection.value) !== key(props.included))
 
   /**

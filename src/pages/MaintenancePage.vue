@@ -145,7 +145,9 @@
     ]
   })
   const maxSize = computed(() => Math.max(1, ...allAreas.value.map((a) => a.size)))
-  const pct = (n: number): string => `${Math.round((n / maxSize.value) * 100)}%`
+  function pct(n: number): string {
+    return `${Math.round((n / maxSize.value) * 100)}%`
+  }
 
   async function refresh(): Promise<void> {
     loading.value = true
@@ -202,7 +204,9 @@
     other: 7,
   }
 
-  const rootRank = (p: ClaudeProcess): number => ROOT_ORDER[p.kind] ?? ROOT_ORDER.other ?? 7
+  function rootRank(p: ClaudeProcess): number {
+    return ROOT_ORDER[p.kind] ?? ROOT_ORDER.other ?? 7
+  }
 
   /**
    * L'arbre à plat, chaque ligne sachant sa profondeur.
@@ -223,7 +227,7 @@
 
     const rows: { p: ClaudeProcess; depth: number }[] = []
     const seen = new Set<number>()
-    const walk = (p: ClaudeProcess, depth: number): void => {
+    function walk(p: ClaudeProcess, depth: number): void {
       if (seen.has(p.pid)) return
       seen.add(p.pid)
       rows.push({ p, depth })

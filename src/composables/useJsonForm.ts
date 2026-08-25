@@ -20,7 +20,9 @@ export function useJsonForm(content: Ref<string>) {
 
   const valid = computed(() => parsed.value !== null)
 
-  const serialize = (obj: unknown): string => JSON.stringify(obj, null, 2) + '\n'
+  function serialize(obj: unknown): string {
+    return JSON.stringify(obj, null, 2) + '\n'
+  }
 
   /** Clone the current object, apply a mutation, write it back to the text. */
   function mutate(fn: (o: Record<string, unknown>) => void): void {
@@ -40,8 +42,12 @@ export function useJsonForm(content: Ref<string>) {
     })
   }
 
-  const has = (path: Path): boolean => getAt(parsed.value, path) !== undefined
-  const remove = (path: Path): void => mutate((o) => deleteAt(o, path))
+  function has(path: Path): boolean {
+    return getAt(parsed.value, path) !== undefined
+  }
+  function remove(path: Path): void {
+    return mutate((o) => deleteAt(o, path))
+  }
 
   /** Read a string[] at a path ([] when absent or wrong type). */
   function stringArray(path: Path): string[] {

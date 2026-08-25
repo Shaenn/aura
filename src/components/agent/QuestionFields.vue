@@ -64,7 +64,9 @@
     })),
   )
 
-  const picked = (value: string): boolean => (Array.isArray(props.modelValue) ? props.modelValue.includes(value) : props.modelValue === value)
+  function picked(value: string): boolean {
+    return Array.isArray(props.modelValue) ? props.modelValue.includes(value) : props.modelValue === value
+  }
 
   /** Le vocabulaire d'icônes suit la nature du choix : un rond, ou une case. */
   function markOf(value: string): string {

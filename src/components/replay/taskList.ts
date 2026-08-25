@@ -322,7 +322,9 @@ export function trackTasks(events: readonly TranscriptEvent[]): TaskProgress {
     au tour où la décision a été prise. C'est la colonne de droite qui dit le
     plan tel qu'il est maintenant, et il n'y est plus.
   */
-  const kept = (t: TrackedTask): boolean => t.status !== 'deleted'
+  function kept(t: TrackedTask): boolean {
+    return t.status !== 'deleted'
+  }
   const grouped: TaskWave[] = waves
     .map((all, i) => {
       const tasks = all.filter(kept)

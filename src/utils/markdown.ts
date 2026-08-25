@@ -33,7 +33,9 @@ import MarkdownIt, { type MarkdownIt as MarkdownItInstance } from 'markdown-it'
 hljs.registerLanguage('powershell', powershell)
 
 /** A link the browser would resolve against another origin: `https:`, `mailto:`, `//host`. */
-const isExternalHref = (href: string): boolean => href.startsWith('//') || /^[a-z][a-z0-9+.-]*:/i.test(href)
+function isExternalHref(href: string): boolean {
+  return href.startsWith('//') || /^[a-z][a-z0-9+.-]*:/i.test(href)
+}
 
 function createRenderer(allowHtml: boolean): MarkdownItInstance {
   const m: MarkdownItInstance = new MarkdownIt({

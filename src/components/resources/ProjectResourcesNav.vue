@@ -372,7 +372,9 @@
 
   const skillGroups = computed(() => groupSkills(props.resources))
 
-  const resourcesIn = (category: ResourceCategory): ResourceNode[] => props.resources.filter((r) => r.category === category)
+  function resourcesIn(category: ResourceCategory): ResourceNode[] {
+    return props.resources.filter((r) => r.category === category)
+  }
 
   const ruleTree = computed<RuleNode[]>(() => buildTree(resourcesIn('rules'), { stripPrefix: true }))
   const docTree = computed<RuleNode[]>(() => buildTree(resourcesIn('docs'), { stripPrefix: true }))
@@ -405,7 +407,9 @@
   // de l'arbre demande de faire défiler ; repliés, ils tiennent tous à l'écran et
   // l'on voit d'un coup ce que le projet porte.
   const expandedCats = reactive<Record<string, boolean>>({})
-  const isCatOpen = (key: string): boolean => Boolean(expandedCats[key])
+  function isCatOpen(key: string): boolean {
+    return Boolean(expandedCats[key])
+  }
   function toggleCat(key: string): void {
     expandedCats[key] = !expandedCats[key]
   }
@@ -415,12 +419,18 @@
   const expandedSkills = reactive<Record<string, boolean>>({})
   const collapsedRefFolders = reactive<Record<string, boolean>>({})
 
-  const isSkillExpanded = (key: string): boolean => Boolean(expandedSkills[key])
+  function isSkillExpanded(key: string): boolean {
+    return Boolean(expandedSkills[key])
+  }
   function toggleSkill(key: string): void {
     expandedSkills[key] = !expandedSkills[key]
   }
-  const refFolderKey = (skill: string, folder: string): string => `${skill}/${folder}`
-  const isRefFolderExpanded = (skill: string, folder: string): boolean => !collapsedRefFolders[refFolderKey(skill, folder)]
+  function refFolderKey(skill: string, folder: string): string {
+    return `${skill}/${folder}`
+  }
+  function isRefFolderExpanded(skill: string, folder: string): boolean {
+    return !collapsedRefFolders[refFolderKey(skill, folder)]
+  }
   function toggleRefFolder(skill: string, folder: string): void {
     const k = refFolderKey(skill, folder)
     collapsedRefFolders[k] = !collapsedRefFolders[k]

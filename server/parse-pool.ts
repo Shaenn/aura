@@ -101,7 +101,7 @@ function spawn(): Slot | null {
 
     // Un thread mort ne doit pas laisser ses appelants suspendus pour toujours :
     // une fois retiré du pool, plus personne ne pourra les solder.
-    const die = (reason: string): void => {
+    function die(reason: string): void {
       const at = slots.indexOf(slot)
       if (at >= 0) slots.splice(at, 1)
       // Mort sans avoir jamais répondu : ce n'est pas un accident, c'est que le

@@ -35,7 +35,9 @@ afterEach(async () => {
   await rm(dir, { recursive: true, force: true })
 })
 
-const read = () => readTranscriptCached(join(dir, 'withsub.jsonl'), 'withsub')
+function read() {
+  return readTranscriptCached(join(dir, 'withsub.jsonl'), 'withsub')
+}
 
 /**
  * Le transcript, relu depuis les octets que le cache retient.
@@ -44,7 +46,9 @@ const read = () => readTranscriptCached(join(dir, 'withsub.jsonl'), 'withsub')
  * part, qui rend le document déjà sérialisé. Un test qui veut regarder dedans le
  * désérialise — c'est le seul endroit du dépôt qui en a besoin.
  */
-const parsed = (c: CachedTranscript): ParsedTranscript => JSON.parse(c.body.toString('utf8')) as ParsedTranscript
+function parsed(c: CachedTranscript): ParsedTranscript {
+  return JSON.parse(c.body.toString('utf8')) as ParsedTranscript
+}
 
 /**
  * Vieillir un fichier d'une seconde.

@@ -189,7 +189,9 @@ describe.skipIf(!HAS_CORPUS)('relevés par session', () => {
       ctx.skip('le corpus a bougé pendant les deux lectures, reprise comprise : une session Claude Code écrivait.')
       return
     }
-    const sum = (pick: (s: SessionSignal) => number): number => signals.reduce((n, s) => n + pick(s), 0)
+    function sum(pick: (s: SessionSignal) => number): number {
+      return signals.reduce((n, s) => n + pick(s), 0)
+    }
 
     expect(sum((s) => s.tokens.input)).toBe(usage.totals.input)
     expect(sum((s) => s.tokens.output)).toBe(usage.totals.output)

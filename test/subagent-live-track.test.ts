@@ -16,15 +16,17 @@ import { eventsOfTrack, MAIN_TRACK } from '../src/composables/useAgentTracks.ts'
 const APPEL = 'toolu_appel_agent'
 
 /** Le message `assistant` complet, tel que le SDK l'envoie. */
-const assistant = (id: string, parent: string | null): Record<string, unknown> => ({
-  type: 'assistant',
-  parent_tool_use_id: parent,
-  message: {
-    id,
-    model: 'claude-opus-5',
-    content: [{ type: 'tool_use', id: `${id}_t`, name: 'Read', input: { file_path: 'a.ts' } }],
-  },
-})
+function assistant(id: string, parent: string | null): Record<string, unknown> {
+  return {
+    type: 'assistant',
+    parent_tool_use_id: parent,
+    message: {
+      id,
+      model: 'claude-opus-5',
+      content: [{ type: 'tool_use', id: `${id}_t`, name: 'Read', input: { file_path: 'a.ts' } }],
+    },
+  }
+}
 
 describe('travail d’un sous-agent en direct', () => {
   it('sort du fil principal', () => {

@@ -49,9 +49,11 @@ async function send<T>(url: string, method: string, body?: unknown): Promise<T> 
   return (await res.json()) as T
 }
 
-export const listAgentSessions = (): Promise<{ sessions: AgentSession[] }> => send('/api/agent/sessions', 'GET')
+export function listAgentSessions(): Promise<{ sessions: AgentSession[] }> {
+  return send('/api/agent/sessions', 'GET')
+}
 
-export const createAgentSession = (body: {
+export function createAgentSession(body: {
   cwd: string
   model?: string
   permissionMode?: string
@@ -60,16 +62,20 @@ export const createAgentSession = (body: {
   attachments?: PromptAttachment[]
   /** Identifiant SDK d'une session à prolonger, en place. */
   resume?: string
-}): Promise<{ session: AgentSession }> => send('/api/agent/sessions', 'POST', body)
+}): Promise<{ session: AgentSession }> {
+  return send('/api/agent/sessions', 'POST', body)
+}
 
-export const setSessionPermissionMode = (runId: string, permissionMode: string): Promise<{ ok: true }> =>
-  send(`/api/agent/sessions/${runId}/permission-mode`, 'POST', { permissionMode })
+export function setSessionPermissionMode(runId: string, permissionMode: string): Promise<{ ok: true }> {
+  return send(`/api/agent/sessions/${runId}/permission-mode`, 'POST', { permissionMode })
+}
 
-export const sendPrompt = (runId: string, prompt: string, attachments?: PromptAttachment[]): Promise<{ ok: true }> =>
-  send(`/api/agent/sessions/${runId}/send`, 'POST', {
+export function sendPrompt(runId: string, prompt: string, attachments?: PromptAttachment[]): Promise<{ ok: true }> {
+  return send(`/api/agent/sessions/${runId}/send`, 'POST', {
     prompt,
     ...(attachments?.length ? { attachments } : {}),
   })
+}
 
 /**
  * Les commandes `/` que la session accepte.
@@ -77,7 +83,9 @@ export const sendPrompt = (runId: string, prompt: string, attachments?: PromptAt
  * Le premier appel démarre le processus du CLI s'il ne tourne pas encore : on
  * ne l'appelle donc qu'au premier `/` tapé, pas à l'ouverture de l'écran.
  */
-export const getSessionCommands = (runId: string): Promise<{ commands: SlashCommandInfo[] }> => send(`/api/agent/sessions/${runId}/commands`, 'GET')
+export function getSessionCommands(runId: string): Promise<{ commands: SlashCommandInfo[] }> {
+  return send(`/api/agent/sessions/${runId}/commands`, 'GET')
+}
 
 /**
  * Les fichiers du dossier de travail, pour l'autocomplétion du `@`.
@@ -87,7 +95,9 @@ export const getSessionCommands = (runId: string): Promise<{ commands: SlashComm
  * `truncated` dit qu'un dépôt trop grand a été coupé — l'écran le signale
  * plutôt que de laisser croire à une liste complète.
  */
-export const getSessionFiles = (runId: string): Promise<{ files: string[]; truncated: boolean }> => send(`/api/agent/sessions/${runId}/files`, 'GET')
+export function getSessionFiles(runId: string): Promise<{ files: string[]; truncated: boolean }> {
+  return send(`/api/agent/sessions/${runId}/files`, 'GET')
+}
 
 /**
  * La suite de la sortie d'un shell lancé en arrière-plan.
@@ -96,12 +106,17 @@ export const getSessionFiles = (runId: string): Promise<{ files: string[]; trunc
  * que ce qui s'est écrit depuis. Aucun chemin ne monte — le serveur retrouve le
  * fichier à partir de l'identifiant du shell, comme pour les fichiers du `@`.
  */
-export const getShellOutput = (runId: string, shellId: string, from = 0): Promise<ShellOutput> =>
-  send(`/api/agent/sessions/${runId}/shells/${shellId}/output?from=${from}`, 'GET')
+export function getShellOutput(runId: string, shellId: string, from = 0): Promise<ShellOutput> {
+  return send(`/api/agent/sessions/${runId}/shells/${shellId}/output?from=${from}`, 'GET')
+}
 
-export const interruptSession = (runId: string): Promise<{ ok: true }> => send(`/api/agent/sessions/${runId}/interrupt`, 'POST')
+export function interruptSession(runId: string): Promise<{ ok: true }> {
+  return send(`/api/agent/sessions/${runId}/interrupt`, 'POST')
+}
 
-export const stopSession = (runId: string): Promise<{ ok: true }> => send(`/api/agent/sessions/${runId}`, 'DELETE')
+export function stopSession(runId: string): Promise<{ ok: true }> {
+  return send(`/api/agent/sessions/${runId}`, 'DELETE')
+}
 
 /**
  * Répondre à une demande de permission.
@@ -110,11 +125,13 @@ export const stopSession = (runId: string): Promise<{ ok: true }> => send(`/api/
  * l'échéance ou une interruption l'a déjà tranchée. L'appelant retire le bandeau
  * et n'affiche rien.
  */
-export const answerPermission = (runId: string, id: string, answer: PermissionAnswer, reason?: string): Promise<{ ok: true }> =>
-  send(`/api/agent/sessions/${runId}/permissions/${id}`, 'POST', { answer, reason })
+export function answerPermission(runId: string, id: string, answer: PermissionAnswer, reason?: string): Promise<{ ok: true }> {
+  return send(`/api/agent/sessions/${runId}/permissions/${id}`, 'POST', { answer, reason })
+}
 
-export const answerAsk = (runId: string, id: string, answers: Record<string, string>, notes?: string): Promise<{ ok: true }> =>
-  send(`/api/agent/sessions/${runId}/ask/${id}`, 'POST', { answers, notes })
+export function answerAsk(runId: string, id: string, answers: Record<string, string>, notes?: string): Promise<{ ok: true }> {
+  return send(`/api/agent/sessions/${runId}/ask/${id}`, 'POST', { answers, notes })
+}
 
 /**
  * Ouvre le sélecteur de dossier du système, sur la machine du BFF.
@@ -122,7 +139,11 @@ export const answerAsk = (runId: string, id: string, answers: Record<string, str
  * `path: null` = l'utilisateur a annulé. Un `501` = la plateforme n'a pas de
  * sélecteur ; l'appelant retombe alors sur la saisie du chemin.
  */
-export const pickFolder = (startFrom?: string): Promise<{ path: string | null }> => send('/api/agent/pick-folder', 'POST', { startFrom })
+export function pickFolder(startFrom?: string): Promise<{ path: string | null }> {
+  return send('/api/agent/pick-folder', 'POST', { startFrom })
+}
 
 /** L'adresse du flux ; l'`EventSource` est ouverte par `useLiveSession`. */
-export const streamUrl = (runId: string): string => `/api/agent/sessions/${runId}/stream`
+export function streamUrl(runId: string): string {
+  return `/api/agent/sessions/${runId}/stream`
+}

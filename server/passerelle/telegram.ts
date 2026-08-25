@@ -178,7 +178,7 @@ export function grille(cases: Bouton[], solo: Bouton[] = []): InlineKeyboardMark
   let rangee: Bouton[] = []
   let plusLong = 0
 
-  const pose = (): void => {
+  function pose(): void {
     if (!rangee.length) return
     rangees.push(rangee.map((b) => ({ text: b.texte, callback_data: b.donnee })))
     rangee = []
@@ -457,11 +457,13 @@ export class Telegram {
     // niveau — la Moldavie —, si bien que `0.livraison.md` devient un lien vers
     // un site qui n'existe pas. `.py`, `.pl`, `.sh`, `.io` en sont d'autres :
     // un dépôt en est plein.
-    const riche = (blocks: InputRichBlock[]) => ({
-      chat_id: chatId,
-      rich_message: { blocks, skip_entity_detection: true },
-      ...markup,
-    })
+    function riche(blocks: InputRichBlock[]) {
+      return {
+        chat_id: chatId,
+        rich_message: { blocks, skip_entity_detection: true },
+        ...markup,
+      }
+    }
 
     if (blocs.length) {
       try {

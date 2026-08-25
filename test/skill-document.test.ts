@@ -11,7 +11,9 @@
 import { describe, expect, it } from 'vitest'
 import { skillDocument } from '../src/components/replay/skillDocument.ts'
 
-const head = (dir: string, body: string): string => `Base directory for this skill: ${dir}\n\n${body}`
+function head(dir: string, body: string): string {
+  return `Base directory for this skill: ${dir}\n\n${body}`
+}
 
 describe('manuel de skill', () => {
   it('lit le nom et le corps sous l’en-tête', () => {
@@ -49,7 +51,9 @@ describe('manuel de skill', () => {
   // La provenance est une clé de catalogue, pas un mot : le libellé se choisit à
   // l'affichage, dans la langue du moment.
   it('dit d’où vient le skill, sur les quatre provenances du parc', () => {
-    const origin = (dir: string): string | undefined => skillDocument(head(dir, 'x'))?.origin
+    function origin(dir: string): string | undefined {
+      return skillDocument(head(dir, 'x'))?.origin
+    }
     expect(origin('C:\\T\\claude\\bundled-skills\\2.1.221\\ab\\claude-api')).toBe('bundled')
     expect(origin('C:\\U\\x\\.claude\\plugins\\cache\\o\\superpowers\\5.0.7\\skills\\b')).toBe('plugin')
     expect(origin('C:\\U\\x\\Documents\\devl\\p\\.claude\\skills\\role-qa')).toBe('project')

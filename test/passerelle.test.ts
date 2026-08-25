@@ -189,14 +189,16 @@ describe('resoudreProjet', () => {
 })
 
 describe('aplatir', () => {
-  const noeud = (rel: string) => ({
-    rel,
-    name: rel,
-    title: '',
-    description: '',
-    size: 0,
-    mtime: 0,
-  })
+  function noeud(rel: string) {
+    return {
+      rel,
+      name: rel,
+      title: '',
+      description: '',
+      size: 0,
+      mtime: 0,
+    }
+  }
 
   it('garde les trois origines distinctes, car elles ne se lisent pas pareil', () => {
     // C'est `source` qui décide du lecteur — donc du bac à sable. Le cas qui a
@@ -232,9 +234,13 @@ describe('aplatir', () => {
 })
 
 describe('arborescence', () => {
-  const e = (label: string) => ({ rel: label, label, source: 'claude' as const })
+  function e(label: string) {
+    return { rel: label, label, source: 'claude' as const }
+  }
   /** Ce que la navigation affiche d'un nœud : son nom, et ce qu'il contient. */
-  const vue = (n: Noeud) => n.enfants.map((x) => `${x.nom}${x.fichier ? '' : `/ ${compte(x)}`}`)
+  function vue(n: Noeud) {
+    return n.enfants.map((x) => `${x.nom}${x.fichier ? '' : `/ ${compte(x)}`}`)
+  }
 
   it('reconstruit les dossiers depuis les chemins', () => {
     const racine = arborescence([e('a/x.md'), e('a/y.md'), e('b.md')])
@@ -338,7 +344,9 @@ describe('elargi', () => {
 })
 
 describe('grille', () => {
-  const b = (texte: string) => ({ texte, donnee: 'x' })
+  function b(texte: string) {
+    return { texte, donnee: 'x' }
+  }
 
   it('remplit une rangée tant que les libellés tiennent', () => {
     const k = grille([b('aa'), b('bb'), b('cc')])

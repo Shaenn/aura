@@ -24,7 +24,9 @@ const HOUR = 3_600_000
 const T0 = Date.parse('2026-01-01T00:00:00.000Z')
 
 /** Des points à `hours` heures de T0, chacun à 1 $. */
-const points = (...hours: number[]): CostPoint[] => hours.map((h, i) => ({ t: T0 + h * HOUR, cost: 1, sessionId: `s${i}` }))
+function points(...hours: number[]): CostPoint[] {
+  return hours.map((h, i) => ({ t: T0 + h * HOUR, cost: 1, sessionId: `s${i}` }))
+}
 
 describe('fenêtre glissante', () => {
   it('additionne ce qui est dans la fenêtre, et rien d’autre', () => {
@@ -73,10 +75,12 @@ describe('fenêtre glissante', () => {
 })
 
 describe('sessions de front', () => {
-  const span = (start: number, end: number): { start: number; end: number } => ({
-    start: T0 + start * HOUR,
-    end: T0 + end * HOUR,
-  })
+  function span(start: number, end: number): { start: number; end: number } {
+    return {
+      start: T0 + start * HOUR,
+      end: T0 + end * HOUR,
+    }
+  }
 
   it('compte le recouvrement, pas les durées', () => {
     // [0,4] et [2,6] : deux heures à deux, quatre heures à une.

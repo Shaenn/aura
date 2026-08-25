@@ -92,9 +92,13 @@
     set: (v) => emit('update:modelValue', v === MAIN_TAB ? MAIN_TRACK : v),
   })
 
-  const colorOf = (run: SubagentRunSummary): string => agentColorOf(run)
+  function colorOf(run: SubagentRunSummary): string {
+    return agentColorOf(run)
+  }
 
-  const nameOf = (run: SubagentRunSummary): string => run.agentType ?? t('replay.tracks.subagent')
+  function nameOf(run: SubagentRunSummary): string {
+    return run.agentType ?? t('replay.tracks.subagent')
+  }
 
   /**
    * Les types d'agent portés par plusieurs runs.
