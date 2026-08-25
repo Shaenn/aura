@@ -185,7 +185,11 @@ describe.skipIf(!HAS_CORPUS)('relevés par session', () => {
   it('totalise exactement comme la page Usage', (ctx) => {
     // Sauter en le disant, jamais passer en silence : un test qui se tait
     // quand il n'a pas pu mesurer vaut moins que pas de test du tout.
+    // Sauter est ici la conclusion du test, pas son abandon : le corpus a bougé
+    // sous la mesure, et ce qu’on comparerait ne serait plus comparable.
+    // eslint-disable-next-line vitest/no-conditional-in-test
     if (corpusMouvant) {
+      // eslint-disable-next-line vitest/no-disabled-tests
       ctx.skip('le corpus a bougé pendant les deux lectures, reprise comprise : une session Claude Code écrivait.')
       return
     }

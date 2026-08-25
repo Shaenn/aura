@@ -177,6 +177,9 @@ function openBrowser(url: string): void {
 }
 
 main().catch((err: unknown) => {
+  // Le dernier recours du BFF : à ce point, ni le journal Fastify ni les routes
+  // n’existent, et la console est le seul endroit où le message peut sortir.
+  // eslint-disable-next-line no-console
   console.error(err instanceof Error ? err.message : err)
   process.exit(1)
 })

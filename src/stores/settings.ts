@@ -114,7 +114,12 @@ export const useSettingsStore = defineStore('settings', () => {
       if (!ready) return
       if (saveTimer) clearTimeout(saveTimer)
       saveTimer = setTimeout(() => {
-        void savePreferences(snapshot()).catch((e: unknown) => console.error('Sauvegarde des préférences échouée', e))
+        void savePreferences(snapshot()).catch((e: unknown) =>
+          // Une préférence non écrite se rattrape au geste suivant : la signaler à
+          // l’écran coûterait plus que ce qu’elle vaut.
+          // eslint-disable-next-line no-console
+          console.error('Sauvegarde des préférences échouée', e),
+        )
       }, 400)
     },
     { deep: true },

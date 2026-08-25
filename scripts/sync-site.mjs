@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- Outil de ligne de commande : la console est sa sortie. */
 // Copie ce que le site vitrine emprunte au reste du dépôt : le manuel embarqué et les
 // médias du README. Rien de tout cela n'est versionné sous `site/` — une page corrigée
 // dans `src/help/sections/` est corrigée sur le site au build suivant, sans geste.

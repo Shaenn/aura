@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- Outil de ligne de commande : la console est sa sortie. */
 // Libère les ports d'AURA avant un lancement, et sert de moteur aux scripts d'arrêt.
 //
 //   node scripts/free-ports.mjs 8800 9100

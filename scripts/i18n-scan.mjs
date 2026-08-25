@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- Outil de ligne de commande : la console est sa sortie. */
 // Repère le texte français qui n'est pas encore passé par le catalogue.
 //
 // Ce n'est pas un linter : il ne sait pas décider, il sait *montrer*. La vraie

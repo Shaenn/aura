@@ -55,6 +55,9 @@ export async function applyLocale(locale: AppLocale): Promise<void> {
     const pack = locale === 'en' ? await import('quasar/lang/en-US') : await import('quasar/lang/fr')
     Lang.set(pack.default as QuasarLangPack)
   } catch (e) {
+    // La langue de l’application a basculé ; seuls les libellés de Quasar sont
+    // restés en arrière. Rien à dire à l’utilisateur, tout à dire au journal.
+    // eslint-disable-next-line no-console
     console.error(`Pack de langue Quasar « ${locale} » non chargé`, e)
   }
 }
