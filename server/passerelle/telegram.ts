@@ -18,7 +18,7 @@
 // `guard.ts` n'a rien de nouveau à trancher. Aucun port ne s'ouvre pour ceci.
 
 import { Api, Bot } from 'node-telegram-bot-api'
-import type { InlineKeyboardMarkup, InputRichBlock as InputRichBlockLib } from 'node-telegram-bot-api'
+import type { InlineKeyboardMarkup } from 'node-telegram-bot-api'
 import { MAX_RICHE, type InputRichBlock } from './riche.ts'
 
 /** Ce qu'un message ordinaire accepte. Le riche en prend huit fois plus. */
@@ -327,10 +327,7 @@ export class Telegram {
       await this.api.sendRichMessage({
         chat_id: chatId,
         rich_message: {
-          // Même conversion que `brouillon`, et pour la même raison : le
-          // `RichText` de la bibliothèque n'admet pas la chaîne nue, que l'API
-          // accepte pourtant — sans quoi aucun titre simple ne serait exprimable.
-          blocks: [{ type: 'details', summary: titre, blocks: blocs }] as unknown as InputRichBlockLib[],
+          blocks: [{ type: 'details', summary: titre, blocks: blocs }],
           skip_entity_detection: true,
         },
       })
@@ -504,11 +501,7 @@ export class Telegram {
         chat_id: chatId,
         draft_id: draftId,
         rich_message: {
-          // La première des deux corrections de `riche.ts` : le `RichText` de la
-          // bibliothèque n'admet pas la chaîne nue, que l'API accepte pourtant
-          // — sans quoi aucun texte simple ne serait exprimable. La conversion
-          // ne porte que sur ce point-là.
-          blocks: [{ type: 'thinking', text: texte } as unknown as InputRichBlockLib],
+          blocks: [{ type: 'thinking', text: texte }],
           skip_entity_detection: true,
         },
       })
