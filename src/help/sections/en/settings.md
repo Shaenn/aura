@@ -33,14 +33,22 @@ This differs from clearing a text field, which writes an empty value into it: a 
 
 ## General tab
 
-| Setting           | Key                     | Note                             |
-| ----------------- | ----------------------- | -------------------------------- |
-| Language          | `language`              | Preferred answer language        |
-| Default model     | `model`                 | Empty = automatic selection      |
-| Effort level      | `effortLevel`           | `low`, `medium`, `high`, `xhigh` |
-| Fast mode         | `fastMode`              | Three positions                  |
-| Extended thinking | `alwaysThinkingEnabled` | Three positions                  |
-| Editor            | `editorMode`            | `normal` or `vim`                |
+| Setting            | Key                      | Note                             |
+| ------------------ | ------------------------ | -------------------------------- |
+| Language           | `language`               | Preferred answer language        |
+| Default model      | `model`                  | Empty = automatic selection      |
+| Effort level       | `effortLevel`            | `low`, `medium`, `high`, `xhigh` |
+| Effort per model   | `modelSettings`          | Read-only — a table, not a field |
+| Fast mode          | `fastMode`               | Three positions                  |
+| Extended thinking  | `alwaysThinkingEnabled`  | Three positions                  |
+| Editor             | `editorMode`             | `normal` or `vim`                |
+| Word keys          | `keybindingFlavor`       | `classic` or `readline`          |
+| Conversation cache | `promptCacheTtl`         | `5m` or `1h`                     |
+| Sub-agent cache    | `subagentPromptCacheTtl` | `5m` or `1h`                     |
+
+**Effort per model** shows only when the key exists, and **read-only**: `modelSettings` is a table keyed by model names, not a field. Saying nothing about it would suggest the only effort in force is the global one just above.
+
+Both **prompt caches** carry the same third position as the switches: `Inherited` deletes the key, and Claude Code then decides alone — one hour on a subscription, five minutes on an API key, five minutes for everything outside the main thread. A one-hour cache write is billed at a higher rate than a five-minute one; in exchange, the cache stays warm across longer breaks.
 
 ## Permissions tab
 
@@ -66,7 +74,13 @@ In Claude Code, **`deny` wins over `allow`**. An exact duplicate is not added tw
 
 `tui` (`fullscreen` / `inline`), `autoUpdatesChannel` (`stable` / `latest`), and `cleanupPeriodDays` — the number of days before Claude Code cleans up sessions and artefacts.
 
-Then a series of three-position switches, whose “Inherited” tooltip recalls **Claude Code's default** each time: `autoCompactEnabled`, `autoMemoryEnabled`, `fileCheckpointingEnabled` (the `/rewind` snapshots), `spinnerTipsEnabled`, `prefersReducedMotion`, `agentPushNotifEnabled`, `skipAutoPermissionPrompt`, `remoteControlAtStartup`, `includeCoAuthoredBy`.
+`desktopSessionCleanupPeriodDays` is its counterpart for sessions opened from Claude Desktop, which the cleanup above spares. It is a **ceiling**, and `0` — the default — means there is none: those transcripts are kept until something else deletes them.
+
+`spellcheck.enabled` underlines misspelled words in the prompt. The underlining needs an `aspell`, `hunspell` or `ispell` installed on the machine; without one, the key does nothing. The rest of the block — the checker, the dictionary, the colour — goes through the JSON tab. Putting this setting back on `Inherited` removes the key, **and the `spellcheck` block if nothing is left in it**: a leftover `"spellcheck": {}` would read as a setting someone put there.
+
+Then a series of three-position switches, whose “Inherited” tooltip recalls **Claude Code's default** each time: `autoCompactEnabled`, `autoMemoryEnabled`, `fileCheckpointingEnabled` (the `/rewind` snapshots), `spinnerTipsEnabled`, `prefersReducedMotion`, `agentPushNotifEnabled`, `skipAutoPermissionPrompt`, `remoteControlAtStartup`, `includeCoAuthoredBy`, `autoContinueAtUsageLimit`, `syncClaudeAiSkills`, `syncClaudeAiPlugins`.
+
+The last two govern what claude.ai drops into `~/.claude/skills/synced` and `~/.claude/plugins/synced`. One quirk worth knowing: **only `No` acts**. Syncing is turned on server-side for your account, so writing `true` does not switch it on any earlier — `Inherited` and `Yes` say the same thing to the file.
 
 The **status line**, finally, appears only when it is configured, and **read-only**: its structure is too free for a field. Fine editing goes through the JSON tab.
 
