@@ -867,9 +867,24 @@
    * route, même instance. L'avis « session plus ouverte » y survivait donc à
    * l'adresse qui l'avait causé, et s'affichait devant un écran d'ouverture vierge.
    */
+  /**
+   * La navigation qui *pose* l'avis ne doit pas l'effacer.
+   *
+   * Constater qu'une session a disparu nettoie l'adresse, et ce nettoyage est
+   * exactement ce que le veilleur ci-dessus lit pour écarter un avis périmé :
+   * l'avis s'effaçait donc lui-même, et l'écran d'ouverture revenait sans un mot
+   * d'explication. Le drapeau ne vaut que pour la navigation suivante — celles
+   * que l'utilisateur fait ensuite retrouvent le comportement d'origine.
+   */
+  let goneNavigation = false
+
   watch(
     () => route.query.run,
     (run) => {
+      if (goneNavigation) {
+        goneNavigation = false
+        return
+      }
       if (!run) gone.value = null
     },
   )
@@ -939,7 +954,11 @@
     const id = session.value?.sessionId ?? ''
     detach()
     session.value = null
+    // Le nettoyage d'adresse qui suit est le nôtre : il ne doit pas emporter
+    // l'avis qu'on vient de poser. Voir `goneNavigation`.
+    goneNavigation = true
     gone.value = { session: id, slug }
+    await router.replace({ name: 'atelier', query: {} })
   }
 
   /** On ne va voir que tant que le lien manque, et jamais avant. */
