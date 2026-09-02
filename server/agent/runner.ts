@@ -132,6 +132,24 @@ const ACTIVITY_STEP_MS = 250
  */
 const SHELL_POLL_MS = 2_000
 
+/**
+ * Au bout de combien de silence du SDK une session « au travail » cesse d'être
+ * protégée par son travail.
+ *
+ * Le balayeur ne ramasse jamais une session en cours de tour : un `Bash` de vingt
+ * minutes n'est pas un abandon. Mais une session dont le processus s'est figé
+ * garde ce statut pour toujours — elle échappait donc au balayeur *et* occupait
+ * une des six places du parc, sans qu'aucun geste ne puisse la libérer.
+ *
+ * Une heure, et c'est délibérément le double du délai d'inactivité : ce garde-fou
+ * ne peut que faire taire, jamais inventer une panne. Un tour vivant parle bien
+ * avant — le SDK émet ses fragments, ses relevés d'outil, ses pings de
+ * raisonnement. Une heure sans un seul message n'est pas un tour long, c'est un
+ * mort. Le ramassage exige de toute façon les deux silences à la fois : celui du
+ * SDK et celui de l'humain.
+ */
+export const SDK_SILENCE_MS = 60 * 60_000
+
 export class SessionRunner {
   readonly session: AgentSession
 
@@ -176,6 +194,14 @@ export class SessionRunner {
    * ligne que `run()` écrit à partir de la deuxième.
    */
   private runs = 0
+  /**
+   * Le dernier message venu du SDK — le pouls de la session.
+   *
+   * À distinguer de `touchedAt`, qui ne compte que les gestes humains : celui-ci
+   * dit si le processus respire encore. Il naît avec la session plutôt qu'à
+   * zéro, sans quoi une session jamais démarrée passerait pour figée.
+   */
+  private lastMessageAt = Date.now()
   private readonly subscribers = new Set<(upsert: AgentUpsert) => void>()
   private query: Query | null = null
   private stopped = false
@@ -332,8 +358,9 @@ export class SessionRunner {
    *
    * Trois conditions, et il les faut toutes. Personne ne regarde. Elle ne
    * travaille pas — un tour de vingt minutes n'est pas un abandon, et le CLI
-   * n'écouterait de toute façon pas qu'on lui ferme son entrée. Et le dernier
-   * geste humain remonte à plus loin que le délai.
+   * n'écouterait de toute façon pas qu'on lui ferme son entrée ; encore
+   * faut-il que ce travail soit réel, ce que seul le pouls du SDK dit. Et le
+   * dernier geste humain remonte à plus loin que le délai.
    *
    * Un flux ouvert protège **sans réserve**, et c'est un choix. On sait qu'il ne
    * prouve pas qu'un humain regarde : le navigateur gèle un onglet d'arrière-plan
@@ -350,7 +377,11 @@ export class SessionRunner {
   expired(ttlMs: number): boolean {
     if (this.stopped) return false
     if (this.subscribers.size > 0) return false
-    if (this.session.status === 'working') return false
+    // « Elle travaille » protège tant que le processus le prouve. Sans ce
+    // second membre, une session figée gardait ce statut pour toujours : elle
+    // échappait au balayeur *et* occupait une des six places du parc, sans
+    // qu'aucun geste ne puisse la libérer. Voir `SDK_SILENCE_MS`.
+    if (this.session.status === 'working' && Date.now() - this.lastMessageAt <= SDK_SILENCE_MS) return false
     return Date.now() - this.touchedAt > ttlMs
   }
 
@@ -986,6 +1017,9 @@ export class SessionRunner {
   }
 
   private consume(message: Rec): void {
+    // Le pouls, avant toute lecture : n'importe quel message prouve que le
+    // processus respire, même ceux dont on ne fait rien.
+    this.lastMessageAt = Date.now()
     // Avant tout dispatch : la plupart des messages qui disent où en est l'agent
     // ne produisent aucun événement de timeline, et sortaient donc par le
     // `default` sans laisser de trace.
