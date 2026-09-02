@@ -167,6 +167,14 @@ export class SessionRunner {
   /** Où en est la lecture du transcript, en octets. Voir `readShellEnds`. */
   private transcriptAt = 0
   private readonly queue = new AsyncQueue<SDKUserMessage>()
+  /**
+   * Combien de fois la boucle a démarré.
+   *
+   * Une seule, en régime ordinaire. Au-delà, c'est que la précédente est morte
+   * et qu'un tour l'a relancée — ce qui ne se devine pas à l'écran, d'où la
+   * ligne que `run()` écrit à partir de la deuxième.
+   */
+  private runs = 0
   private readonly subscribers = new Set<(upsert: AgentUpsert) => void>()
   private query: Query | null = null
   private stopped = false
@@ -597,7 +605,17 @@ export class SessionRunner {
    * `Query` est donc déjà là.
    */
   private ensureQuery(): void {
-    if (!this.query && !this.stopped) void this.run()
+    if (this.query || this.stopped) return
+    // `run()` capte tout ce qui vient du flux, mais pas ce que `query()` lève en
+    // montant : options refusées, serveur MCP mal formé. Sans ce `catch`, ce
+    // rejet-là n'avait pas de destinataire — la session restait « au travail »
+    // sans qu'aucun message ne vienne jamais.
+    void this.run().catch((e: unknown) => {
+      const message = e instanceof Error ? e.message : String(e)
+      this.emit(this.translator.appendSystem(t('agent.sessionEnded', { message }), 'error'))
+      this.log(message, e)
+      this.setStatus('failed', message)
+    })
   }
 
   /**
@@ -824,6 +842,19 @@ export class SessionRunner {
   }
 
   private async run(): Promise<void> {
+    this.runs += 1
+    // Une boucle qui repart après une mort ne doit pas repartir à vide. Le
+    // `resume` d'origine ne vaut que pour le premier démarrage : ensuite c'est
+    // l'identifiant que la session s'est vu attribuer qui fait foi, sans quoi
+    // une session née sans reprise recommençait une conversation neuve — même
+    // fil à l'écran, aucun souvenir derrière.
+    const reprise = this.session.sessionId || this.resume
+    if (this.runs > 1) {
+      // Le dire : une reprise silencieuse serait pire que la panne, puisque
+      // rien ne distinguerait à l'écran un contexte retrouvé d'un contexte perdu.
+      this.emit(this.translator.appendSystem(t(reprise ? 'agent.relaunched' : 'agent.relaunchedFresh')))
+    }
+
     this.query = query({
       prompt: this.queue,
       options: {
@@ -834,7 +865,7 @@ export class SessionRunner {
         includePartialMessages: true,
         permissionMode: this.session.permissionMode as never,
         ...(this.session.model ? { model: this.session.model } : {}),
-        ...(this.resume ? { resume: this.resume } : {}),
+        ...(reprise ? { resume: reprise } : {}),
         // On exécute nous-mêmes les questions à l'utilisateur : voir `ask.ts`.
         mcpServers: { atelier: createAskServer((questions) => this.askHuman(questions)) },
         toolAliases: { AskUserQuestion: ASK_TOOL },
@@ -862,6 +893,10 @@ export class SessionRunner {
       this.setStatus('failed', message)
     } finally {
       this.query = null
+      // Le SDK ne referme pas la file qu'il tenait : sans cela, son itérateur
+      // resterait inscrit comme destinataire du prochain `push`, et le prompt
+      // d'une relance partirait dans un générateur que plus personne ne tire.
+      this.queue.abandon()
     }
   }
 

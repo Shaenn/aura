@@ -29,11 +29,31 @@ export class AsyncQueue<T> {
   close(): void {
     if (this.closed) return
     this.closed = true
-    if (this.waiting) {
-      const resolve = this.waiting
-      this.waiting = null
-      resolve({ value: undefined as never, done: true })
-    }
+    this.release()
+  }
+
+  /**
+   * Le consommateur est parti, mais la file continue.
+   *
+   * C'est le cas quand la boucle du SDK meurt : elle ne referme pas l'itérateur
+   * qu'elle tenait, et il restait donc inscrit comme destinataire du prochain
+   * `push`. Le prompt de la relance lui était remis, dans un générateur que plus
+   * personne ne tirait — le message ne partait jamais et la session restait « au
+   * travail » pour toujours. Le dénouer rend la place au consommateur suivant,
+   * et ce qui arrive ensuite l'attend dans le tableau.
+   *
+   * À la différence de `close`, la file reste ouverte : c'est tout l'objet.
+   */
+  abandon(): void {
+    this.release()
+  }
+
+  /** Dénoue l'attente en cours, s'il y en a une. */
+  private release(): void {
+    if (!this.waiting) return
+    const resolve = this.waiting
+    this.waiting = null
+    resolve({ value: undefined as never, done: true })
   }
 
   async *[Symbol.asyncIterator](): AsyncGenerator<T> {
