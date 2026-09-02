@@ -83,6 +83,9 @@ export default {
     failed: 'Arrêtée sur erreur',
   },
   resumed: 'reprise',
+  // Ce qui est rompu est le flux, pas la session : elle travaille peut-être
+  // encore. La phrase dit donc ce qu'AURA ne voit plus, jamais ce qui a échoué.
+  lost: 'J’ai perdu le contact',
   autoScroll: 'Auto-défilement',
   followLive: 'Suivre le direct',
   fullReplay: 'Rejeu complet',

@@ -236,8 +236,15 @@
           <!-- Le halo respirant de `status-dot--live`, celui-là même que la page
                d'accueil pose sur une session en activité. L'Atelier, qui est
                *l'*écran d'une session en activité, ne l'avait pas. -->
-          <span class="at-dot" :class="[`at-dot--${status}`, { 'status-dot--live': status === 'working' }]" aria-hidden="true" />
-          <span class="at-status">{{ t(`pages.atelier.status.${status}`) }}</span>
+          <!-- Le lien rompu prime sur le statut : celui-ci date de la dernière
+               trame reçue, et l'annoncer encore ferait dire « Au travail » à une
+               session dont on ne sait plus rien. -->
+          <span
+            class="at-dot"
+            :class="[lost ? 'at-dot--lost' : `at-dot--${status}`, { 'status-dot--live': status === 'working' && !lost }]"
+            aria-hidden="true"
+          />
+          <span class="at-status">{{ lost ? t('pages.atelier.lost') : t(`pages.atelier.status.${status}`) }}</span>
           <!-- Le nom du dossier, pas son chemin : la barre dit où l'on est, et
                un chemin absolu la remplit sans rien apprendre à qui l'a choisi.
                Le chemin complet reste dans l'infobulle, et sur l'écran d'accueil
@@ -580,6 +587,7 @@
     error,
     permissions,
     asks,
+    lost,
     activity,
     commands,
     commandsLoading,
@@ -2124,6 +2132,12 @@
 
   .at-dot--failed {
     background: var(--danger);
+  }
+
+  /* Un lien rompu n'est pas une session en erreur : elle travaille peut-être
+   encore, c'est nous qui ne la voyons plus. D'où l'ambre et non le rouge. */
+  .at-dot--lost {
+    background: var(--warn);
   }
 
   .at-status {
