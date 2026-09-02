@@ -97,6 +97,12 @@ export function useLiveSession() {
         events.value = upsert.events
         activity.value = upsert.activity
         shells.value = upsert.shells
+        // Le serveur dit ce qui attend vraiment une réponse — vide compris.
+        // Sans ces deux lignes, une demande émise pendant une coupure ne
+        // revenait pas, et une demande réglée pendant la coupure laissait un
+        // bandeau que plus aucun clic ne pouvait dénouer.
+        permissions.value = upsert.permissions
+        asks.value = upsert.asks
         reindex()
         return
 

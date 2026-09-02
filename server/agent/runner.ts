@@ -15,6 +15,7 @@ import type {
   AgentStatus,
   AgentUpsert,
   AskQuestion,
+  AskRequest,
   PermissionAnswer,
   PermissionRequest,
   PromptAttachment,
@@ -214,6 +215,17 @@ export class SessionRunner {
   /** Les questions en vol. Même mécanique, autre canal : rien à autoriser ici. */
   private readonly asks = new Map<string, PendingAnswer<string>>()
   /**
+   * Ce qu'une demande en vol dit à l'écran, gardé le temps qu'elle vive.
+   *
+   * La promesse suspend le SDK ; ces deux cartes-là servent à la **rejouer** —
+   * un onglet qui s'abonne au milieu d'une attente doit voir le bandeau, sans
+   * quoi la demande reste invisible et l'agent suspendu jusqu'au garde-fou.
+   * Même motif que `suggestions` et `permissionInputs` : une carte parallèle,
+   * vidée dans le même `finally`.
+   */
+  private readonly permissionRequests = new Map<string, PermissionRequest>()
+  private readonly askRequests = new Map<string, AskRequest>()
+  /**
    * Les règles suggérées par le SDK pour la demande en cours, gardées le temps
    * qu'un humain choisisse « toujours autoriser ». Elles ne se devinent pas :
    * c'est le SDK qui sait quelle règle couvrirait exactement ce cas.
@@ -261,8 +273,16 @@ export class SessionRunner {
    * un onglet ouvert au milieu d'un tour voit donc la même chose qu'un onglet
    * présent depuis le début.
    */
-  subscribe(send: (upsert: AgentUpsert) => void): () => void {
-    send({
+  /**
+   * Tout l'état d'une session, en un message.
+   *
+   * Il part à chaque abonnement, et à chaque fois que le fil change d'identité
+   * (`/clear`). Rien ne s'y ajoute : les listes qu'il porte **remplacent** celles
+   * du client, vides comprises — c'est ce qui rattrape une coupure sans que le
+   * front ait à tenir un curseur.
+   */
+  private snapshot(): AgentUpsert {
+    return {
       kind: 'snapshot',
       session: this.session,
       events: this.translator.events,
@@ -272,7 +292,18 @@ export class SessionRunner {
       // Les shells encore plus : celui qui tient un port a pu partir il y a une
       // heure, bien avant que cet onglet n'existe.
       shells: this.shells.snapshot(),
-    })
+      // Ce qui attend un humain, au même titre. Une demande émise pendant une
+      // coupure du flux ne revenait jamais : le bandeau n'apparaissait pas et
+      // l'agent restait suspendu jusqu'au refus du garde-fou. Dans l'autre sens,
+      // une demande réglée pendant la coupure laissait un bandeau fantôme que
+      // plus aucun clic ne pouvait dénouer.
+      permissions: [...this.permissionRequests.values()],
+      asks: [...this.askRequests.values()],
+    }
+  }
+
+  subscribe(send: (upsert: AgentUpsert) => void): () => void {
+    send(this.snapshot())
     this.touchedAt = Date.now()
     this.subscribers.add(send)
     return () => {
@@ -388,17 +419,10 @@ export class SessionRunner {
     // qu'on vient d'envoyer.
     const byClear = /^\/clear\b/.test(this.lastPrompt)
     this.translator.appendSystem(t(byClear ? 'agent.clearedByCommand' : 'agent.cleared'), 'warn')
-    this.emit([
-      {
-        kind: 'snapshot',
-        session: this.session,
-        events: this.translator.events,
-        activity: this.activity.snapshot(),
-        // La conversation repart à vide, pas la machine : un serveur lancé avant
-        // le `/clear` tient toujours son port, et reste donc à l'écran.
-        shells: this.shells.snapshot(),
-      },
-    ])
+    // La conversation repart à vide, pas la machine : un serveur lancé avant le
+    // `/clear` tient toujours son port, et une demande en vol attend toujours sa
+    // réponse. Le fil seul s'efface.
+    this.emit([this.snapshot()])
   }
 
   /**
@@ -686,6 +710,17 @@ export class SessionRunner {
   stop(grace = STOP_GRACE_MS): void {
     if (this.stopped) return
     this.stopped = true
+    // Le dire aux onglets qui regardent encore. Sans cela l'arrêt ne se voyait
+    // nulle part : la socket restait ouverte, son battement continuait, et
+    // l'écran se figeait sur le dernier statut reçu sans jamais l'admettre.
+    // C'est le cas d'un arrêt demandé depuis un autre onglet, et celui de
+    // l'extinction du serveur. Le balayeur, lui, ne ramasse que ce que plus
+    // personne ne regarde : ce message-là n'aurait pas d'auditeur, et c'est le
+    // front qui doit constater la disparition.
+    if (this.session.status !== 'ended' && this.session.status !== 'failed') {
+      this.emit(this.translator.appendSystem(t('agent.sessionStopped')))
+      this.setStatus('ended')
+    }
     if (this.shellPoll) {
       clearInterval(this.shellPoll)
       this.shellPoll = null
@@ -749,6 +784,7 @@ export class SessionRunner {
       return { behavior: 'deny', message: t('agent.permissionTimeout') }
     })
     this.permissions.set(id, pending)
+    this.permissionRequests.set(id, request)
     this.emit([{ kind: 'permission-request', request }])
 
     // Une interruption pendant l'attente doit libérer le tour, pas le figer.
@@ -769,6 +805,7 @@ export class SessionRunner {
       return await pending.promise
     } finally {
       this.permissions.delete(id)
+      this.permissionRequests.delete(id)
       this.suggestions.delete(id)
       this.permissionInputs.delete(id)
     }
@@ -805,9 +842,14 @@ export class SessionRunner {
       this.emit([{ kind: 'ask-settled', id }])
       return NO_ANSWER
     })
+    const request: AskRequest = { id, questions, askedAt: Date.now() }
     this.asks.set(id, pending)
-    this.emit([{ kind: 'ask-request', request: { id, questions, askedAt: Date.now() } }])
-    return pending.promise.finally(() => this.asks.delete(id))
+    this.askRequests.set(id, request)
+    this.emit([{ kind: 'ask-request', request }])
+    return pending.promise.finally(() => {
+      this.asks.delete(id)
+      this.askRequests.delete(id)
+    })
   }
 
   /** Répond à une question. Rend `false` si elle n'est plus en vol. */

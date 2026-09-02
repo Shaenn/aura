@@ -237,6 +237,20 @@ export type AgentUpsert =
       events: TranscriptEvent[]
       activity: AgentActivity
       shells: BackgroundShell[]
+      /**
+       * Ce qui attend un humain, et qui n'était pas rejoué.
+       *
+       * Une demande émise pendant une coupure du flux ne revenait jamais : le
+       * bandeau n'apparaissait pas, et l'agent restait suspendu jusqu'au refus
+       * du garde-fou, un quart d'heure plus tard. Dans l'autre sens, une demande
+       * réglée pendant la coupure laissait un bandeau fantôme, dont le clic ne
+       * pouvait plus rien dénouer.
+       *
+       * Elles appartiennent donc à l'état au même titre que l'activité : c'est
+       * la liste entière qui remplace celle du client, vide comprise.
+       */
+      permissions: PermissionRequest[]
+      asks: AskRequest[]
     }
   | { kind: 'session'; session: AgentSession }
   | { kind: 'append-event'; event: TranscriptEvent }

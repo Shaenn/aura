@@ -902,6 +902,59 @@
     }
   }
 
+  /**
+   * Le pas auquel on va voir si une session dont on a perdu le fil existe encore.
+   *
+   * `EventSource` retente seul toutes les trois secondes environ ; interroger
+   * plus vite qu'elle ne se reconnecte ferait conclure à une disparition là où
+   * il n'y avait qu'un hoquet.
+   */
+  const GONE_POLL_MS = 5000
+  let gonePoll: ReturnType<typeof setInterval> | null = null
+
+  /**
+   * La session a-t-elle disparu, ou est-ce seulement le lien ?
+   *
+   * `reopenFromUrl` posait déjà la question, mais au montage seulement : une
+   * session ramassée par le balayeur pendant qu'on la regardait laissait donc un
+   * fil figé, sur lequel l'`EventSource` se reconnectait indéfiniment contre un
+   * 404. Le serveur ne peut pas nous le dire — le balayeur ne ramasse que ce que
+   * plus personne ne regarde, et à ce moment-là il n'y a plus d'abonné à qui
+   * l'annoncer. C'est donc ici qu'on va voir.
+   *
+   * Un appel qui échoue ne conclut rien : le BFF est peut-être en train de
+   * redémarrer, et le déclarer disparu couperait un fil qui revient.
+   */
+  async function checkStillThere(): Promise<void> {
+    const run = session.value?.runId
+    if (!run) return
+    let sessions: AgentSession[]
+    try {
+      ;({ sessions } = await listAgentSessions())
+    } catch {
+      return
+    }
+    if (sessions.some((s) => s.runId === run)) return
+    const slug = session.value?.slug ?? ''
+    const id = session.value?.sessionId ?? ''
+    detach()
+    session.value = null
+    gone.value = { session: id, slug }
+  }
+
+  /** On ne va voir que tant que le lien manque, et jamais avant. */
+  watch(lost, (perdu) => {
+    if (gonePoll) {
+      clearInterval(gonePoll)
+      gonePoll = null
+    }
+    if (perdu) gonePoll = setInterval(() => void checkStillThere(), GONE_POLL_MS)
+  })
+
+  onUnmounted(() => {
+    if (gonePoll) clearInterval(gonePoll)
+  })
+
   /** Refermer l'avis, et nettoyer l'adresse : elle ne désigne plus rien. */
   function dismissGone(): void {
     gone.value = null
