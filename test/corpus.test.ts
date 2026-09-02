@@ -55,7 +55,20 @@ function attributedAt(c: SessionContext, i: number): number {
   return CONTEXT_CATEGORIES.reduce((sum, cat) => sum + c.turns[i]!.byCategory[cat], 0)
 }
 
-describe.skipIf(!HAS_CORPUS)('invariants sur ~/.claude', () => {
+/**
+ * Le délai laissé à un test qui lit le vrai disque.
+ *
+ * Les cinq secondes de vitest ont été écrites pour des fixtures ; ici chaque
+ * test relit soixante transcrits réels, et le corpus d'une machine ne cesse de
+ * grossir. Quatre de ces tests tombaient donc en dépassement — un `pnpm verifie`
+ * rouge en permanence, pour une propriété qui tenait pourtant à chaque fois.
+ *
+ * On allonge plutôt que de réduire l'échantillon : ce fichier est un filet, et
+ * un filet qu'on rétrécit pour qu'il aille plus vite n'attrape plus rien.
+ */
+const TIMEOUT_MS = 120_000
+
+describe.skipIf(!HAS_CORPUS)('invariants sur ~/.claude', { timeout: TIMEOUT_MS }, () => {
   const sessions = HAS_CORPUS ? sample() : []
 
   it('trouve des sessions à examiner', () => {
