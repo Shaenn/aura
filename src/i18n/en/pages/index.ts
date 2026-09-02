@@ -1,3 +1,4 @@
+import type { MessageSchema } from '../../fr'
 import agents from './agents'
 import atelier from './atelier'
 import backups from './backups'
@@ -18,7 +19,9 @@ import settings from './settings'
 import skills from './skills'
 import usage from './usage'
 
-export default {
+// Annoté pour la même raison qu'`en/index.ts` : une page ajoutée au français et
+// oubliée ici doit casser le typecheck, pas se découvrir à l'écran.
+const pages: MessageSchema['pages'] = {
   agents,
   atelier,
   backups,
@@ -39,3 +42,5 @@ export default {
   skills,
   usage,
 }
+
+export default pages

@@ -1,3 +1,4 @@
+import type { MessageSchema } from '../fr'
 import agent from './agent'
 import cli from './cli'
 import common from './common'
@@ -13,7 +14,10 @@ import resources from './resources'
 import rules from './rules'
 import tools from './tools'
 
-export default {
+// Annoté, et pas seulement composé : les tranches se contrôlent chacune de leur
+// côté, mais rien ne vérifiait l'assemblage. Une tranche ajoutée au français et
+// oubliée ici serait passée en silence — c'est cette ligne qui la fait voir.
+const en: MessageSchema = {
   agent,
   cli,
   common,
@@ -29,3 +33,5 @@ export default {
   rules,
   tools,
 }
+
+export default en
