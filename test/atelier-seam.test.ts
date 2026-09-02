@@ -88,6 +88,30 @@ describe('la couture du fil', () => {
     expect(stitch(disk, [...disk, compact, mark], 1)).toEqual([...disk, compact, mark])
   })
 
+  it('ne la montre pas deux fois pendant que le fichier s’écrit', () => {
+    // Le fichier est relu toutes les deux secondes et demie pendant une action :
+    // on le surprend donc à mi-chemin, la frontière écrite mais pas encore la
+    // ligne de commande qui l'a provoquée. Compter les commandes de part et
+    // d'autre donnait alors un de moins côté disque, et le complément laissait
+    // passer la frontière du direct par-dessus celle du fichier.
+    const compact = command('/compact')
+    const mark = boundary('c1')
+    const written = [human('un'), answer('un'), boundary('c1')]
+    const live = [human('un'), answer('un'), compact, mark]
+    expect(stitch(written, live, 1)).toEqual([...written, compact])
+  })
+
+  it('complète la commande écrite de la frontière qui lui manque', () => {
+    // L'autre moitié du même chemin : selon le moment où l'on relit, c'est la
+    // commande qui est là et la frontière qui manque. Chaque famille se
+    // complète selon son propre critère — l'uuid pour l'une, le compte pour
+    // l'autre.
+    const compact = command('/compact')
+    const mark = boundary('c1')
+    const written = [human('un'), answer('un'), command('/compact')]
+    expect(stitch(written, [human('un'), answer('un'), compact, mark], 1)).toEqual([...written, mark])
+  })
+
   it('ne la montre pas deux fois une fois le fichier rattrapé', () => {
     const compact = command('/compact')
     const mark = boundary('c1')
