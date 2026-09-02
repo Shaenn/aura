@@ -36,7 +36,7 @@ A type whose main field I do not expose (`mcp_tool`) says so and points to the *
 
 ## The event catalogue
 
-Thirty events are offered. The add selector, at the bottom of the page, shows the description of the one selected; every section title carries the same tooltip.
+Thirty-three events are offered. The add selector, at the bottom of the page, shows the description of the one selected; every section title carries the same tooltip.
 
 **Session lifecycle** — `SessionStart`, `SessionEnd`, `Setup` (launch in init/maintenance mode).
 
@@ -52,7 +52,9 @@ Thirty events are offered. The add selector, at the bottom of the page, shows th
 
 **Context** — `PreCompact`, `PostCompact`, `InstructionsLoaded` (a `CLAUDE.md` or a `.claude/rules/*.md` is loaded).
 
-**Environment** — `ConfigChange`, `CwdChanged`, `FileChanged`, `WorktreeCreate`, `WorktreeRemove`.
+**Model** — `PreModelSwitch` (before a model change: the hook can allow it, deny it or have it confirmed), `PostModelSwitch` (after).
+
+**Environment** — `ConfigChange`, `CwdChanged`, `DirectoryAdded` (a directory joins the workspace, through `/add-dir`), `FileChanged`, `WorktreeCreate`, `WorktreeRemove`.
 
 **MCP** — `Elicitation` (a server asks for input during a tool call), `ElicitationResult` (after your answer, before it goes back to the server).
 

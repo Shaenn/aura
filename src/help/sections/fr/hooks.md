@@ -36,7 +36,7 @@ Un type dont je n'expose pas le champ principal (`mcp_tool`) l'annonce et renvoi
 
 ## Le catalogue d'événements
 
-Trente événements sont proposés. Le sélecteur d'ajout, en bas de page, affiche la description de celui qui est sélectionné ; chaque titre de section a la même infobulle.
+Trente-trois événements sont proposés. Le sélecteur d'ajout, en bas de page, affiche la description de celui qui est sélectionné ; chaque titre de section a la même infobulle.
 
 **Cycle de vie de la session** — `SessionStart`, `SessionEnd`, `Setup` (lancement en mode init/maintenance).
 
@@ -52,7 +52,9 @@ Trente événements sont proposés. Le sélecteur d'ajout, en bas de page, affic
 
 **Contexte** — `PreCompact`, `PostCompact`, `InstructionsLoaded` (chargement d'un `CLAUDE.md` ou d'un `.claude/rules/*.md`).
 
-**Environnement** — `ConfigChange`, `CwdChanged`, `FileChanged`, `WorktreeCreate`, `WorktreeRemove`.
+**Modèle** — `PreModelSwitch` (avant un changement de modèle : le hook peut l'autoriser, le refuser ou le faire confirmer), `PostModelSwitch` (après).
+
+**Environnement** — `ConfigChange`, `CwdChanged`, `DirectoryAdded` (un dossier entre dans l'espace de travail, par `/add-dir`), `FileChanged`, `WorktreeCreate`, `WorktreeRemove`.
 
 **MCP** — `Elicitation` (un serveur demande une saisie pendant un appel d'outil), `ElicitationResult` (après votre réponse, avant renvoi au serveur).
 
