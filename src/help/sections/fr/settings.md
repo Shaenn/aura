@@ -33,14 +33,22 @@ C'est différent de vider un champ texte, qui y écrit une valeur vide : une lan
 
 ## Onglet Général
 
-| Réglage           | Clé                     | Remarque                         |
-| ----------------- | ----------------------- | -------------------------------- |
-| Langue            | `language`              | Langue de réponse préférée       |
-| Modèle par défaut | `model`                 | Vide = sélection automatique     |
-| Niveau d'effort   | `effortLevel`           | `low`, `medium`, `high`, `xhigh` |
-| Mode rapide       | `fastMode`              | Trois positions                  |
-| Réflexion étendue | `alwaysThinkingEnabled` | Trois positions                  |
-| Éditeur           | `editorMode`            | `normal` ou `vim`                |
+| Réglage                  | Clé                      | Remarque                                |
+| ------------------------ | ------------------------ | --------------------------------------- |
+| Langue                   | `language`               | Langue de réponse préférée              |
+| Modèle par défaut        | `model`                  | Vide = sélection automatique            |
+| Niveau d'effort          | `effortLevel`            | `low`, `medium`, `high`, `xhigh`        |
+| Effort par modèle        | `modelSettings`          | Lecture seule — une table, pas un champ |
+| Mode rapide              | `fastMode`               | Trois positions                         |
+| Réflexion étendue        | `alwaysThinkingEnabled`  | Trois positions                         |
+| Éditeur                  | `editorMode`             | `normal` ou `vim`                       |
+| Touches de mot           | `keybindingFlavor`       | `classic` ou `readline`                 |
+| Cache de la conversation | `promptCacheTtl`         | `5m` ou `1h`                            |
+| Cache des sous-agents    | `subagentPromptCacheTtl` | `5m` ou `1h`                            |
+
+**Effort par modèle** ne s'affiche que si la clé existe, et **en lecture seule** : `modelSettings` est une table dont les clés sont des noms de modèles, pas un champ. Le taire laisserait pourtant croire que le seul effort en vigueur est le global juste au-dessus.
+
+Les deux **caches de prompt** portent la même troisième position que les interrupteurs : `Hérité` supprime la clé, et Claude Code décide alors seul — une heure sur abonnement, cinq minutes sur clé API, cinq minutes pour tout ce qui sort du fil principal. Une écriture de cache d'une heure est facturée plus cher qu'une de cinq minutes ; en échange, le cache reste chaud sur des pauses plus longues.
 
 ## Onglet Permissions
 
@@ -66,7 +74,13 @@ Chez Claude Code, **`deny` l'emporte sur `allow`**. Un doublon exact n'est pas a
 
 `tui` (`fullscreen` / `inline`), `autoUpdatesChannel` (`stable` / `latest`), et `cleanupPeriodDays` — le nombre de jours avant nettoyage des sessions et artefacts par Claude Code.
 
-Puis une série d'interrupteurs à trois positions, dont l'infobulle « Hérité » rappelle chaque fois **la valeur par défaut de Claude Code** : `autoCompactEnabled`, `autoMemoryEnabled`, `fileCheckpointingEnabled` (les instantanés de `/rewind`), `spinnerTipsEnabled`, `prefersReducedMotion`, `agentPushNotifEnabled`, `skipAutoPermissionPrompt`, `remoteControlAtStartup`, `includeCoAuthoredBy`.
+`desktopSessionCleanupPeriodDays` en est le pendant pour les sessions ouvertes depuis Claude Desktop, que le nettoyage précédent épargne. C'est un **plafond**, et `0` — la valeur par défaut — veut dire qu'il n'y en a pas : ces transcripts sont gardés jusqu'à ce qu'autre chose les supprime.
+
+`spellcheck.enabled` souligne les mots mal orthographiés dans le prompt. Le soulignement demande un `aspell`, `hunspell` ou `ispell` installé sur la machine ; sans lui, la clé n'a aucun effet. Le reste du bloc — le correcteur, le dictionnaire, la couleur — passe par l'onglet JSON. Repasser ce réglage sur `Hérité` retire la clé, **et le bloc `spellcheck` s'il ne reste rien dedans** : un `"spellcheck": {}` résiduel se lirait comme un réglage posé.
+
+Puis une série d'interrupteurs à trois positions, dont l'infobulle « Hérité » rappelle chaque fois **la valeur par défaut de Claude Code** : `autoCompactEnabled`, `autoMemoryEnabled`, `fileCheckpointingEnabled` (les instantanés de `/rewind`), `spinnerTipsEnabled`, `prefersReducedMotion`, `agentPushNotifEnabled`, `skipAutoPermissionPrompt`, `remoteControlAtStartup`, `includeCoAuthoredBy`, `autoContinueAtUsageLimit`, `syncClaudeAiSkills`, `syncClaudeAiPlugins`.
+
+Les deux derniers gouvernent ce que claude.ai dépose dans `~/.claude/skills/synced` et `~/.claude/plugins/synced`. Une particularité à connaître : **seul `Non` agit**. La synchronisation s'active côté serveur pour votre compte, si bien qu'écrire `true` ne l'allume pas plus tôt — `Hérité` et `Oui` disent la même chose au fichier.
 
 La **status line**, enfin, n'apparaît que si elle est configurée, et **en lecture seule** : c'est une structure trop libre pour un champ. Son édition fine passe par l'onglet JSON.
 

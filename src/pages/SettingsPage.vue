@@ -84,6 +84,15 @@
           <SegmentedControl v-model="effortLevel" :options="effortOptions" :aria-label="t('pages.settings.fields.effort')" />
         </SettingField>
 
+        <SettingField
+          v-if="modelSettingsSummary"
+          :label="t('pages.settings.fields.modelSettings')"
+          json-key="modelSettings"
+          :hint="t('pages.settings.fields.modelSettingsHint')"
+        >
+          <code class="ctl-readonly font-mono">{{ modelSettingsSummary }}</code>
+        </SettingField>
+
         <SettingField :label="t('pages.settings.fields.fastMode')" json-key="fastMode" :hint="t('pages.settings.fields.fastModeHint')">
           <SegmentedControl v-model="fastMode" :options="triDefaultOff" :aria-label="t('pages.settings.fields.fastMode')" />
         </SettingField>
@@ -94,6 +103,22 @@
 
         <SettingField :label="t('pages.settings.fields.editor')" json-key="editorMode" :hint="t('pages.settings.fields.editorHint')">
           <SegmentedControl v-model="editorMode" :options="editorOptions" :aria-label="t('pages.settings.fields.editorAria')" />
+        </SettingField>
+
+        <SettingField :label="t('pages.settings.fields.keybinding')" json-key="keybindingFlavor" :hint="t('pages.settings.fields.keybindingHint')">
+          <SegmentedControl v-model="keybindingFlavor" :options="keybindingOptions" :aria-label="t('pages.settings.fields.keybinding')" />
+        </SettingField>
+
+        <SettingField :label="t('pages.settings.fields.promptCache')" json-key="promptCacheTtl" :hint="t('pages.settings.fields.promptCacheHint')">
+          <SegmentedControl v-model="promptCacheTtl" :options="cacheTtlOptions" :aria-label="t('pages.settings.fields.promptCache')" />
+        </SettingField>
+
+        <SettingField
+          :label="t('pages.settings.fields.subagentCache')"
+          json-key="subagentPromptCacheTtl"
+          :hint="t('pages.settings.fields.subagentCacheHint')"
+        >
+          <SegmentedControl v-model="subagentPromptCacheTtl" :options="cacheTtlOptions" :aria-label="t('pages.settings.fields.subagentCache')" />
         </SettingField>
       </section>
 
@@ -188,6 +213,24 @@
           />
         </SettingField>
 
+        <SettingField
+          :label="t('pages.settings.fields.desktopCleanup')"
+          json-key="desktopSessionCleanupPeriodDays"
+          :hint="t('pages.settings.fields.desktopCleanupHint')"
+        >
+          <input
+            v-model.number="desktopCleanupDays"
+            type="number"
+            min="0"
+            class="ctl-input ctl-input--num font-mono"
+            :aria-label="t('pages.settings.fields.desktopCleanupAria')"
+          />
+        </SettingField>
+
+        <SettingField :label="t('pages.settings.fields.spellcheck')" json-key="spellcheck.enabled" :hint="t('pages.settings.fields.spellcheckHint')">
+          <SegmentedControl v-model="spellcheck" :options="triDefaultOff" :aria-label="t('pages.settings.fields.spellcheck')" />
+        </SettingField>
+
         <SettingField v-for="f in booleanFlags" :key="f.key" :label="f.label" :json-key="f.key" :hint="f.hint">
           <SegmentedControl
             :model-value="triFlag(f.key)"
@@ -221,6 +264,7 @@
   import { useJsonForm } from '@/composables/useJsonForm'
   import { useNotify } from '@/composables/useNotify'
   import { readFile, propose as proposeWrite, ClaudeApiError, type Proposal } from '@/services/claude'
+  import { getAt, type Path } from '@/utils/json-edit'
   import { onMounted, ref, computed } from 'vue'
   import { useI18n } from 'vue-i18n'
 
@@ -234,7 +278,7 @@
   const proposing = ref(false)
   const proposal = ref<Proposal | null>(null)
 
-  const { valid, field, has, remove, stringArray, pushTo, removeFrom } = useJsonForm(content)
+  const { parsed, valid, field, has, remove, stringArray, pushTo, removeFrom } = useJsonForm(content)
 
   const dirty = computed(() => content.value !== original.value)
 
@@ -284,6 +328,11 @@
     { key: 'skipAutoPermissionPrompt', default: false },
     { key: 'remoteControlAtStartup', default: false },
     { key: 'includeCoAuthoredBy', default: false },
+    { key: 'autoContinueAtUsageLimit', default: false },
+    // Activés côté serveur pour le compte : seul `false` est honoré ici, `true`
+    // n'avance rien. « Hérité » et « Oui » disent donc la même chose au fichier.
+    { key: 'syncClaudeAiSkills', default: true },
+    { key: 'syncClaudeAiPlugins', default: true },
   ]
   const booleanFlags = computed(() =>
     FLAGS.map((f) => ({
@@ -328,6 +377,46 @@
     return computed<Tri>({ get: () => triFlag(key), set: (v) => setTriFlag(key, v) })
   }
 
+  // Same tri-state, on a nested key. "Inherited" deletes the leaf, then the
+  // parent object if nothing is left in it: a leftover `"spellcheck": {}` would
+  // read as a setting someone put there.
+  function triNested(path: Path) {
+    return computed<Tri>({
+      get: () => (has(path) ? (field<boolean>(path, false).value ? 'on' : 'off') : 'inherit'),
+      set: (v) => {
+        if (v !== 'inherit') {
+          field<boolean>(path, v === 'on').value = v === 'on'
+          return
+        }
+        remove(path)
+        const parent = path.slice(0, -1)
+        const left = getAt(parsed.value, parent)
+        if (parent.length && left !== null && typeof left === 'object' && !Object.keys(left).length) remove(parent)
+      },
+    })
+  }
+
+  // A closed set of string values reads like the booleans above: an absent key
+  // is not one of the values, it is Claude Code deciding. Picking "Inherited"
+  // deletes the key, exactly as it does for a flag.
+  function choiceField(path: Path) {
+    const bound = field<string>(path, 'inherit')
+    return computed<string>({
+      get: () => bound.value,
+      set: (v) => (v === 'inherit' ? remove(path) : (bound.value = v)),
+    })
+  }
+
+  /** The "Inherited" segment, then the values themselves — their own names, untranslated. */
+  function choiceOptions(values: readonly string[], fallback: string) {
+    return [
+      { label: t('pages.settings.tri.inherit'), value: 'inherit', tooltip: t('pages.settings.tri.inheritTip', { default: fallback }) },
+      ...values.map((v) => ({ label: v, value: v })),
+    ]
+  }
+  const keybindingOptions = computed(() => choiceOptions(['classic', 'readline'], 'classic'))
+  const cacheTtlOptions = computed(() => choiceOptions(['5m', '1h'], t('pages.settings.fields.cacheAuto')))
+
   // ── Bound fields ─────────────────────────────────────────────────────────────
   const language = field<string>(['language'], '')
   const model = field<string>(['model'], '')
@@ -339,10 +428,26 @@
   const tui = field<string>(['tui'], 'fullscreen')
   const channel = field<string>(['autoUpdatesChannel'], 'latest')
   const cleanupDays = field<number>(['cleanupPeriodDays'], 30)
+  const desktopCleanupDays = field<number>(['desktopSessionCleanupPeriodDays'], 0)
+  const keybindingFlavor = choiceField(['keybindingFlavor'])
+  const promptCacheTtl = choiceField(['promptCacheTtl'])
+  const subagentPromptCacheTtl = choiceField(['subagentPromptCacheTtl'])
+  const spellcheck = triNested(['spellcheck', 'enabled'])
 
   const statusLineCommand = computed(() => {
     const v = field<string>(['statusLine', 'command'], '').value
     return v || ''
+  })
+
+  // L'effort mémorisé modèle par modèle. Le formulaire ne l'édite pas — c'est une
+  // table dont les clés sont des noms de modèles, pas un champ — mais le taire
+  // laisserait croire que le seul effort est le global juste au-dessus.
+  const modelSettingsSummary = computed(() => {
+    const v = getAt(parsed.value, ['modelSettings'])
+    if (v === null || typeof v !== 'object' || Array.isArray(v)) return ''
+    return Object.entries(v as Record<string, unknown>)
+      .map(([model, s]) => `${model} : ${(s as { effortLevel?: string } | null)?.effortLevel ?? '—'}`)
+      .join('  ·  ')
   })
 
   // ── Tabs (single menu level, panel swap — no scroll-spy) ─────────────────────
