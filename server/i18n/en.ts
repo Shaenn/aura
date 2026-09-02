@@ -63,6 +63,7 @@ const en: Catalog = {
     sessionStopped: 'Session stopped.',
     deniedFromAtelier: 'Denied from the Workshop.',
     sessionEnded: 'The session stopped: {message}',
+    streamClosed: 'The stream closed on its own. I no longer have a session running; you can resume it.',
     cleared: 'I am opening a new session. The context is empty; the previous exchange stays on disk.',
     clearedByCommand: 'I am opening a new session: /clear emptied the context. The previous exchange stays on disk.',
     pickerUnavailable: 'No folder picker available on {platform}.',

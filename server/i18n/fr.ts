@@ -71,6 +71,15 @@ export default {
     sessionStopped: 'Session arrêtée.',
     deniedFromAtelier: "Refusé depuis l'Atelier.",
     sessionEnded: "La session s'est arrêtée : {message}",
+    /**
+     * Une fin sans exception : le CLI a refermé son flux de lui-même.
+     *
+     * C'était jusqu'ici le seul chemin de fin qui n'écrivait rien — la session
+     * s'arrêtait sans un mot, et l'écran ne distinguait pas cette fin-là d'un
+     * plantage. Elle ne dit pas de cause parce qu'il n'y en a pas à dire : le
+     * flux s'est refermé, la reprise reste possible.
+     */
+    streamClosed: "Le flux s'est refermé de lui-même. Je n'ai plus de session en cours ; vous pouvez la reprendre.",
     /** Le fil vient d'être vidé : ces deux lignes sont tout ce qui reste à l'écran. */
     cleared: "J'ouvre une nouvelle session. Le contexte est vide ; l'échange précédent reste sur disque.",
     clearedByCommand: "J'ouvre une nouvelle session : /clear a vidé le contexte. L'échange précédent reste sur disque.",

@@ -804,6 +804,25 @@ export class SessionRunner {
 
   // ── La boucle ─────────────────────────────────────────────────────────────
 
+  /**
+   * Ce qui s'écrit dans le terminal du BFF quand une session finit mal.
+   *
+   * Le fil dit à l'utilisateur ce qui s'est passé ; ceci le dit à qui relira
+   * après coup. Les deux sont nécessaires : une session qui s'arrête pendant
+   * qu'on regarde ailleurs ne laisse aucune trace ailleurs qu'ici, et c'est ce
+   * qu'il faut pour instruire une panne qu'on ne sait pas reproduire.
+   *
+   * L'horodatage et le `runId` sont le minimum pour recouper avec le `.jsonl`.
+   */
+  private log(reason: string, cause?: unknown): void {
+    const stack = cause instanceof Error ? cause.stack : undefined
+    // Le journal de Fastify n'est pas joignable d'ici, et ce fichier ne connaît
+    // pas HTTP — c'est l'invariant du runner. La sortie d'erreur est le même
+    // flux que celui où pino écrit ; l'ordre des lignes reste donc lisible.
+    // eslint-disable-next-line no-console
+    console.error(`[atelier] ${new Date().toISOString()} ${this.session.runId} ${reason}`, stack ?? '')
+  }
+
   private async run(): Promise<void> {
     this.query = query({
       prompt: this.queue,
@@ -827,10 +846,19 @@ export class SessionRunner {
       for await (const message of this.query) {
         this.consume(message)
       }
+      // Une fin sans exception, et que personne n'a demandée : le CLI a refermé
+      // son flux tout seul. C'était le seul chemin de fin qui n'écrivait rien —
+      // la session s'arrêtait sans un mot, et l'écran ne distinguait pas cette
+      // fin-là d'un plantage. Un arrêt demandé, lui, a déjà dit ce qu'il était.
+      if (!this.stopped) {
+        this.emit(this.translator.appendSystem(t('agent.streamClosed'), 'error'))
+        this.log('flux refermé sans arrêt demandé')
+      }
       this.setStatus('ended')
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
       this.emit(this.translator.appendSystem(t('agent.sessionEnded', { message }), 'error'))
+      this.log(message, e)
       this.setStatus('failed', message)
     } finally {
       this.query = null
