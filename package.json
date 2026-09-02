@@ -44,7 +44,7 @@
     "mermaid": "11.17.2",
     "node-telegram-bot-api": "2.1.0",
     "pinia": "4.0.3",
-    "quasar": "2.26.0",
+    "quasar": "2.28.0",
     "vue": "3.5.41",
     "vue-i18n": "11.4.9",
     "vue-router": "5.2.0",
