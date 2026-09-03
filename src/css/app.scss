@@ -610,19 +610,19 @@ body.body--dark {
 // l'emporte sur le fond opaque de la primitive sans `!important` — et la carte
 // conserve l'arête lumineuse que `.surface-card` lui donne déjà.
 //
-// L'ordre des deux dernières lignes n'est pas indifférent, et il a coûté cher à
-// trouver : le minifieur tient le préfixe et la propriété standard pour
-// équivalents, et ne garde que **la dernière** des deux. Écrite en premier, la
-// standard disparaissait du CSS livré — le build ne portait plus que
-// `-webkit-backdrop-filter`, que ce Chrome n'honore pas. Les panneaux gardaient
-// donc leur fond translucide sans le flou qui le rend opaque, et l'on lisait la
-// page au travers. Le repli ci-dessous ne rattrapait rien : il teste le
-// *support* du navigateur, qui est acquis, pas la présence de la règle.
+// **Le préfixe `-webkit-` ne s'écrit pas ici.** Autoprefixer le pose, et il le
+// pose au bon endroit — avant la propriété standard. L'écrire à la main mettait
+// les deux déclarations dans l'ordre inverse, et le minifieur, qui les tient
+// pour équivalentes, ne garde que la dernière : la standard disparaissait du CSS
+// livré. Il ne restait que le préfixe, que ce Chrome n'honore pas, si bien que
+// les panneaux gardaient leur fond translucide sans le flou qui le rend opaque
+// — on lisait la page au travers. Le repli ci-dessous ne rattrapait rien, et ne
+// le pouvait pas : il teste le *support* du navigateur, acquis depuis
+// longtemps, pas la présence de la règle.
 .q-drawer,
 .q-menu,
 .q-dialog__inner > .q-card {
   background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   backdrop-filter: blur(var(--glass-blur));
 }
 
