@@ -69,7 +69,26 @@ function trailingCommands(events: readonly TranscriptEvent[]): TranscriptEvent[]
  * et ne complète plus rien dès que le disque a rattrapé.
  */
 function pendingCommands(disk: readonly TranscriptEvent[], live: readonly TranscriptEvent[]): TranscriptEvent[] {
-  return trailingCommands(live).slice(trailingCommands(disk).length)
+  const ecrites = trailingCommands(disk)
+  // Une compaction se reconnaît, une commande se compte. Les deux sources
+  // donnent le même `uuid` à une frontière de compaction — c'est ce que
+  // `diskCaughtUp` emploie déjà — alors qu'une commande `/` n'a d'identité
+  // commune ni par sa clé ni par son horloge.
+  const posees = new Set(ecrites.filter((e) => e.kind === 'compaction').map((e) => e.uuid))
+  const comptees = ecrites.filter((e) => e.kind !== 'compaction').length
+
+  // Le complément se faisait par la seule longueur, et la longueur mélangeait
+  // les deux familles. Le fichier s'écrit dans un ordre qui n'est pas celui du
+  // direct : la frontière y précède la ligne `/compact`. On surprenait donc le
+  // disque à mi-chemin — une commande de moins que le direct — et le décalage
+  // laissait passer la frontière du direct par-dessus celle du fichier. Le fil
+  // affichait alors deux compactions là où la session n'en avait vécu qu'une.
+  let vues = 0
+  return trailingCommands(live).filter((e) => {
+    if (e.kind === 'compaction') return !posees.has(e.uuid)
+    vues += 1
+    return vues > comptees
+  })
 }
 
 /**

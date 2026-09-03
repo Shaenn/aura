@@ -38,7 +38,7 @@
       <PlanModeMarker v-else-if="node.event.kind === 'planmode' && node.event.planMode" :mark="node.event.planMode" />
       <CompactSummary v-else-if="node.event.origin === 'compact-summary'" :event="node.event" />
       <CommandLine v-else-if="isCommand" :event="node.event" />
-      <section v-else class="rp-loose">
+      <section v-else class="rp-loose" :class="{ 'rp-loose--error': isError }">
         <p class="rp-loose-head">
           <q-icon :name="looseIcon" size="14px" aria-hidden="true" />
           {{ looseLabel }}
@@ -110,7 +110,21 @@
     return origin === 'slash-command' || origin === 'command-output'
   })
 
-  const looseIcon = computed(() => (props.node.kind !== 'turn' && props.node.event.kind === 'summary' ? 'summarize' : 'info'))
+  /**
+   * Une ligne de service qui annonce une panne.
+   *
+   * `AssistantTurn` lisait déjà `level` ; ce rendu-ci ne le lisait pas. Une
+   * session qui s'arrêtait sans qu'un tour assistant ne l'accompagne — c'est le
+   * cas d'un plantage au premier message — écrivait donc son crash en gris,
+   * sous l'étiquette « Système », où il ressemblait à une note d'information.
+   */
+  const isError = computed(() => props.node.kind !== 'turn' && props.node.event.level === 'error')
+
+  const looseIcon = computed(() => {
+    if (props.node.kind === 'turn') return 'info'
+    if (props.node.event.level === 'error') return 'error_outline'
+    return props.node.event.kind === 'summary' ? 'summarize' : 'info'
+  })
 
   const looseLabel = computed(() => {
     if (props.node.kind === 'turn') return ''
@@ -195,6 +209,11 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
+  }
+  /* Le titre porte la couleur, pas le corps : c'est l'étiquette qui disait
+   « information » à tort, et un pavé rouge se lirait comme une alarme. */
+  .rp-loose--error .rp-loose-head {
+    color: var(--danger);
   }
   .rp-loose-head {
     margin: 0;

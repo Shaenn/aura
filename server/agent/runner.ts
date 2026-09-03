@@ -15,6 +15,7 @@ import type {
   AgentStatus,
   AgentUpsert,
   AskQuestion,
+  AskRequest,
   PermissionAnswer,
   PermissionRequest,
   PromptAttachment,
@@ -131,6 +132,24 @@ const ACTIVITY_STEP_MS = 250
  */
 const SHELL_POLL_MS = 2_000
 
+/**
+ * Au bout de combien de silence du SDK une session « au travail » cesse d'être
+ * protégée par son travail.
+ *
+ * Le balayeur ne ramasse jamais une session en cours de tour : un `Bash` de vingt
+ * minutes n'est pas un abandon. Mais une session dont le processus s'est figé
+ * garde ce statut pour toujours — elle échappait donc au balayeur *et* occupait
+ * une des six places du parc, sans qu'aucun geste ne puisse la libérer.
+ *
+ * Une heure, et c'est délibérément le double du délai d'inactivité : ce garde-fou
+ * ne peut que faire taire, jamais inventer une panne. Un tour vivant parle bien
+ * avant — le SDK émet ses fragments, ses relevés d'outil, ses pings de
+ * raisonnement. Une heure sans un seul message n'est pas un tour long, c'est un
+ * mort. Le ramassage exige de toute façon les deux silences à la fois : celui du
+ * SDK et celui de l'humain.
+ */
+export const SDK_SILENCE_MS = 60 * 60_000
+
 export class SessionRunner {
   readonly session: AgentSession
 
@@ -167,6 +186,22 @@ export class SessionRunner {
   /** Où en est la lecture du transcript, en octets. Voir `readShellEnds`. */
   private transcriptAt = 0
   private readonly queue = new AsyncQueue<SDKUserMessage>()
+  /**
+   * Combien de fois la boucle a démarré.
+   *
+   * Une seule, en régime ordinaire. Au-delà, c'est que la précédente est morte
+   * et qu'un tour l'a relancée — ce qui ne se devine pas à l'écran, d'où la
+   * ligne que `run()` écrit à partir de la deuxième.
+   */
+  private runs = 0
+  /**
+   * Le dernier message venu du SDK — le pouls de la session.
+   *
+   * À distinguer de `touchedAt`, qui ne compte que les gestes humains : celui-ci
+   * dit si le processus respire encore. Il naît avec la session plutôt qu'à
+   * zéro, sans quoi une session jamais démarrée passerait pour figée.
+   */
+  private lastMessageAt = Date.now()
   private readonly subscribers = new Set<(upsert: AgentUpsert) => void>()
   private query: Query | null = null
   private stopped = false
@@ -205,6 +240,17 @@ export class SessionRunner {
   private readonly permissions = new Map<string, PendingAnswer<PermissionResult>>()
   /** Les questions en vol. Même mécanique, autre canal : rien à autoriser ici. */
   private readonly asks = new Map<string, PendingAnswer<string>>()
+  /**
+   * Ce qu'une demande en vol dit à l'écran, gardé le temps qu'elle vive.
+   *
+   * La promesse suspend le SDK ; ces deux cartes-là servent à la **rejouer** —
+   * un onglet qui s'abonne au milieu d'une attente doit voir le bandeau, sans
+   * quoi la demande reste invisible et l'agent suspendu jusqu'au garde-fou.
+   * Même motif que `suggestions` et `permissionInputs` : une carte parallèle,
+   * vidée dans le même `finally`.
+   */
+  private readonly permissionRequests = new Map<string, PermissionRequest>()
+  private readonly askRequests = new Map<string, AskRequest>()
   /**
    * Les règles suggérées par le SDK pour la demande en cours, gardées le temps
    * qu'un humain choisisse « toujours autoriser ». Elles ne se devinent pas :
@@ -253,8 +299,16 @@ export class SessionRunner {
    * un onglet ouvert au milieu d'un tour voit donc la même chose qu'un onglet
    * présent depuis le début.
    */
-  subscribe(send: (upsert: AgentUpsert) => void): () => void {
-    send({
+  /**
+   * Tout l'état d'une session, en un message.
+   *
+   * Il part à chaque abonnement, et à chaque fois que le fil change d'identité
+   * (`/clear`). Rien ne s'y ajoute : les listes qu'il porte **remplacent** celles
+   * du client, vides comprises — c'est ce qui rattrape une coupure sans que le
+   * front ait à tenir un curseur.
+   */
+  private snapshot(): AgentUpsert {
+    return {
       kind: 'snapshot',
       session: this.session,
       events: this.translator.events,
@@ -264,7 +318,18 @@ export class SessionRunner {
       // Les shells encore plus : celui qui tient un port a pu partir il y a une
       // heure, bien avant que cet onglet n'existe.
       shells: this.shells.snapshot(),
-    })
+      // Ce qui attend un humain, au même titre. Une demande émise pendant une
+      // coupure du flux ne revenait jamais : le bandeau n'apparaissait pas et
+      // l'agent restait suspendu jusqu'au refus du garde-fou. Dans l'autre sens,
+      // une demande réglée pendant la coupure laissait un bandeau fantôme que
+      // plus aucun clic ne pouvait dénouer.
+      permissions: [...this.permissionRequests.values()],
+      asks: [...this.askRequests.values()],
+    }
+  }
+
+  subscribe(send: (upsert: AgentUpsert) => void): () => void {
+    send(this.snapshot())
     this.touchedAt = Date.now()
     this.subscribers.add(send)
     return () => {
@@ -293,8 +358,9 @@ export class SessionRunner {
    *
    * Trois conditions, et il les faut toutes. Personne ne regarde. Elle ne
    * travaille pas — un tour de vingt minutes n'est pas un abandon, et le CLI
-   * n'écouterait de toute façon pas qu'on lui ferme son entrée. Et le dernier
-   * geste humain remonte à plus loin que le délai.
+   * n'écouterait de toute façon pas qu'on lui ferme son entrée ; encore
+   * faut-il que ce travail soit réel, ce que seul le pouls du SDK dit. Et le
+   * dernier geste humain remonte à plus loin que le délai.
    *
    * Un flux ouvert protège **sans réserve**, et c'est un choix. On sait qu'il ne
    * prouve pas qu'un humain regarde : le navigateur gèle un onglet d'arrière-plan
@@ -311,7 +377,11 @@ export class SessionRunner {
   expired(ttlMs: number): boolean {
     if (this.stopped) return false
     if (this.subscribers.size > 0) return false
-    if (this.session.status === 'working') return false
+    // « Elle travaille » protège tant que le processus le prouve. Sans ce
+    // second membre, une session figée gardait ce statut pour toujours : elle
+    // échappait au balayeur *et* occupait une des six places du parc, sans
+    // qu'aucun geste ne puisse la libérer. Voir `SDK_SILENCE_MS`.
+    if (this.session.status === 'working' && Date.now() - this.lastMessageAt <= SDK_SILENCE_MS) return false
     return Date.now() - this.touchedAt > ttlMs
   }
 
@@ -380,17 +450,10 @@ export class SessionRunner {
     // qu'on vient d'envoyer.
     const byClear = /^\/clear\b/.test(this.lastPrompt)
     this.translator.appendSystem(t(byClear ? 'agent.clearedByCommand' : 'agent.cleared'), 'warn')
-    this.emit([
-      {
-        kind: 'snapshot',
-        session: this.session,
-        events: this.translator.events,
-        activity: this.activity.snapshot(),
-        // La conversation repart à vide, pas la machine : un serveur lancé avant
-        // le `/clear` tient toujours son port, et reste donc à l'écran.
-        shells: this.shells.snapshot(),
-      },
-    ])
+    // La conversation repart à vide, pas la machine : un serveur lancé avant le
+    // `/clear` tient toujours son port, et une demande en vol attend toujours sa
+    // réponse. Le fil seul s'efface.
+    this.emit([this.snapshot()])
   }
 
   /**
@@ -597,7 +660,17 @@ export class SessionRunner {
    * `Query` est donc déjà là.
    */
   private ensureQuery(): void {
-    if (!this.query && !this.stopped) void this.run()
+    if (this.query || this.stopped) return
+    // `run()` capte tout ce qui vient du flux, mais pas ce que `query()` lève en
+    // montant : options refusées, serveur MCP mal formé. Sans ce `catch`, ce
+    // rejet-là n'avait pas de destinataire — la session restait « au travail »
+    // sans qu'aucun message ne vienne jamais.
+    void this.run().catch((e: unknown) => {
+      const message = e instanceof Error ? e.message : String(e)
+      this.emit(this.translator.appendSystem(t('agent.sessionEnded', { message }), 'error'))
+      this.log(message, e)
+      this.setStatus('failed', message)
+    })
   }
 
   /**
@@ -668,6 +741,17 @@ export class SessionRunner {
   stop(grace = STOP_GRACE_MS): void {
     if (this.stopped) return
     this.stopped = true
+    // Le dire aux onglets qui regardent encore. Sans cela l'arrêt ne se voyait
+    // nulle part : la socket restait ouverte, son battement continuait, et
+    // l'écran se figeait sur le dernier statut reçu sans jamais l'admettre.
+    // C'est le cas d'un arrêt demandé depuis un autre onglet, et celui de
+    // l'extinction du serveur. Le balayeur, lui, ne ramasse que ce que plus
+    // personne ne regarde : ce message-là n'aurait pas d'auditeur, et c'est le
+    // front qui doit constater la disparition.
+    if (this.session.status !== 'ended' && this.session.status !== 'failed') {
+      this.emit(this.translator.appendSystem(t('agent.sessionStopped')))
+      this.setStatus('ended')
+    }
     if (this.shellPoll) {
       clearInterval(this.shellPoll)
       this.shellPoll = null
@@ -731,6 +815,7 @@ export class SessionRunner {
       return { behavior: 'deny', message: t('agent.permissionTimeout') }
     })
     this.permissions.set(id, pending)
+    this.permissionRequests.set(id, request)
     this.emit([{ kind: 'permission-request', request }])
 
     // Une interruption pendant l'attente doit libérer le tour, pas le figer.
@@ -751,6 +836,7 @@ export class SessionRunner {
       return await pending.promise
     } finally {
       this.permissions.delete(id)
+      this.permissionRequests.delete(id)
       this.suggestions.delete(id)
       this.permissionInputs.delete(id)
     }
@@ -787,9 +873,14 @@ export class SessionRunner {
       this.emit([{ kind: 'ask-settled', id }])
       return NO_ANSWER
     })
+    const request: AskRequest = { id, questions, askedAt: Date.now() }
     this.asks.set(id, pending)
-    this.emit([{ kind: 'ask-request', request: { id, questions, askedAt: Date.now() } }])
-    return pending.promise.finally(() => this.asks.delete(id))
+    this.askRequests.set(id, request)
+    this.emit([{ kind: 'ask-request', request }])
+    return pending.promise.finally(() => {
+      this.asks.delete(id)
+      this.askRequests.delete(id)
+    })
   }
 
   /** Répond à une question. Rend `false` si elle n'est plus en vol. */
@@ -804,7 +895,39 @@ export class SessionRunner {
 
   // ── La boucle ─────────────────────────────────────────────────────────────
 
+  /**
+   * Ce qui s'écrit dans le terminal du BFF quand une session finit mal.
+   *
+   * Le fil dit à l'utilisateur ce qui s'est passé ; ceci le dit à qui relira
+   * après coup. Les deux sont nécessaires : une session qui s'arrête pendant
+   * qu'on regarde ailleurs ne laisse aucune trace ailleurs qu'ici, et c'est ce
+   * qu'il faut pour instruire une panne qu'on ne sait pas reproduire.
+   *
+   * L'horodatage et le `runId` sont le minimum pour recouper avec le `.jsonl`.
+   */
+  private log(reason: string, cause?: unknown): void {
+    const stack = cause instanceof Error ? cause.stack : undefined
+    // Le journal de Fastify n'est pas joignable d'ici, et ce fichier ne connaît
+    // pas HTTP — c'est l'invariant du runner. La sortie d'erreur est le même
+    // flux que celui où pino écrit ; l'ordre des lignes reste donc lisible.
+    // eslint-disable-next-line no-console
+    console.error(`[atelier] ${new Date().toISOString()} ${this.session.runId} ${reason}`, stack ?? '')
+  }
+
   private async run(): Promise<void> {
+    this.runs += 1
+    // Une boucle qui repart après une mort ne doit pas repartir à vide. Le
+    // `resume` d'origine ne vaut que pour le premier démarrage : ensuite c'est
+    // l'identifiant que la session s'est vu attribuer qui fait foi, sans quoi
+    // une session née sans reprise recommençait une conversation neuve — même
+    // fil à l'écran, aucun souvenir derrière.
+    const reprise = this.session.sessionId || this.resume
+    if (this.runs > 1) {
+      // Le dire : une reprise silencieuse serait pire que la panne, puisque
+      // rien ne distinguerait à l'écran un contexte retrouvé d'un contexte perdu.
+      this.emit(this.translator.appendSystem(t(reprise ? 'agent.relaunched' : 'agent.relaunchedFresh')))
+    }
+
     this.query = query({
       prompt: this.queue,
       options: {
@@ -815,7 +938,7 @@ export class SessionRunner {
         includePartialMessages: true,
         permissionMode: this.session.permissionMode as never,
         ...(this.session.model ? { model: this.session.model } : {}),
-        ...(this.resume ? { resume: this.resume } : {}),
+        ...(reprise ? { resume: reprise } : {}),
         // On exécute nous-mêmes les questions à l'utilisateur : voir `ask.ts`.
         mcpServers: { atelier: createAskServer((questions) => this.askHuman(questions)) },
         toolAliases: { AskUserQuestion: ASK_TOOL },
@@ -827,13 +950,26 @@ export class SessionRunner {
       for await (const message of this.query) {
         this.consume(message)
       }
+      // Une fin sans exception, et que personne n'a demandée : le CLI a refermé
+      // son flux tout seul. C'était le seul chemin de fin qui n'écrivait rien —
+      // la session s'arrêtait sans un mot, et l'écran ne distinguait pas cette
+      // fin-là d'un plantage. Un arrêt demandé, lui, a déjà dit ce qu'il était.
+      if (!this.stopped) {
+        this.emit(this.translator.appendSystem(t('agent.streamClosed'), 'error'))
+        this.log('flux refermé sans arrêt demandé')
+      }
       this.setStatus('ended')
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
       this.emit(this.translator.appendSystem(t('agent.sessionEnded', { message }), 'error'))
+      this.log(message, e)
       this.setStatus('failed', message)
     } finally {
       this.query = null
+      // Le SDK ne referme pas la file qu'il tenait : sans cela, son itérateur
+      // resterait inscrit comme destinataire du prochain `push`, et le prompt
+      // d'une relance partirait dans un générateur que plus personne ne tire.
+      this.queue.abandon()
     }
   }
 
@@ -881,6 +1017,9 @@ export class SessionRunner {
   }
 
   private consume(message: Rec): void {
+    // Le pouls, avant toute lecture : n'importe quel message prouve que le
+    // processus respire, même ceux dont on ne fait rien.
+    this.lastMessageAt = Date.now()
     // Avant tout dispatch : la plupart des messages qui disent où en est l'agent
     // ne produisent aucun événement de timeline, et sortaient donc par le
     // `default` sans laisser de trace.

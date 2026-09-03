@@ -236,8 +236,15 @@
           <!-- Le halo respirant de `status-dot--live`, celui-là même que la page
                d'accueil pose sur une session en activité. L'Atelier, qui est
                *l'*écran d'une session en activité, ne l'avait pas. -->
-          <span class="at-dot" :class="[`at-dot--${status}`, { 'status-dot--live': status === 'working' }]" aria-hidden="true" />
-          <span class="at-status">{{ t(`pages.atelier.status.${status}`) }}</span>
+          <!-- Le lien rompu prime sur le statut : celui-ci date de la dernière
+               trame reçue, et l'annoncer encore ferait dire « Au travail » à une
+               session dont on ne sait plus rien. -->
+          <span
+            class="at-dot"
+            :class="[lost ? 'at-dot--lost' : `at-dot--${status}`, { 'status-dot--live': status === 'working' && !lost }]"
+            aria-hidden="true"
+          />
+          <span class="at-status">{{ lost ? t('pages.atelier.lost') : t(`pages.atelier.status.${status}`) }}</span>
           <!-- Le nom du dossier, pas son chemin : la barre dit où l'on est, et
                un chemin absolu la remplit sans rien apprendre à qui l'a choisi.
                Le chemin complet reste dans l'infobulle, et sur l'écran d'accueil
@@ -580,6 +587,7 @@
     error,
     permissions,
     asks,
+    lost,
     activity,
     commands,
     commandsLoading,
@@ -859,9 +867,24 @@
    * route, même instance. L'avis « session plus ouverte » y survivait donc à
    * l'adresse qui l'avait causé, et s'affichait devant un écran d'ouverture vierge.
    */
+  /**
+   * La navigation qui *pose* l'avis ne doit pas l'effacer.
+   *
+   * Constater qu'une session a disparu nettoie l'adresse, et ce nettoyage est
+   * exactement ce que le veilleur ci-dessus lit pour écarter un avis périmé :
+   * l'avis s'effaçait donc lui-même, et l'écran d'ouverture revenait sans un mot
+   * d'explication. Le drapeau ne vaut que pour la navigation suivante — celles
+   * que l'utilisateur fait ensuite retrouvent le comportement d'origine.
+   */
+  let goneNavigation = false
+
   watch(
     () => route.query.run,
     (run) => {
+      if (goneNavigation) {
+        goneNavigation = false
+        return
+      }
       if (!run) gone.value = null
     },
   )
@@ -893,6 +916,63 @@
       slug: typeof route.query.slug === 'string' ? route.query.slug : '',
     }
   }
+
+  /**
+   * Le pas auquel on va voir si une session dont on a perdu le fil existe encore.
+   *
+   * `EventSource` retente seul toutes les trois secondes environ ; interroger
+   * plus vite qu'elle ne se reconnecte ferait conclure à une disparition là où
+   * il n'y avait qu'un hoquet.
+   */
+  const GONE_POLL_MS = 5000
+  let gonePoll: ReturnType<typeof setInterval> | null = null
+
+  /**
+   * La session a-t-elle disparu, ou est-ce seulement le lien ?
+   *
+   * `reopenFromUrl` posait déjà la question, mais au montage seulement : une
+   * session ramassée par le balayeur pendant qu'on la regardait laissait donc un
+   * fil figé, sur lequel l'`EventSource` se reconnectait indéfiniment contre un
+   * 404. Le serveur ne peut pas nous le dire — le balayeur ne ramasse que ce que
+   * plus personne ne regarde, et à ce moment-là il n'y a plus d'abonné à qui
+   * l'annoncer. C'est donc ici qu'on va voir.
+   *
+   * Un appel qui échoue ne conclut rien : le BFF est peut-être en train de
+   * redémarrer, et le déclarer disparu couperait un fil qui revient.
+   */
+  async function checkStillThere(): Promise<void> {
+    const run = session.value?.runId
+    if (!run) return
+    let sessions: AgentSession[]
+    try {
+      ;({ sessions } = await listAgentSessions())
+    } catch {
+      return
+    }
+    if (sessions.some((s) => s.runId === run)) return
+    const slug = session.value?.slug ?? ''
+    const id = session.value?.sessionId ?? ''
+    detach()
+    session.value = null
+    // Le nettoyage d'adresse qui suit est le nôtre : il ne doit pas emporter
+    // l'avis qu'on vient de poser. Voir `goneNavigation`.
+    goneNavigation = true
+    gone.value = { session: id, slug }
+    await router.replace({ name: 'atelier', query: {} })
+  }
+
+  /** On ne va voir que tant que le lien manque, et jamais avant. */
+  watch(lost, (perdu) => {
+    if (gonePoll) {
+      clearInterval(gonePoll)
+      gonePoll = null
+    }
+    if (perdu) gonePoll = setInterval(() => void checkStillThere(), GONE_POLL_MS)
+  })
+
+  onUnmounted(() => {
+    if (gonePoll) clearInterval(gonePoll)
+  })
 
   /** Refermer l'avis, et nettoyer l'adresse : elle ne désigne plus rien. */
   function dismissGone(): void {
@@ -2124,6 +2204,12 @@
 
   .at-dot--failed {
     background: var(--danger);
+  }
+
+  /* Un lien rompu n'est pas une session en erreur : elle travaille peut-être
+   encore, c'est nous qui ne la voyons plus. D'où l'ambre et non le rouge. */
+  .at-dot--lost {
+    background: var(--warn);
   }
 
   .at-status {

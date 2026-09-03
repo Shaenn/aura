@@ -37,6 +37,15 @@ export function useLiveSession() {
   const asks = ref<AskRequest[]>([])
   const connected = ref(false)
   /**
+   * Le lien a été établi, puis rompu — et pas encore rétabli.
+   *
+   * `connected` seul ne suffit pas à le dire : il est faux entre l'ouverture de
+   * la page et la première trame, où il n'y a pourtant rien d'anormal à
+   * signaler. Ce drapeau ne se lève qu'après un flux qui a vécu, et retombe dès
+   * qu'il reprend.
+   */
+  const lost = ref(false)
+  /**
    * Ce que l'agent fait à l'instant. Un état à part de la timeline : il ne
    * s'ajoute à rien, il se remplace — et il n'a pas de passé.
    */
@@ -69,6 +78,8 @@ export function useLiveSession() {
 
   let source: EventSource | null = null
   let attached = ''
+  /** Le flux a-t-il déjà porté quelque chose ? Voir `lost`. */
+  let opened = false
   let commandsAsked = false
   let filesAsked = false
   const index = new Map<string, number>()
@@ -86,6 +97,12 @@ export function useLiveSession() {
         events.value = upsert.events
         activity.value = upsert.activity
         shells.value = upsert.shells
+        // Le serveur dit ce qui attend vraiment une réponse — vide compris.
+        // Sans ces deux lignes, une demande émise pendant une coupure ne
+        // revenait pas, et une demande réglée pendant la coupure laissait un
+        // bandeau que plus aucun clic ne pouvait dénouer.
+        permissions.value = upsert.permissions
+        asks.value = upsert.asks
         reindex()
         return
 
@@ -150,7 +167,10 @@ export function useLiveSession() {
 
       case 'status':
         status.value = upsert.status
-        if (upsert.error) error.value = upsert.error
+        // Une erreur appartient au statut qui la porte : sans cette remise à
+        // zéro, celle d'un tour ancien restait sous le composeur pour le reste
+        // de la session, y compris après une reprise réussie.
+        error.value = upsert.error ?? ''
         if (session.value) session.value.status = upsert.status
         return
 
@@ -235,16 +255,25 @@ export function useLiveSession() {
     filesTruncated.value = false
     filesAsked = false
     attached = runId
+    opened = false
     index.clear()
 
     source = new EventSource(streamUrl(runId))
     source.onopen = () => {
       connected.value = true
+      lost.value = false
+      opened = true
     }
     source.onerror = () => {
-      // `EventSource` se reconnecte seul ; le `snapshot` qui suivra remettra
-      // l'état d'aplomb. On ne signale donc qu'une coupure visible, pas une panne.
+      // `EventSource` se reconnecte seul, et le `snapshot` qui suivra remettra
+      // l'état d'aplomb : la coupure n'est donc pas une panne. Mais tant qu'elle
+      // dure, on ne sait plus ce que fait l'agent — et la dernière phase reçue
+      // resterait à l'écran, son chrono montant à vide, parce qu'il tourne ici.
+      // Une session coupée pendant un compactage annonçait ainsi un compactage
+      // qui n'avait plus lieu.
       connected.value = false
+      lost.value = opened
+      activity.value = IDLE_ACTIVITY
     }
     // Le serveur nomme chaque trame de son `kind` : on écoute par nom plutôt que
     // `onmessage`, qui ne reçoit que les trames sans nom.
@@ -276,6 +305,8 @@ export function useLiveSession() {
     source = null
     attached = ''
     connected.value = false
+    lost.value = false
+    opened = false
     // Débranché, on ne sait plus ce qui se passe : laisser la dernière phase
     // affichée ferait croire à une session qu'on regarde encore.
     activity.value = IDLE_ACTIVITY
@@ -291,6 +322,7 @@ export function useLiveSession() {
     permissions,
     asks,
     connected,
+    lost,
     activity,
     commands,
     commandsLoading,

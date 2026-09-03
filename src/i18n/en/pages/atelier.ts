@@ -68,6 +68,7 @@ const atelier: MessageSchema['pages']['atelier'] = {
     failed: 'Stopped on error',
   },
   resumed: 'resumed',
+  lost: 'I’ve lost contact',
   autoScroll: 'Auto-scroll',
   followLive: 'Follow live',
   fullReplay: 'Full replay',

@@ -10,11 +10,17 @@
 // personne ne regarde, et surtout qu'il ne ramasse *que* cela — un tour de vingt
 // minutes et un onglet ouvert sont deux raisons de vivre.
 //
+// La première de ces deux raisons a une limite, et elle s'éprouve ici aussi : un
+// tour ne protège qu'aussi longtemps que le processus le prouve. Sans cela, une
+// session figée gardait son statut « au travail » pour toujours et occupait une
+// place du parc que plus aucun geste ne pouvait libérer.
+//
 // Aucun test n'envoie de tour : le runner ne lance son processus qu'au premier
 // `send()`, et ces bornes se vérifient toutes avant.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { atCapacity, countSessions, createRunner, IDLE_TTL_MS, MAX_SESSIONS, stopAll, sweep } from '../server/agent/registry.ts'
+import { SDK_SILENCE_MS } from '../server/agent/runner.ts'
 
 const CWD = import.meta.dirname
 
@@ -88,6 +94,43 @@ describe('balayeur d’inactivité', () => {
     occupée.session.status = 'working'
 
     laisserPasser(IDLE_TTL_MS + 1)
+
+    expect(sweep()).toEqual([])
+    expect(countSessions()).toBe(1)
+  })
+
+  it('ramasse celle qui prétend travailler alors que son processus s’est tu', () => {
+    // Le cas qui manquait : ce statut protégeait sans réserve, donc une session
+    // figée échappait au balayeur *et* occupait une des six places du parc,
+    // sans qu'aucun geste ne puisse la libérer.
+    const figée = open()
+    figée.session.status = 'working'
+
+    laisserPasser(SDK_SILENCE_MS + 1)
+
+    expect(sweep()).toEqual([figée.session.runId])
+    expect(countSessions()).toBe(0)
+  })
+
+  it('ne la ramasse pas tant que le silence n’a pas duré une heure', () => {
+    const occupée = open()
+    occupée.session.status = 'working'
+
+    laisserPasser(SDK_SILENCE_MS - 1000)
+
+    expect(sweep()).toEqual([])
+    expect(countSessions()).toBe(1)
+  })
+
+  it('garde la session figée qu’un onglet regarde encore', () => {
+    // Le silence du SDK lève la protection du travail, pas celle du flux : un
+    // écran ouvert reste la raison de vivre la plus forte, et couper dessous
+    // serait exactement ce que le balayeur s'interdit.
+    const regardée = open()
+    regardée.session.status = 'working'
+    regardée.subscribe(() => {})
+
+    laisserPasser(SDK_SILENCE_MS * 2)
 
     expect(sweep()).toEqual([])
     expect(countSessions()).toBe(1)

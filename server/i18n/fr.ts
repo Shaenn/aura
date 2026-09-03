@@ -71,6 +71,24 @@ export default {
     sessionStopped: 'Session arrêtée.',
     deniedFromAtelier: "Refusé depuis l'Atelier.",
     sessionEnded: "La session s'est arrêtée : {message}",
+    /**
+     * Une fin sans exception : le CLI a refermé son flux de lui-même.
+     *
+     * C'était jusqu'ici le seul chemin de fin qui n'écrivait rien — la session
+     * s'arrêtait sans un mot, et l'écran ne distinguait pas cette fin-là d'un
+     * plantage. Elle ne dit pas de cause parce qu'il n'y en a pas à dire : le
+     * flux s'est refermé, la reprise reste possible.
+     */
+    streamClosed: "Le flux s'est refermé de lui-même. Je n'ai plus de session en cours ; vous pouvez la reprendre.",
+    /**
+     * La boucle repart après une mort, et il faut dire dans quel état.
+     *
+     * Une reprise silencieuse serait pire que la panne : rien ne distinguerait
+     * à l'écran un contexte retrouvé d'un contexte perdu, et le fil affiché
+     * laisserait croire au second que l'agent se souvient du premier.
+     */
+    relaunched: "J'ai relancé la session sur l'échange précédent.",
+    relaunchedFresh: "J'ai relancé la session, mais sans son contexte : elle n'avait pas encore d'identifiant à reprendre.",
     /** Le fil vient d'être vidé : ces deux lignes sont tout ce qui reste à l'écran. */
     cleared: "J'ouvre une nouvelle session. Le contexte est vide ; l'échange précédent reste sur disque.",
     clearedByCommand: "J'ouvre une nouvelle session : /clear a vidé le contexte. L'échange précédent reste sur disque.",
