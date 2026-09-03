@@ -609,12 +609,21 @@ body.body--dark {
 // (0,2,0) supérieure à celle de `.surface-card` (0,1,0), donc le fond de verre
 // l'emporte sur le fond opaque de la primitive sans `!important` — et la carte
 // conserve l'arête lumineuse que `.surface-card` lui donne déjà.
+//
+// L'ordre des deux dernières lignes n'est pas indifférent, et il a coûté cher à
+// trouver : le minifieur tient le préfixe et la propriété standard pour
+// équivalents, et ne garde que **la dernière** des deux. Écrite en premier, la
+// standard disparaissait du CSS livré — le build ne portait plus que
+// `-webkit-backdrop-filter`, que ce Chrome n'honore pas. Les panneaux gardaient
+// donc leur fond translucide sans le flou qui le rend opaque, et l'on lisait la
+// page au travers. Le repli ci-dessous ne rattrapait rien : il teste le
+// *support* du navigateur, qui est acquis, pas la présence de la règle.
 .q-drawer,
 .q-menu,
 .q-dialog__inner > .q-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
 }
 
 // Repli : sans `backdrop-filter`, un fond translucide laisserait lire le contenu
