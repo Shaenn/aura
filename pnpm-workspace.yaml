@@ -77,3 +77,15 @@ overrides:
   # Au-delà de la 24, ils décrivent des API absentes du runtime : le code
   # compile et échoue à l'exécution. À retirer quand `engines.node` changera de ligne.
   '@types/node': '<25'
+
+  # `chevrotain` 11.1.2, tiré par `mermaid` 12.0.0, épingle `lodash-es` à 4.17.23
+  # exactement — sans plage, aucune mise à jour ne le fait bouger. Cette version
+  # porte deux avis, dont un de gravité haute ; le premier correctif est 4.18.0,
+  # une mineure, donc sans rupture attendue.
+  #
+  # La portée est la version vulnérable, pas le paquet : `dagre-d3-es` tire déjà
+  # une 4.18 et n'a pas à être contraint.
+  #
+  # À retirer quand `pnpm why lodash-es` ne montrera plus aucune 4.17 — une
+  # `mermaid` passée à `chevrotain` 13, qui n'épingle plus cette version.
+  'lodash-es@<4.18.0': '^4.18.1'
