@@ -7,7 +7,7 @@
   "license": "MIT",
   "type": "module",
   "private": true,
-  "packageManager": "pnpm@11.18.0",
+  "packageManager": "pnpm@12.5.1",
   "scripts": {
     "dev": "quasar dev",
     "server": "node --env-file-if-exists=server/.env --env-file-if-exists=server/.env.local --watch --import tsx server/index.ts",
@@ -75,6 +75,6 @@
   },
   "engines": {
     "node": "^24",
-    "pnpm": ">= 11.18.0 <12"
+    "pnpm": ">= 12.5.1 <13"
   }
 }

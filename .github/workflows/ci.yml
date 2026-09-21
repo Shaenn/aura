@@ -31,10 +31,10 @@ jobs:
       # Pas de version ici : `packageManager` dans `package.json` la porte
       # désormais, et l'action refuse de démarrer si les deux se contredisent.
       # Ce qui se joue sur ce numéro : les gardes de `pnpm-workspace.yaml` sont
-      # des fonctions de pnpm 11. Sous la 10, `pnpm install` ne vérifie pas le
-      # lockfile contre elles — la quarantaine ne protégeait donc que la machine
-      # qui résout, et un lockfile fabriqué ailleurs avec une dérogation locale
-      # passait la CI sans un mot.
+      # des fonctions apparues avec pnpm 11. Sous la 10, `pnpm install` ne
+      # vérifie pas le lockfile contre elles — la quarantaine ne protégeait donc
+      # que la machine qui résout, et un lockfile fabriqué ailleurs avec une
+      # dérogation locale passait la CI sans un mot.
       - uses: pnpm/action-setup@v6
 
       - uses: actions/setup-node@v7
