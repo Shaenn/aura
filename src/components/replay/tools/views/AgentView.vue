@@ -99,6 +99,7 @@
   import { agentColorOf } from '@/utils/agentColors'
   import { computed, inject, ref } from 'vue'
   import { useI18n } from 'vue-i18n'
+  import { agentReport } from '../agentReport'
   import OutputPane from '../OutputPane.vue'
   import ToolChips from '../ToolChips.vue'
   import { asRecord, chips, str } from '../values'
@@ -189,7 +190,7 @@
     if (!result || result.isError) return ''
     const text = result.content.trim()
     if (!text || text.startsWith('Async agent launched')) return ''
-    return text
+    return agentReport(text)
   })
 </script>
 
