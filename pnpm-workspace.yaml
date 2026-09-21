@@ -25,7 +25,7 @@ allowBuilds:
   esbuild: true
 
 # Fait échouer l'installation si un script de build apparaît dans l'arbre des
-# dépendances sans figurer ci-dessus. C'est déjà le défaut de pnpm 11 ; le
+# dépendances sans figurer ci-dessus. C'est le défaut depuis pnpm 11 ; le
 # déclarer le met à l'abri d'un retour en arrière, et dit l'intention à qui lit.
 strictDepBuilds: true
 
@@ -34,7 +34,7 @@ strictDepBuilds: true
 # pendant laquelle le mainteneur légitime peut détecter et dépublier reste,
 # elle, exploitable.
 #
-# 1440 est déjà le défaut de pnpm 11 — ce n'est donc pas la durée qu'on gagne
+# 1440 est le défaut depuis pnpm 11 — ce n'est donc pas la durée qu'on gagne
 # ici. C'est `minimumReleaseAgeStrict`, qui ne vaut `true` que si le seuil est
 # déclaré **explicitement**. Sans cette ligne, pnpm ne refuse pas une version
 # trop jeune : il retombe dessus et inscrit lui-même la dérogation dans ce
