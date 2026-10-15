@@ -41,7 +41,7 @@ Claude Code well is precisely a matter of seeing what goes on under the hood, lo
 own files. AURA is the tool I built to look.
 
 ```bash
-pnpm install && pnpm dev:all
+pnpm install && node lancement/lancer.mjs dev
 ```
 
 <p align="center">
@@ -348,12 +348,16 @@ pnpm install
 **In development** — front and server together, hot reload on both:
 
 ```bash
-pnpm dev:all
+node lancement/lancer.mjs dev
 ```
 
 The application opens at <http://localhost:9788> — the dev server opens the browser itself —
 and the BFF listens on `:8788`. On Windows, `dev.bat` runs the very same command, for those
-who prefer a double-click to a terminal.
+who prefer a double-click to a terminal. What gets launched, and how, is declared in
+`lancement/services.json` (`lancement` is French for “launch”); see `lancement/LISEZMOI.md`.
+
+To stop it from another window: `node lancement/arreter.mjs`, or `stop.bat`. It first asks the
+server to shut down by itself, so that it can close the Workshop sessions it runs.
 
 **In local “production”** — a single process serves the application and the API:
 
@@ -361,6 +365,8 @@ who prefer a double-click to a terminal.
 pnpm build
 pnpm start          # http://localhost:8788
 ```
+
+Or in a single step, build included: `node lancement/lancer.mjs preview`, or `preview.bat`.
 
 The console window stays open: **it is the server**. Closing it stops AURA.
 

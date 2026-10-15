@@ -30,7 +30,7 @@ system.
 ### In development (front + server, hot reload)
 
 ```bash
-pnpm dev:all
+node lancement/lancer.mjs dev    # or dev.bat, on Windows
 ```
 
 - Application: <http://localhost:9788> (opened automatically)

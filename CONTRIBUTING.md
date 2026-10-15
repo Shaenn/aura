@@ -16,7 +16,7 @@ et [SECURITY.md](SECURITY.md) dit comment signaler une faille sans l'exposer.
 - **Agent** : `@anthropic-ai/claude-agent-sdk` pour l'Atelier (sessions possédées par AURA).
 - **Rendu de transcript** : `markdown-it` + `highlight.js` (+ `mermaid`) pour le rejeu des sessions ;
   `chart.js` pour les graphes d'usage, `lottie-web` pour les animations.
-- **Outillage** : ESLint + Prettier, `vite-plugin-checker` (vue-tsc + eslint), `vitest`, `concurrently`.
+- **Outillage** : ESLint + Prettier, `vite-plugin-checker` (vue-tsc + eslint), `vitest`, et le lanceur commun du parc (`lancement/`).
 
 ## Architecture
 
@@ -111,11 +111,17 @@ src/
 test/                   vitest, environnement node — parseurs, agrégats, diagnostics
 
 scripts/                outillage hors application
-  free-ports.mjs        libère 8788/9788 : extinction ordonnée du BFF d'abord, force ensuite
   i18n-scan.mjs         relevé des chaînes à traduire
 
-dev.bat                 lancement (délègue à `pnpm dev:all`)
-stop.bat                arrêt ordonné (délègue à `pnpm stop`)
+lancement/              le lancement : commun au parc, distribué par VIGIE — sauf deux fichiers
+  services.json         ce qu'AURA lance : le front, le BFF, et l'aperçu de production
+  eteindre.mjs          extinction ordonnée du BFF, que l'arrêt passe avant toute coupe
+  lancer.mjs            dev | preview — à ne pas retoucher, comme arreter.mjs et LISEZMOI.md
+  arreter.mjs           extinction ordonnée d'abord, force ensuite ; libère 8788/9788
+
+dev.bat                 lancement (node lancement/lancer.mjs dev)
+preview.bat             comme en production : build, puis le BFF sert dist/spa
+stop.bat                arrêt ordonné (node lancement/arreter.mjs)
 ```
 
 ## Instructions pour Claude Code

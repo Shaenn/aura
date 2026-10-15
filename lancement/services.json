@@ -1,0 +1,12 @@
+{
+  "dev": {
+    "web": { "commande": "pnpm dev" },
+    "api": { "commande": "pnpm server", "arret": "node lancement/eteindre.mjs" }
+  },
+  "preview": {
+    "avant": ["pnpm build"],
+    "services": {
+      "api": { "commande": "pnpm start", "arret": "node lancement/eteindre.mjs" }
+    }
+  }
+}

@@ -109,11 +109,11 @@ installed and run at least once. Developed and tested on **Windows**, exclusivel
 git clone https://github.com/Shaenn/aura.git aura
 cd aura
 pnpm install
-pnpm dev:all
+node lancement/lancer.mjs dev
 ```
 
-The application opens on `http://127.0.0.1:9788`. To stop it: `Ctrl+C`, or `pnpm stop` from
-another window — a Workshop session runs a `claude` process, and that is the only gesture
+The application opens on `http://127.0.0.1:9788`. To stop it: `Ctrl+C`, or
+`node lancement/arreter.mjs` from another window — a Workshop session runs a `claude` process, and that is the only gesture
 which, on Windows, triggers an orderly shutdown.
 
 ::: warning Keep your transcripts, or AURA has nothing to show

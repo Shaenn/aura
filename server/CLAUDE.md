@@ -176,7 +176,8 @@ voix (`docs/voix.md`, déjà chargée). Trois choses, dans cet ordre — ce qu'A
 - **Le serveur ne se tue pas, il s'éteint.** Le crochet `onClose` coupe les sessions de
   l'Atelier — un processus `claude` chacune — et les threads de lecture. Aucun signal venu de
   l'extérieur ne le déclenche sous Windows : `POST /api/system/shutdown` (refusé hors
-  `127.0.0.1`) existe pour ça, et `pnpm stop` l'appelle. Terminer le processus de force laisse
+  `127.0.0.1`) existe pour ça, et `lancement/eteindre.mjs` l'appelle — la commande `arret` du
+  service `api`, que le lanceur passe avant toute coupe. Terminer le processus de force laisse
   les sessions derrière lui, quota compris.
 
 ## Tests

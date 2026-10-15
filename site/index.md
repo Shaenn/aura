@@ -110,11 +110,11 @@ installé et lancé au moins une fois. Développé et testé sous **Windows**, e
 git clone https://github.com/Shaenn/aura.git aura
 cd aura
 pnpm install
-pnpm dev:all
+node lancement/lancer.mjs dev
 ```
 
-L'application s'ouvre sur `http://127.0.0.1:9788`. Pour l'arrêter : `Ctrl+C`, ou `pnpm stop`
-depuis une autre fenêtre — une session de l'Atelier fait tourner un processus `claude`, et
+L'application s'ouvre sur `http://127.0.0.1:9788`. Pour l'arrêter : `Ctrl+C`, ou
+`node lancement/arreter.mjs` depuis une autre fenêtre — une session de l'Atelier fait tourner un processus `claude`, et
 c'est le seul geste qui, sous Windows, déclenche un arrêt ordonné.
 
 ::: warning Gardez vos transcripts, sinon AURA n'a rien à montrer

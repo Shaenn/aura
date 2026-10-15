@@ -17,7 +17,7 @@ it.
 - **Agent**: `@anthropic-ai/claude-agent-sdk` for the Workshop (sessions AURA owns).
 - **Transcript rendering**: `markdown-it` + `highlight.js` (+ `mermaid`) for session replay;
   `chart.js` for usage charts, `lottie-web` for animations.
-- **Tooling**: ESLint + Prettier, `vite-plugin-checker` (vue-tsc + eslint), `vitest`, `concurrently`.
+- **Tooling**: ESLint + Prettier, `vite-plugin-checker` (vue-tsc + eslint), `vitest`, and the fleet-wide launcher (`lancement/`).
 
 ## Architecture
 
@@ -112,11 +112,17 @@ src/
 test/                   vitest, node environment — parsers, aggregates, diagnostics
 
 scripts/                tooling outside the application
-  free-ports.mjs        frees 8788/9788: orderly BFF shutdown first, force second
   i18n-scan.mjs         survey of the strings to translate
 
-dev.bat                 launch (delegates to `pnpm dev:all`)
-stop.bat                orderly stop (delegates to `pnpm stop`)
+lancement/              launching: shared across the fleet, distributed by VIGIE — but two files
+  services.json         what AURA launches: the front, the BFF, and the production preview
+  eteindre.mjs          orderly BFF shutdown, run by the stop before anything is killed
+  lancer.mjs            dev | preview — not to be edited here, like arreter.mjs and LISEZMOI.md
+  arreter.mjs           orderly shutdown first, force second; frees 8788/9788
+
+dev.bat                 launch (node lancement/lancer.mjs dev)
+preview.bat             as in production: build, then the BFF serves dist/spa
+stop.bat                orderly stop (node lancement/arreter.mjs)
 ```
 
 ## Instructions for Claude Code
