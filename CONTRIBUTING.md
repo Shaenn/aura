@@ -119,9 +119,9 @@ lancement/              le lancement : commun au parc, distribué par VIGIE — 
   lancer.mjs            dev | preview — à ne pas retoucher, comme arreter.mjs et LISEZMOI.md
   arreter.mjs           extinction ordonnée d'abord, force ensuite ; libère 8788/9788
 
-dev.bat                 lancement (node lancementlancer.mjs dev)
+dev.bat                 lancement (node lancement/lancer.mjs dev)
 preview.bat             comme en production : build, puis le BFF sert dist/spa
-stop.bat                arrêt ordonné (node lancementarreter.mjs)
+stop.bat                arrêt ordonné (node lancement/arreter.mjs)
 ```
 
 ## Instructions pour Claude Code

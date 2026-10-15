@@ -120,9 +120,9 @@ lancement/              launching: shared across the fleet, distributed by VIGIE
   lancer.mjs            dev | preview — not to be edited here, like arreter.mjs and LISEZMOI.md
   arreter.mjs           orderly shutdown first, force second; frees 8788/9788
 
-dev.bat                 launch (node lancementlancer.mjs dev)
+dev.bat                 launch (node lancement/lancer.mjs dev)
 preview.bat             as in production: build, then the BFF serves dist/spa
-stop.bat                orderly stop (node lancementarreter.mjs)
+stop.bat                orderly stop (node lancement/arreter.mjs)
 ```
 
 ## Instructions for Claude Code
