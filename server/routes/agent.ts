@@ -69,7 +69,7 @@ function notFound(reply: FastifyReply): unknown {
 }
 
 export function registerAgent(app: FastifyInstance): void {
-  app.get('/api/agent/sessions', () => ({ sessions: listSessions() }))
+  app.get('/api/agent/sessions', { config: { releve: true } }, () => ({ sessions: listSessions() }))
 
   /**
    * Ouvre le sélecteur de dossier du système et rend le chemin choisi.
@@ -206,7 +206,7 @@ export function registerAgent(app: FastifyInstance): void {
    * tout le fichier. Un serveur de dev qui tourne depuis une heure en écrit des
    * mégaoctets, dont personne ne relira le début.
    */
-  app.get('/api/agent/sessions/:runId/shells/:shellId/output', async (req, reply) => {
+  app.get('/api/agent/sessions/:runId/shells/:shellId/output', { config: { releve: true } }, async (req, reply) => {
     const { runId, shellId } = req.params as { runId: string; shellId: string }
     const runner = getRunner(runId)
     if (!runner) return notFound(reply)

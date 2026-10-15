@@ -1,8 +1,8 @@
 // Server-side configuration for the BFF.
 //
-// AURA is a local, single-user tool. Two knobs live here: the port, and an
+// AURA is a local, single-user tool. Three knobs live here: the port, an
 // optional override of the managed .claude directory (handy for tests or a
-// sandboxed copy).
+// sandboxed copy), and the log level.
 //
 // Il y a désormais une exception à « aucun service externe, aucun secret », et
 // elle est volontairement tenue à l'écart d'ici : la Passerelle
@@ -29,7 +29,18 @@ export interface ServerEnv {
   port: number
   /** Absolute path of the .claude directory AURA manages. */
   claudeDir: string
+  /**
+   * Le niveau du journal (`LOG_LEVEL`), `info` par défaut. `debug` rend
+   * visibles les relevés — les routes que la SPA interroge en boucle —, qui ne
+   * s'écrivent qu'en `dbg` (voir `journal.ts`).
+   */
+  niveauJournal: NiveauJournal
 }
+
+/** Les niveaux de pino, que Fastify comprend. */
+export type NiveauJournal = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal'
+
+const NIVEAUX_JOURNAL: NiveauJournal[] = ['trace', 'debug', 'info', 'warn', 'error', 'fatal']
 
 /** Read the server environment; everything has a sensible local default. */
 export function loadEnv(): ServerEnv {
@@ -37,7 +48,10 @@ export function loadEnv(): ServerEnv {
   // instance, ou un test sur un port libre, sans toucher au fichier partagé.
   const port = Number(process.env.PORT ?? PORTS.api)
   const raw = process.env.AURA_CLAUDE_DIR?.trim() || join(homedir(), '.claude')
-  return { port, claudeDir: normalizeRoot(raw) }
+  // Une valeur inconnue retombe sur `info` plutôt que d'empêcher le démarrage :
+  // une faute de frappe dans un réglage de confort ne doit pas couper AURA.
+  const niveau = (process.env.LOG_LEVEL ?? '').trim().toLowerCase() as NiveauJournal
+  return { port, claudeDir: normalizeRoot(raw), niveauJournal: NIVEAUX_JOURNAL.includes(niveau) ? niveau : 'info' }
 }
 
 /**

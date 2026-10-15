@@ -24,6 +24,7 @@ import type {
 import type { TranscriptImage } from '../../shared/transcript.ts'
 import { CLAUDE_DIR } from '../claude/paths.ts'
 import { t } from '../i18n/index.ts'
+import { ecrire } from '../journal.ts'
 import { num, str } from '../json.ts'
 import { imageSize, isHiResVisionModel, visualTokens } from '../transcript.ts'
 import { ActivityTracker, type Change } from './activity.ts'
@@ -906,12 +907,10 @@ export class SessionRunner {
    * L'horodatage et le `runId` sont le minimum pour recouper avec le `.jsonl`.
    */
   private log(reason: string, cause?: unknown): void {
-    const stack = cause instanceof Error ? cause.stack : undefined
     // Le journal de Fastify n'est pas joignable d'ici, et ce fichier ne connaît
-    // pas HTTP — c'est l'invariant du runner. La sortie d'erreur est le même
-    // flux que celui où pino écrit ; l'ordre des lignes reste donc lisible.
-    // eslint-disable-next-line no-console
-    console.error(`[atelier] ${new Date().toISOString()} ${this.session.runId} ${reason}`, stack ?? '')
+    // pas HTTP — c'est l'invariant du runner. `ecrire` ne le rompt pas : il ne
+    // dépend que de Node, et écrit au même format que Fastify, sur le même flux.
+    ecrire('err', 'Atelier', `${this.session.runId} ${reason}`, cause)
   }
 
   private async run(): Promise<void> {
