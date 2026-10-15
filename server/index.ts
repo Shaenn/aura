@@ -12,12 +12,13 @@ import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import fastifyStatic from '@fastify/static'
-import Fastify from 'fastify'
+import Fastify, { LogController } from 'fastify'
 import { stopAll } from './agent/registry.ts'
 import { loadEnv } from './env'
 import { publicMessage } from './errors.ts'
 import { registerGuard } from './guard.ts'
 import { enterLocale, localeFromHeader } from './i18n/index.ts'
+import { ecrireFatal, journal, ligneRequete, niveauRequete } from './journal.ts'
 import { stopPool } from './parse-pool.ts'
 import { arretePasserelle, demarrePasserelle } from './passerelle/index.ts'
 import { APP_DIR, IS_BUNDLE } from './paths'
@@ -32,11 +33,34 @@ import { registerPreferences } from './routes/preferences'
 import { registerProjects } from './routes/projects'
 import { registerUsage } from './routes/usage.ts'
 
+declare module 'fastify' {
+  interface FastifyContextConfig {
+    /** La route est un relevé, interrogé en boucle : ses réponses réussies s'écrivent en `dbg`. */
+    releve?: boolean
+  }
+}
+
 async function main(): Promise<void> {
   const env = loadEnv()
-  const app = Fastify({ logger: true, bodyLimit: 8 * 1024 * 1024 })
 
-  app.log.info(`Dossier .claude géré : ${env.claudeDir}`)
+  // Le journal au template console de Serilog, comme les autres projets du parc
+  // (voir `journal.ts`). Les requêtes s'y écrivent en UNE ligne, à la fin,
+  // plutôt qu'en deux lignes JSON. `logController` et non l'option
+  // `disableRequestLogging` de premier niveau, dépréciée en Fastify 5 (FSTDEP023).
+  const app = Fastify({
+    logger: { stream: journal, level: env.niveauJournal },
+    logController: new LogController({ disableRequestLogging: true }),
+    bodyLimit: 8 * 1024 * 1024,
+  })
+  const log = app.log.child({ source: 'Serveur' })
+  const http = app.log.child({ source: 'Http' })
+  const passerelle = app.log.child({ source: 'Passerelle' })
+  app.addHook('onResponse', (req, reply, fini) => {
+    http[niveauRequete(reply.statusCode, req.routeOptions.config.releve)](ligneRequete(req.method, req.url, reply.statusCode, reply.elapsedTime))
+    fini()
+  })
+
+  log.info(`Dossier .claude géré : ${env.claudeDir}`)
 
   // La langue de la réponse suit celle de la requête, et rien d'autre. Le
   // contexte est ouvert au plus tôt — avant toute route — et tenu jusqu'au bout
@@ -54,7 +78,7 @@ async function main(): Promise<void> {
   // sert le message brut de Node — chemin absolu compris, donc le nom du compte
   // Windows. Le détail va au journal, le client reçoit un constat. Voir errors.ts.
   app.setErrorHandler((err: unknown, _req, reply) => {
-    app.log.error(err)
+    http.error(err)
     // Le statut que Fastify a posé lui-même — 400 sur un corps illisible, 415
     // sur un type inattendu — vaut mieux qu'un 500 uniforme : il dit à l'appelant
     // si la faute est de son côté.
@@ -98,8 +122,8 @@ async function main(): Promise<void> {
   // Elle n'ouvre aucun port : son long-polling est sortant, et elle appelle le
   // registre directement plutôt que de passer par l'API.
   demarrePasserelle({
-    info: (m) => app.log.info(m),
-    warn: (m) => app.log.warn(m),
+    info: (m) => passerelle.info(m),
+    warn: (m) => passerelle.warn(m),
   })
 
   // Un processus `claude` par session survivrait au serveur sans cela — et un
@@ -178,8 +202,8 @@ function openBrowser(url: string): void {
 
 main().catch((err: unknown) => {
   // Le dernier recours du BFF : à ce point, ni le journal Fastify ni les routes
-  // n’existent, et la console est le seul endroit où le message peut sortir.
-  // eslint-disable-next-line no-console
-  console.error(err instanceof Error ? err.message : err)
+  // n’existent. `ecrireFatal` écrit sans eux, au format du journal, pile
+  // comprise : c'est la seule ligne qui dise pourquoi le serveur n'a pas démarré.
+  ecrireFatal('Serveur', err)
   process.exit(1)
 })

@@ -25,7 +25,7 @@ export function registerMaintenance(app: FastifyInstance): void {
     }
   })
 
-  app.get('/api/system/sessions', async () => ({ sessions: await listSessions() }))
+  app.get('/api/system/sessions', { config: { releve: true } }, async () => ({ sessions: await listSessions() }))
 
   // ── Processus ──────────────────────────────────────────────────────────────
   //

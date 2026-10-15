@@ -161,7 +161,7 @@ export function registerProjects(app: FastifyInstance): void {
    * `no-cache` ne veut pas dire « ne garde rien » mais « garde, et revalide avant
    * de servir » : c'est exactement ce qu'il faut d'un fichier qui grandit.
    */
-  app.get('/api/projects/:slug/transcript', async (req, reply) => {
+  app.get('/api/projects/:slug/transcript', { config: { releve: true } }, async (req, reply) => {
     const { slug } = req.params as { slug: string }
     const id = str((req.query as Record<string, unknown>).id)
     if (!id) return reply.code(400).send({ error: t('errors.paramRequired', { name: 'id' }) })
