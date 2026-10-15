@@ -7,6 +7,7 @@
 // Usage :
 //   node lancement/lancer.mjs dev       le développement, avec rechargement
 //   node lancement/lancer.mjs preview   l'application telle qu'en production : build, puis serveurs
+//   node lancement/lancer.mjs <mode>    une variante que le projet déclare dans `services.json`
 //
 // Ce que ce fichier fait, et que `concurrently` faisait à moitié :
 //
@@ -29,9 +30,8 @@ import { spawn, spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
-import { arreter, couperArbre, demanderExtinction, FICHIER_PID, RACINE } from './arreter.mjs'
+import { arreter, couperArbre, demanderExtinction, FICHIER_PID, planDe, RACINE } from './arreter.mjs'
 
-const MODES = ['dev', 'preview']
 const COULEURS = [34, 35, 32, 33, 36, 31]
 const COLORE = process.stdout.isTTY && !process.env.NO_COLOR
 /** STATUS_CONTROL_C_EXIT : le code d'un processus Windows interrompu par Ctrl+C. */
@@ -40,22 +40,24 @@ const CTRL_C_WINDOWS = 0xc000013a
 const GRACE_MS = 5000
 
 const mode = process.argv[2] ?? 'dev'
-if (!MODES.includes(mode)) {
-  console.error(`Mode inconnu : « ${mode} ». Usage : node lancement/lancer.mjs ${MODES.join(' | ')}`)
-  process.exit(1)
-}
-
 const declaration = lireDeclaration()
 const ports = lirePorts()
-const plan = mode === 'dev' ? { avant: [], services: declaration.dev } : declaration.preview
+const plan = planDe(declaration, mode)
 
-if (!plan || !Object.keys(plan.services ?? {}).length) {
+if (!plan) {
+  console.error(`Mode inconnu : « ${mode} ». Ceux que déclare lancement/services.json : ${Object.keys(declaration).join(', ')}.`)
+  process.exit(1)
+}
+if (!Object.keys(plan.services).length) {
   console.error(`lancement/services.json ne déclare aucun service pour « ${mode} ».`)
   process.exit(1)
 }
 
-const etapes = (plan.avant ?? []).map((e) => (typeof e === 'string' ? { commande: e } : e))
+const etapes = plan.avant
 const services = Object.entries(plan.services).map(([nom, s]) => ({ nom, ...s }))
+if (plan.libelle) {
+  console.log(`\n${plan.libelle}`)
+}
 
 verifierInstallations([...etapes, ...services])
 arreter()

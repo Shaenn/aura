@@ -145,11 +145,36 @@ function pidsSur(port) {
   return [...pids].filter((p) => p !== process.pid)
 }
 
-/** Les services de `services.json`, sections `dev` et `preview` confondues. */
+/**
+ * Ce qu'un mode de `services.json` lance : ses étapes préalables et ses services.
+ *
+ * Chaque clé du fichier est un mode. Deux formes :
+ *  - la forme courte, un objet de services : c'est celle de `dev` ;
+ *  - la forme complète, `{ libelle?, base?, avant?, services }` : celle de `preview`, et des
+ *    variantes. `base` reprend les services d'un autre mode, que `services` complète ou remplace
+ *    un par un — `dev:device` ne redit que le front qui change, et garde le back de `dev`.
+ *
+ * Rend `null` pour un mode que le fichier ne déclare pas.
+ */
+export function planDe(doc, mode, vus = []) {
+  const section = doc?.[mode]
+  if (!section || typeof section !== 'object' || vus.includes(mode)) {
+    return null
+  }
+  const complete = 'services' in section
+  const base = complete && typeof section.base === 'string' ? planDe(doc, section.base, [...vus, mode]) : null
+  return {
+    libelle: complete && typeof section.libelle === 'string' ? section.libelle : null,
+    avant: (complete && Array.isArray(section.avant) ? section.avant : []).map((e) => (typeof e === 'string' ? { commande: e } : e)),
+    services: { ...base?.services, ...(complete ? section.services : section) },
+  }
+}
+
+/** Les services de `services.json`, tous modes confondus. */
 function servicesDeclares() {
   try {
     const doc = JSON.parse(readFileSync(join(RACINE, 'lancement', 'services.json'), 'utf8'))
-    return [...Object.entries(doc.dev ?? {}), ...Object.entries(doc.preview?.services ?? {})].map(([nom, s]) => ({ nom, ...s }))
+    return Object.keys(doc).flatMap((mode) => Object.entries(planDe(doc, mode)?.services ?? {}).map(([nom, s]) => ({ nom, ...s })))
   } catch {
     return []
   }

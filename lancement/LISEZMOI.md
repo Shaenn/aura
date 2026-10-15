@@ -44,6 +44,33 @@ VIGIE signale toute copie qui diverge.
   de son arbre. Sous Windows, aucun signal venu de l'extérieur ne l'atteint : `stop.bat`, ou le
   radar de VIGIE, le couperaient sans qu'il ait pu le faire.
 
+### Les variantes
+
+Chaque clé de `services.json` est un mode, qui se lance par `node lancement/lancer.mjs <mode>`.
+En plus de `dev` et `preview`, un projet peut déclarer ses variantes. Par exemple, un
+développement dont le front vise l'adresse du poste sur le réseau, pour déboguer depuis un autre
+appareil :
+
+```json
+"dev:device": {
+  "libelle": "Debug sur un autre appareil",
+  "base": "dev",
+  "services": {
+    "web": { "dossier": "front", "commande": "pnpm dev:device" }
+  }
+}
+```
+
+- **`base`** reprend les services d'un autre mode. `services` les complète ou les remplace un par
+  un : la variante ne redit que ce qui change.
+- **`libelle`** est le nom affiché au lancement, et sur la carte du service dans le radar de VIGIE,
+  qui propose la variante à côté du développement.
+
+Un lanceur au double-clic pour une variante est propre au projet, par exemple `dev-device.bat`
+qui appelle `node lancement\lancer.mjs dev:device`.
+
+### Les scripts du projet
+
 Un script qui ne sert qu'à lancer ou à éteindre un service, par exemple télécharger puis démarrer un
 outil, a sa place dans ce dossier, à côté de `services.json`. Il n'a pas sa place dans le
 `package.json` du front.
