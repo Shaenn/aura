@@ -15,13 +15,17 @@ Navigateur (SPA Quasar)  ──/api/*──►  BFF Fastify (server/)  ──►
 ```
 
 Ces deux numéros sont déclarés dans **`ports.json`**, à la racine, et nulle part ailleurs :
-`quasar.config.ts` (l'écoute et la cible du proxy), `server/env.ts` et `scripts/free-ports.mjs`
+`quasar.config.ts` (l'écoute et la cible du proxy), `server/env.ts` et `lancement/arreter.mjs`
 le lisent. Du JSON plutôt qu'un module TypeScript pour rester lisible hors du monde TypeScript
 — PowerShell par `ConvertFrom-Json`, un back C# par `AddJsonFile`. Le schéma ci-dessus est la
 seule recopie qui subsiste : elle se lit, elle ne s'exécute pas.
 
-`dev.bat` et `stop.bat` sont les deux seuls lanceurs, et ils ne font que déléguer à `pnpm
-dev:all` et `pnpm stop` : une commande de lancement qui vit à deux endroits finit par diverger.
+Le lancement vit dans **`lancement/`**, le lanceur commun du parc distribué par VIGIE : `dev.bat`,
+`preview.bat` et `stop.bat` ne font que l'appeler, et pour un agent ce sont `node
+lancement/lancer.mjs dev`, `node lancement/lancer.mjs preview` et `node lancement/arreter.mjs`.
+Ce qui est propre à AURA tient dans `lancement/services.json` (les deux services) et
+`lancement/eteindre.mjs` (l'extinction ordonnée du BFF). `lancer.mjs`, `arreter.mjs` et
+`LISEZMOI.md` sont des copies qu'on ne retouche pas : une correction se porte à VIGIE.
 
 AURA est un outil **local, mono-utilisateur** : aucun service externe, aucun secret, aucune
 authentification. Le front n'appelle que `/api/*` en même origine — pas de CORS.
@@ -51,9 +55,9 @@ un téléphone, ce qui supposerait de l'adapter à cet écran.
 ```bash
 pnpm dev         # front seul, HMR — le back doit tourner à côté
 pnpm server      # BFF seul, relancé à chaque fichier (node --watch)
-pnpm preview     # comme en production : build, puis le BFF sert dist/spa
-pnpm dev:all     # front + BFF ensemble, en développement
-pnpm stop        # libère les deux ports de ports.json
+node lancement/lancer.mjs dev      # front + BFF ensemble, en développement (dev.bat)
+node lancement/lancer.mjs preview  # comme en production : build, puis le BFF sert dist/spa (preview.bat)
+node lancement/arreter.mjs         # extinction ordonnée du BFF, puis libère les ports (stop.bat)
 pnpm test        # vitest, environnement node, test/**/*.test.ts
 pnpm typecheck   # vue-tsc sur src/, puis tsc sur server/ et test/
 pnpm lint        # eslint . — 384 fichiers, mise en forme comprise

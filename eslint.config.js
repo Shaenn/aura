@@ -143,6 +143,17 @@ export default [
     },
   },
 
+  // Le lanceur commun du parc et ses scripts : la console est leur seule sortie. Les fichiers
+  // communs sont des copies de VIGIE qu'on ne retouche pas — un `eslint-disable` ajouté en tête
+  // en ferait une divergence.
+  {
+    name: 'projet/lancement',
+    files: ['lancement/**/*.mjs'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+
   // En dernier : `eslint-plugin-prettier/recommended` éteint les règles de mise en
   // forme qui entreraient en conflit, puis rallume Prettier comme une règle ESLint.
   // La mise en forme se vérifie donc au même endroit que le reste, et se corrige par

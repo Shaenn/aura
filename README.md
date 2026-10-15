@@ -41,7 +41,7 @@ Code demande justement de voir ce qui se passe sous le capot, en local, sur ses 
 fichiers. AURA est l'outil que j'ai construit pour regarder.
 
 ```bash
-pnpm install && pnpm dev:all
+pnpm install && node lancement/lancer.mjs dev
 ```
 
 <p align="center">
@@ -375,17 +375,18 @@ pnpm install
 **En développement** — front et serveur ensemble, rechargement à chaud des deux :
 
 ```bash
-pnpm dev:all
+node lancement/lancer.mjs dev
 ```
 
 L'application s'ouvre sur <http://127.0.0.1:9788> — le serveur de développement ouvre le
-navigateur lui-même — et le BFF écoute sur `:8788`. `dev.bat` lance exactement la même
-commande, pour qui préfère un double-clic à un terminal.
+navigateur lui-même — et le BFF écoute sur `:8788`. Sous Windows, `dev.bat` lance exactement
+la même commande, pour qui préfère un double-clic à un terminal. Ce qui est lancé, et comment,
+est déclaré dans `lancement/services.json` ; voir `lancement/LISEZMOI.md`.
 
 ### L'arrêt compte autant que le lancement
 
 ```bash
-pnpm stop           # ou stop.bat
+node lancement/arreter.mjs    # ou stop.bat
 ```
 
 Une session de l'Atelier fait tourner un processus `claude`. Le serveur les coupe tous en
@@ -394,12 +395,12 @@ geste ne le lui laisse pas : chaque session ouverte survit alors, invisible, en 
 compter sur votre quota, et laisse dans `~/.claude/sessions` un fichier qui la fait passer
 pour vivante.
 
-`Ctrl+C` dans la fenêtre suffit. Depuis une autre fenêtre, `pnpm stop` demande au serveur de
+`Ctrl+C` dans la fenêtre suffit. Depuis une autre fenêtre, `stop.bat` demande au serveur de
 partir de lui-même — c'est le seul geste qui, sous Windows, déclenche cet arrêt ordonné, un
 `Stop-Process` s'y réduisant à une terminaison sans préavis. Ce qui résiste est écarté
 ensuite, en dernier recours.
 
-La même commande s'exécute au début de `pnpm dev:all` : `node --watch` est un superviseur qui
+Le même arrêt s'exécute au début de chaque lancement : `node --watch` est un superviseur qui
 ne meurt pas d'un port occupé — il attend, et le reprend dès qu'il se libère. Sans ce garde,
 un lancement précédent mal refermé reprend la main sur le nouveau.
 
@@ -409,6 +410,8 @@ un lancement précédent mal refermé reprend la main sur le nouveau.
 pnpm build
 pnpm start          # http://127.0.0.1:8788
 ```
+
+Ou d'un seul geste, build compris : `node lancement/lancer.mjs preview`, ou `preview.bat`.
 
 La fenêtre de console reste ouverte : **c'est le serveur**. La fermer arrête AURA.
 

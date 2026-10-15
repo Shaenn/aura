@@ -30,7 +30,7 @@ supposent ce système.
 ### En développement (front + serveur, rechargement à chaud)
 
 ```bash
-pnpm dev:all
+node lancement/lancer.mjs dev    # ou dev.bat, sous Windows
 ```
 
 - Application : <http://127.0.0.1:9788> (ouverte automatiquement)
