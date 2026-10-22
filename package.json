@@ -50,7 +50,7 @@
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@lehoczky/eslint-config-vitest": "2.1.0",
-    "@quasar/app-vite": "3.10.2",
+    "@quasar/app-vite": "3.10.3",
     "@types/node": "24.19.2",
     "@vue/eslint-config-typescript": "14.9.0",
     "autoprefixer": "10.6.1",
