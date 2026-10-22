@@ -20,35 +20,99 @@ import { CONTEXT_CATEGORIES, type SessionContext } from '../shared/context.ts'
 const PROJECTS = join(homedir(), '.claude', 'projects')
 const HAS_CORPUS = existsSync(PROJECTS)
 
-/** Assez pour que les propriétés mordent, assez peu pour rester une seconde. */
+/** Assez pour que les propriétés mordent. */
 const SAMPLE = 60
+
+/**
+ * Ce que l'échantillon a le droit de peser, sous-agents compris.
+ *
+ * Un plafond en sessions ne borne rien : le corpus d'une machine ne fait que
+ * grossir, et les sessions à sous-agents — celles qu'on prend d'abord — sont les
+ * plus lourdes, si bien que le fichier a fini par dépasser ses deux minutes. Un
+ * budget en octets garde le coût constant quoi qu'il arrive au disque.
+ */
+const BUDGET_BYTES = 250 * 1024 * 1024
+
+/** Au-delà, une seule session mangerait le budget de dix autres. */
+const MAX_SESSION_BYTES = BUDGET_BYTES / 10
+
+/** Une session écrite il y a moins que cela tourne peut-être encore. */
+const SETTLED_MS = 2 * 60 * 1000
 
 interface Session {
   name: string
   path: string
   /** Ce transcript a-t-il des sous-agents ? Eux seuls exercent l'isolation. */
   hasSubagents: boolean
+  bytes: number
+  modifiedAt: number
+}
+
+function sizeOf(dir: string): number {
+  let bytes = 0
+  for (const file of readdirSync(dir)) bytes += statSync(join(dir, file)).size
+  return bytes
 }
 
 function sample(): Session[] {
-  const out: Session[] = []
+  const all: Session[] = []
   for (const project of readdirSync(PROJECTS)) {
     const dir = join(PROJECTS, project)
     if (!statSync(dir).isDirectory()) continue
     for (const file of readdirSync(dir)) {
       if (!file.endsWith('.jsonl')) continue
       const id = file.slice(0, -6)
-      out.push({
+      const path = join(dir, file)
+      const subagents = join(dir, id, 'subagents')
+      const hasSubagents = existsSync(subagents)
+      const stat = statSync(path)
+      all.push({
         name: `${project}/${id.slice(0, 8)}`,
-        path: join(dir, file),
-        hasSubagents: existsSync(join(dir, id, 'subagents')),
+        path,
+        hasSubagents,
+        bytes: stat.size + (hasSubagents ? sizeOf(subagents) : 0),
+        modifiedAt: stat.mtimeMs,
       })
     }
   }
   // Les sessions à sous-agents d'abord : ce sont elles qui portent l'invariant
-  // le plus fragile, et elles sont minoritaires.
-  out.sort((a, b) => Number(b.hasSubagents) - Number(a.hasSubagents))
-  return out.slice(0, SAMPLE)
+  // le plus fragile, et elles sont minoritaires. Puis les plus récentes : ce
+  // sont elles qui portent le format que le CLI écrit aujourd'hui.
+  all.sort((a, b) => Number(b.hasSubagents) - Number(a.hasSubagents) || b.modifiedAt - a.modifiedAt)
+
+  // Une session vivante bouge sous le test : une ligne lue à moitié n'est pas
+  // une régression.
+  const settled = Date.now() - SETTLED_MS
+  const out: Session[] = []
+  let spent = 0
+  for (const s of all) {
+    if (out.length === SAMPLE) break
+    if (s.modifiedAt > settled || s.bytes > MAX_SESSION_BYTES || spent + s.bytes > BUDGET_BYTES) continue
+    out.push(s)
+    spent += s.bytes
+  }
+  return out
+}
+
+/**
+ * Chaque test lit les mêmes sessions : les parser une fois pour tous. L'identifiant
+ * fait partie de la clé parce qu'il change ce que le parseur rattache — deux tests
+ * passent `''` exprès.
+ */
+const parsed = new Map<string, ReturnType<typeof parseTranscript>>()
+function parse(path: string, id: string): ReturnType<typeof parseTranscript> {
+  const key = `${path}\0${id}`
+  let p = parsed.get(key)
+  if (!p) parsed.set(key, (p = parseTranscript(path, id)))
+  return p
+}
+
+/** Les lignes d'un fichier, lues une fois quel que soit le nombre d'images qu'il porte. */
+const linesOf = new Map<string, string[]>()
+function lines(file: string): string[] {
+  let l = linesOf.get(file)
+  if (!l) linesOf.set(file, (l = readFileSync(file, 'utf8').split('\n')))
+  return l
 }
 
 function attributedAt(c: SessionContext, i: number): number {
@@ -58,13 +122,10 @@ function attributedAt(c: SessionContext, i: number): number {
 /**
  * Le délai laissé à un test qui lit le vrai disque.
  *
- * Les cinq secondes de vitest ont été écrites pour des fixtures ; ici chaque
- * test relit soixante transcrits réels, et le corpus d'une machine ne cesse de
- * grossir. Quatre de ces tests tombaient donc en dépassement — un `pnpm verifie`
- * rouge en permanence, pour une propriété qui tenait pourtant à chaque fois.
- *
- * On allonge plutôt que de réduire l'échantillon : ce fichier est un filet, et
- * un filet qu'on rétrécit pour qu'il aille plus vite n'attrape plus rien.
+ * Les cinq secondes de vitest ont été écrites pour des fixtures ; ici le premier
+ * test qui touche une session la parse depuis le vrai disque. Le budget en octets
+ * borne ce coût — quelques secondes — et ce délai n'est qu'une marge : s'il est
+ * atteint, c'est que le parseur a ralenti, pas que le corpus a grossi.
  */
 const TIMEOUT_MS = 120_000
 
@@ -77,7 +138,7 @@ describe.skipIf(!HAS_CORPUS)('invariants sur ~/.claude', { timeout: TIMEOUT_MS }
 
   it("n'attribue jamais plus que la fenêtre exacte", async () => {
     for (const s of sessions) {
-      const { context } = await parseTranscript(s.path, '')
+      const { context } = await parse(s.path, '')
       context.turns.forEach((turn, i) => {
         if (!turn.total) return
         // Une estimation qui dépasse son ancre ne dit plus rien : `unattributed`
@@ -89,7 +150,7 @@ describe.skipIf(!HAS_CORPUS)('invariants sur ~/.claude', { timeout: TIMEOUT_MS }
 
   it('déduit un socle plausible dès que le premier tour est ancré', async () => {
     for (const s of sessions) {
-      const { context } = await parseTranscript(s.path, '')
+      const { context } = await parse(s.path, '')
       const first = context.turns[0]
       if (!first?.total) continue
       // Le prompt système et les schémas d'outils de Claude Code. Mesuré sur 488
@@ -105,7 +166,7 @@ describe.skipIf(!HAS_CORPUS)('invariants sur ~/.claude', { timeout: TIMEOUT_MS }
     let seen = 0
     for (const s of sessions) {
       const id = s.path.split(/[\\/]/).at(-1)!.slice(0, -6)
-      const { events } = await parseTranscript(s.path, id)
+      const { events } = await parse(s.path, id)
       for (const ev of events) {
         for (const b of ev.blocks) {
           for (const img of b.images ?? b.result?.images ?? []) {
@@ -120,8 +181,7 @@ describe.skipIf(!HAS_CORPUS)('invariants sur ~/.claude', { timeout: TIMEOUT_MS }
             // Et elle doit désigner les octets, pas seulement exister : on relit
             // le fichier comme le fera le BFF, en repartant de l'adresse seule.
             const file = img.agentId ? join(dirname(s.path), id, 'subagents', `agent-${img.agentId}.jsonl`) : s.path
-            const row = readFileSync(file, 'utf8')
-              .split('\n')
+            const row = lines(file)
               .filter((l) => l.includes(`"uuid":"${img.uuid}"`))
               .map((l) => JSON.parse(l) as Record<string, unknown>)
               .find((r) => r.uuid === img.uuid)
@@ -157,7 +217,7 @@ describe.skipIf(!HAS_CORPUS)('invariants sur ~/.claude', { timeout: TIMEOUT_MS }
     let runs = 0
     for (const s of withSub) {
       const id = s.path.split(/[\\/]/).at(-1)!.slice(0, -6)
-      const { subagents, events } = await parseTranscript(s.path, id)
+      const { subagents, events } = await parse(s.path, id)
       runs += subagents.length
 
       const inStream = new Set(events.flatMap((e) => (e.agentId ? [e.agentId] : [])))
@@ -183,7 +243,7 @@ describe.skipIf(!HAS_CORPUS)('invariants sur ~/.claude', { timeout: TIMEOUT_MS }
     expect(withSub.length, 'aucune session à sous-agents dans l’échantillon').toBeGreaterThan(0)
 
     for (const s of withSub) {
-      const { context } = await parseTranscript(s.path, s.path.split(/[\\/]/).at(-1)!.slice(0, -6))
+      const { context } = await parse(s.path, s.path.split(/[\\/]/).at(-1)!.slice(0, -6))
       // Une fenêtre grandit, tour après tour, jusqu'à ce qu'une compaction la
       // vide — et une compaction ouvre une phase. Un effondrement *au sein* d'une
       // phase n'a donc qu'une explication : deux fenêtres se sont mélangées.
