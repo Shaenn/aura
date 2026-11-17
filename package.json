@@ -63,7 +63,7 @@
     "prettier": "3.10.1",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
-    "vite-plugin-checker": "0.14.5",
+    "vite-plugin-checker": "1.0.0",
     "vitepress": "1.6.4",
     "vitest": "5.1.0",
     "vue-eslint-parser": "10.4.2",
