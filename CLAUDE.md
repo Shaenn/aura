@@ -59,7 +59,7 @@ node lancement/lancer.mjs dev      # front + BFF ensemble, en développement (de
 node lancement/lancer.mjs preview  # comme en production : build, puis le BFF sert dist/spa (preview.bat)
 node lancement/arreter.mjs         # extinction ordonnée du BFF, puis libère les ports (stop.bat)
 pnpm test        # vitest, environnement node, test/**/*.test.ts
-pnpm typecheck   # vue-tsc sur src/, puis tsc sur server/ et test/
+pnpm typecheck   # quasar prepare, vue-tsc sur src/, puis tsc sur server/ et test/
 pnpm lint        # eslint . — 384 fichiers, mise en forme comprise
 pnpm lint:fix
 pnpm format      # prettier . --write puis pnpm lint:fix
@@ -70,6 +70,13 @@ pnpm verifie     # lint + typecheck + test : le geste avant de pousser
 `pnpm typecheck` couvre tout ce que le dépôt contient : le front par `vue-tsc`, le BFF et
 les tests par `tsc`. `vite-plugin-checker` continue de typer `src/` pendant `pnpm dev`,
 mais il ne rattrape plus rien que la ligne de commande ne verrait pas.
+
+`pnpm typecheck` commence par `quasar prepare`, qui régénère `.quasar/`. Le
+`tsconfig.json` du dépôt hérite de `.quasar/tsconfig.json`, et celui-ci désigne
+`@quasar/app-vite` par son chemin réel dans le magasin pnpm, dont le nom change
+dès qu'une de ses peers (`vue`, `vue-router`, `pinia`…) change de version. Sans
+cette régénération, le typecheck qui suit une montée lit les types de l'ancienne
+copie et signale une incompatibilité qui n'existe pas.
 
 Prettier est lancé **comme une règle ESLint** (`eslint-plugin-prettier/recommended`) : la
 mise en forme se relève par `pnpm lint` et se corrige par le même `--fix`. Une seule

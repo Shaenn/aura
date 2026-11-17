@@ -17,7 +17,7 @@
     "lint:fix": "pnpm lint --fix",
     "format": "prettier . --write && pnpm lint:fix",
     "format:check": "prettier . --check",
-    "typecheck": "vue-tsc --noEmit -p tsconfig.json && tsc --noEmit -p server/tsconfig.json && tsc --noEmit -p test/tsconfig.json",
+    "typecheck": "quasar prepare && vue-tsc --noEmit -p tsconfig.json && tsc --noEmit -p server/tsconfig.json && tsc --noEmit -p test/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "verifie": "pnpm lint && pnpm typecheck && pnpm test",
