@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.3.332",
-    "@fastify/static": "10.1.11",
+    "@fastify/static": "10.1.12",
     "@fontsource/inter": "5.3.0",
     "@fontsource/jetbrains-mono": "5.3.0",
     "@quasar/extras": "2.1.0",
@@ -65,9 +65,9 @@
     "typescript": "6.0.3",
     "vite-plugin-checker": "1.1.0",
     "vitepress": "1.6.4",
-    "vitest": "5.1.0",
+    "vitest": "5.1.2",
     "vue-eslint-parser": "10.4.2",
-    "vue-tsc": "3.3.11"
+    "vue-tsc": "3.3.14"
   },
   "engines": {
     "node": "^24",
